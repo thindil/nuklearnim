@@ -134,11 +134,11 @@ proc overview*(ctx: PContext) =
       # menu #1
       nk_layout_row_begin(ctx, NK_STATIC, 25, 5)
       nk_layout_row_push(ctx, 45)
-      if createMenu(ctx, "MENU", NK_TEXT_LEFT.cint, 120, 200):
+      if createMenu(ctx, "MENU", NK_TEXT_LEFT, 120, 200):
         nk_layout_row_dynamic(ctx, 25, 1)
-        if nk_menu_item_label(ctx, "Hide", NK_TEXT_LEFT.cint) == nk_true:
+        if nk_menu_item_label(ctx, "Hide", NK_TEXT_LEFT):
           showMenu = 0
-        if nk_menu_item_label(ctx, "About", NK_TEXT_LEFT.cint) == nk_true:
+        if nk_menu_item_label(ctx, "About", NK_TEXT_LEFT):
           showAppAbout = 1
         discard nk_progress(ctx, prog, 100, nk_true)
         discard nk_slider_int(ctx, 0, slider, 16, 1)
@@ -146,39 +146,39 @@ proc overview*(ctx: PContext) =
         nk_menu_end(ctx)
       # menu 2
       nk_layout_row_push(ctx, 60)
-      if createMenu(ctx, "ADVANCED", NK_TEXT_LEFT.cint, 200, 600):
+      if createMenu(ctx, "ADVANCED", NK_TEXT_LEFT, 200, 600):
         state = (if menuState == MENU_FILE: NK_MAXIMIZED else: NK_MINIMIZED)
-        if nk_tree_state_push(ctx, NK_TREE_TAB, "FILE", state) == nk_true:
+        if nk_tree_state_push(ctx, NK_TREE_TAB, "FILE", state):
           menuState = MENU_FILE
-          discard nk_menu_item_label(ctx, "New", NK_TEXT_LEFT.cint)
-          discard nk_menu_item_label(ctx, "Open", NK_TEXT_LEFT.cint)
-          discard nk_menu_item_label(ctx, "Save", NK_TEXT_LEFT.cint)
-          discard nk_menu_item_label(ctx, "Close", NK_TEXT_LEFT.cint)
-          discard nk_menu_item_label(ctx, "Exit", NK_TEXT_LEFT.cint)
+          discard nk_menu_item_label(ctx, "New", NK_TEXT_LEFT)
+          discard nk_menu_item_label(ctx, "Open", NK_TEXT_LEFT)
+          discard nk_menu_item_label(ctx, "Save", NK_TEXT_LEFT)
+          discard nk_menu_item_label(ctx, "Close", NK_TEXT_LEFT)
+          discard nk_menu_item_label(ctx, "Exit", NK_TEXT_LEFT)
           nk_tree_pop(ctx)
         else:
           menuState = (if menuState == MENU_FILE: MENU_NONE else: menuState)
         state = (if menuState == MENU_EDIT: NK_MAXIMIZED else: NK_MINIMIZED)
-        if nk_tree_state_push(ctx, NK_TREE_TAB, "EDIT", state) == nk_true:
+        if nk_tree_state_push(ctx, NK_TREE_TAB, "EDIT", state):
           menuState = MENU_EDIT
-          discard nk_menu_item_label(ctx, "Copy", NK_TEXT_LEFT.cint)
-          discard nk_menu_item_label(ctx, "Delete", NK_TEXT_LEFT.cint)
-          discard nk_menu_item_label(ctx, "Cut", NK_TEXT_LEFT.cint)
-          discard nk_menu_item_label(ctx, "Paste", NK_TEXT_LEFT.cint)
+          discard nk_menu_item_label(ctx, "Copy", NK_TEXT_LEFT)
+          discard nk_menu_item_label(ctx, "Delete", NK_TEXT_LEFT)
+          discard nk_menu_item_label(ctx, "Cut", NK_TEXT_LEFT)
+          discard nk_menu_item_label(ctx, "Paste", NK_TEXT_LEFT)
           nk_tree_pop(ctx)
         else:
           menuState = (if menuState == MENU_EDIT: MENU_NONE else: menuState)
         state = (if menu_state == MENU_VIEW: NK_MAXIMIZED else: NK_MINIMIZED)
-        if nk_tree_state_push(ctx, NK_TREE_TAB, "VIEW", state) == nk_true:
+        if nk_tree_state_push(ctx, NK_TREE_TAB, "VIEW", state):
           menuState = MENU_VIEW
-          discard nk_menu_item_label(ctx, "About", NK_TEXT_LEFT.cint)
-          discard nk_menu_item_label(ctx, "Options", NK_TEXT_LEFT.cint)
-          discard nk_menu_item_label(ctx, "Customize", NK_TEXT_LEFT.cint)
+          discard nk_menu_item_label(ctx, "About", NK_TEXT_LEFT)
+          discard nk_menu_item_label(ctx, "Options", NK_TEXT_LEFT)
+          discard nk_menu_item_label(ctx, "Customize", NK_TEXT_LEFT)
           nk_tree_pop(ctx)
         else:
           menuState = (if menuState == MENU_VIEW: MENU_NONE else: menuState)
         state = (if menuState == MENU_CHART: NK_MAXIMIZED else: NK_MINIMIZED)
-        if nk_tree_state_push(ctx, NK_TREE_TAB, "CHART", state) == nk_true:
+        if nk_tree_state_push(ctx, NK_TREE_TAB, "CHART", state):
           menuState = MENU_CHART
           nk_layout_row_dynamic(ctx, 150, 1)
           discard nk_chart_begin(ctx, NK_CHART_COLUMN, values.len, 0, 50)
@@ -199,15 +199,15 @@ proc overview*(ctx: PContext) =
       if createPopup(ctx, NK_POPUP_STATIC, "About", nkWindowCloseable, 20, 100,
           300, 190):
         nk_layout_row_dynamic(ctx, 20, 1)
-        nk_label(ctx, "Nuklear", NK_TEXT_LEFT.cint)
-        nk_label(ctx, "By Micha Mettke", NK_TEXT_LEFT.cint)
+        nk_label(ctx, "Nuklear", NK_TEXT_LEFT)
+        nk_label(ctx, "By Micha Mettke", NK_TEXT_LEFT)
         nk_label(ctx, "nuklear is licensed under the public domain License.",
-            NK_TEXT_LEFT.cint)
+            NK_TEXT_LEFT)
         nk_popup_end(ctx)
       else:
         showAppAbout = 0
     if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Window", NK_MINIMIZED,
-        "overview151", 12, 151) == nk_true:
+        "overview151", 12, 151):
       nk_layout_row_dynamic(ctx, 30, 2)
       discard nk_checkbox_label(ctx, "Titlebar", titlebar)
       discard nk_checkbox_label(ctx, "Menu", showMenu)
@@ -219,28 +219,28 @@ proc overview*(ctx: PContext) =
       discard nk_checkbox_label(ctx, "Scale Left", scaleLeft)
       nk_tree_pop(ctx)
     if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Widgets", NK_MINIMIZED,
-        "overview163", 12, 163) == nk_true:
+        "overview163", 12, 163):
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Text", NK_MINIMIZED,
-          "overview165", 12, 165) == nk_true:
+          "overview165", 12, 165):
         nk_layout_row_dynamic(ctx, 20, 1)
-        nk_label(ctx, "Label aligned left", NK_TEXT_LEFT.cint)
-        nk_label(ctx, "Label aligned centered", NK_TEXT_CENTERED.cint)
-        nk_label(ctx, "Label aligned right", NK_TEXT_RIGHT.cint)
-        colorLabel(ctx, "Blue text", NK_TEXT_LEFT.cint, 0, 0, 255)
-        colorLabel(ctx, "Yellow text", NK_TEXT_LEFT.cint, 255, 255, 0)
-        nk_text(ctx, "Text without /0", 15, NK_TEXT_RIGHT.cint)
+        nk_label(ctx, "Label aligned left", NK_TEXT_LEFT)
+        nk_label(ctx, "Label aligned centered", NK_TEXT_CENTERED)
+        nk_label(ctx, "Label aligned right", NK_TEXT_RIGHT)
+        colorLabel(ctx, "Blue text", NK_TEXT_LEFT, 0, 0, 255)
+        colorLabel(ctx, "Yellow text", NK_TEXT_LEFT, 255, 255, 0)
+        nk_text(ctx, "Text without /0", 15, NK_TEXT_RIGHT)
         nk_layout_row_static(ctx, 100, 200, 1)
         nk_label_wrap(ctx, "This is a very long line to hopefully get this text to be wrapped into multiple lines to show line wrapping")
         nk_layout_row_dynamic(ctx, 100, 1)
         nk_label_wrap(ctx, "This is another long text to show dynamic window changes on multiline text")
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Button", NK_MINIMIZED,
-          "overview180", 12, 180) == nk_true:
+          "overview180", 12, 180):
         nk_layout_row_static(ctx, 30, 100, 3)
-        if nk_button_label(ctx, "Button") == nk_true:
+        if nk_button_label(ctx, "Button"):
           echo "Button pressed!"
         nk_button_set_behavior(ctx, NK_BUTTON_REPEATER)
-        if nk_button_label(ctx, "Repeater") == nk_true:
+        if nk_button_label(ctx, "Repeater"):
           echo "Repeater is being pressed!"
         nk_button_set_behavior(ctx, NK_BUTTON_DEFAULT)
         discard colorButton(ctx, 0, 0, 255)
@@ -255,37 +255,37 @@ proc overview*(ctx: PContext) =
         discard nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_RIGHT)
         nk_layout_row_static(ctx, 30, 100, 2)
         discard nk_button_symbol_label(ctx, NK_SYMBOL_TRIANGLE_LEFT, "prev",
-            NK_TEXT_RIGHT.cint)
+            NK_TEXT_RIGHT)
         discard nk_button_symbol_label(ctx, NK_SYMBOL_TRIANGLE_RIGHT, "next",
-            NK_TEXT_LEFT.cint)
+            NK_TEXT_LEFT)
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Basic", NK_MINIMIZED,
-          "overview204", 12, 204) == nk_true:
+          "overview204", 12, 204):
         nk_layout_row_static(ctx, 30, 100, 1)
         discard nk_checkbox_label(ctx, "Checkbox", checkbox)
         nk_layout_row_static(ctx, 30, 80, 3)
-        if nk_option_label(ctx, "optionA", (if option == A: 1 else: 0)) == nk_true:
+        if nk_option_label(ctx, "optionA", (if option == A: 1 else: 0)):
           option = A
-        if nk_option_label(ctx, "optionB", (if option == B: 1 else: 0)) == nk_true:
+        if nk_option_label(ctx, "optionB", (if option == B: 1 else: 0)):
           option = B
-        if nk_option_label(ctx, "optionC", (if option == C: 1 else: 0)) == nk_true:
+        if nk_option_label(ctx, "optionC", (if option == C: 1 else: 0)):
           option = C
         nk_layout_row(ctx, NK_STATIC, 30, 2, ratio.unsafeAddr)
-        nk_labelf(ctx, NK_TEXT_LEFT.cint, "Slider int")
+        nk_labelf(ctx, NK_TEXT_LEFT, "Slider int")
         discard nk_slider_int(ctx, 0, intSlider, 10, 1)
-        nk_label(ctx, "Slider float", NK_TEXT_LEFT.cint)
+        nk_label(ctx, "Slider float", NK_TEXT_LEFT)
         discard nk_slider_float(ctx, 0, float_slider, 5.0, 0.5f)
-        nk_labelf(ctx, NK_TEXT_LEFT.cint, "Progressbar: %u", progValue)
+        nk_labelf(ctx, NK_TEXT_LEFT, "Progressbar: %u", progValue)
         discard nk_progress(ctx, prog_value, 100, nk_true)
         nk_layout_row(ctx, NK_STATIC, 25, 2, ratio.unsafeAddr)
-        nk_label(ctx, "Property float:", NK_TEXT_LEFT.cint)
+        nk_label(ctx, "Property float:", NK_TEXT_LEFT)
         nk_property_float(ctx, "Float:", 0, propertyFloat, 64.0, 0.1, 0.2)
-        nk_label(ctx, "Property int:", NK_TEXT_LEFT.cint)
+        nk_label(ctx, "Property int:", NK_TEXT_LEFT)
         nk_property_int(ctx, "Int:", 0, propertyInt, 100, 1, 1)
-        nk_label(ctx, "Property neg:", NK_TEXT_LEFT.cint)
+        nk_label(ctx, "Property neg:", NK_TEXT_LEFT)
         nk_property_int(ctx, "Neg:", -10, propertyNeg, 10, 1, 1)
         nk_layout_row_dynamic(ctx, 25, 1)
-        nk_label(ctx, "Range:", NK_TEXT_LEFT.cint)
+        nk_label(ctx, "Range:", NK_TEXT_LEFT)
         nk_layout_row_dynamic(ctx, 25, 3)
         nk_property_float(ctx, "#min:", 0, rangeFloatMin, rangeFloatMax, 1.0, 0.2)
         nk_property_float(ctx, "#float:", rangeFloatMin, rangeFloatValue,
@@ -297,7 +297,7 @@ proc overview*(ctx: PContext) =
         nk_property_int(ctx, "#max:", rangeIntMin, rangeIntMax, cint.high, 1, 10)
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Inactive", NK_MINIMIZED,
-          "overview257", 12, 257) == nk_true:
+          "overview257", 12, 257):
         nk_layout_row_dynamic(ctx, 30, 1)
         discard nk_checkbox_label(ctx, "Inactive", inactive)
         nk_layout_row_static(ctx, 30, 80, 1)
@@ -313,29 +313,29 @@ proc overview*(ctx: PContext) =
           setButtonStyle(ctx, textActive, 60, 60, 60)
           discard nk_button_label(ctx, "button")
           restoreButtonStyle(ctx)
-        elif nk_button_label(ctx, "button") == nk_true:
+        elif nk_button_label(ctx, "button"):
           echo "button pressed"
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Selectable", NK_MINIMIZED,
-          "overview275", 12, 275) == nk_true:
+          "overview275", 12, 275):
         if nk_tree_push_hashed(ctx, NK_TREE_NODE, "List", NK_MINIMIZED,
-            "overview277", 12, 277) == nk_true:
+            "overview277", 12, 277):
           nk_layout_row_static(ctx, 18, 100, 1)
-          discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT.cint,
+          discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT,
               selected[0])
-          discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT.cint,
+          discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT,
               selected[1])
-          nk_label(ctx, "Not Selectable", NK_TEXT_LEFT.cint)
-          discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT.cint,
+          nk_label(ctx, "Not Selectable", NK_TEXT_LEFT)
+          discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT,
               selected[2])
-          discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT.cint,
+          discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT,
               selected[3])
           nk_tree_pop(ctx);
         if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Grid", NK_MINIMIZED,
-            "overview287", 12, 287) == nk_true:
+            "overview287", 12, 287):
           nk_layout_row_static(ctx, 50, 50, 4)
           for index, value in selected2.mpairs:
-            if nk_selectable_label(ctx, "Z", NK_TEXT_CENTERED.cint, value) == nk_true:
+            if nk_selectable_label(ctx, "Z", NK_TEXT_CENTERED, value):
               let
                 x = index mod 4
                 y = (index / 4).int
@@ -350,28 +350,28 @@ proc overview*(ctx: PContext) =
           nk_tree_pop(ctx)
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Combo", NK_MINIMIZED,
-          "overview312", 12, 312) == nk_true:
+          "overview312", 12, 312):
         nk_layout_row_static(ctx, 25, 200, 1);
         currentWeapon = createCombo(ctx, weapons, currentWeapon, 25, 200, 200)
         if createColorCombo(ctx, comboColor, 200, 200):
           let ratios: array[2, cfloat] = [0.15.cfloat, 0.85]
           nk_layout_row(ctx, NK_DYNAMIC, 30, 2, ratios.unsafeAddr)
-          nk_label(ctx, "R:", NK_TEXT_LEFT.cint)
+          nk_label(ctx, "R:", NK_TEXT_LEFT)
           comboColor.r = nk_slide_int(ctx, 0, comboColor.r, 255, 5)
-          nk_label(ctx, "G:", NK_TEXT_LEFT.cint)
+          nk_label(ctx, "G:", NK_TEXT_LEFT)
           comboColor.g = nk_slide_int(ctx, 0, comboColor.g, 255, 5)
-          nk_label(ctx, "B:", NK_TEXT_LEFT.cint)
+          nk_label(ctx, "B:", NK_TEXT_LEFT)
           comboColor.b = nk_slide_int(ctx, 0, comboColor.b, 255, 5)
-          nk_label(ctx, "A:", NK_TEXT_LEFT.cint)
+          nk_label(ctx, "A:", NK_TEXT_LEFT)
           comboColor.a = nk_slide_int(ctx, 0, comboColor.a, 255, 5)
           nk_combo_end(ctx)
         if createColorCombo(ctx, comboColor2, 200, 400):
           nk_layout_row_dynamic(ctx, 120, 1)
           comboColor2 = colorPicker(ctx, comboColor2, NK_RGBA)
           nk_layout_row_dynamic(ctx, 25, 2);
-          if nk_option_label(ctx, "RGB", (if colMode == COL_RGB: 1 else: 0)) == nk_true:
+          if nk_option_label(ctx, "RGB", (if colMode == COL_RGB: 1 else: 0)):
             colMode = COL_RGB
-          if nk_option_label(ctx, "HSV", (if colMode == COL_HSV: 1 else: 0)) == nk_true:
+          if nk_option_label(ctx, "HSV", (if colMode == COL_HSV: 1 else: 0)):
             colMode = COL_HSV
           nk_layout_row_dynamic(ctx, 25, 1)
           if colMode == COL_RGB:
@@ -448,7 +448,7 @@ proc overview*(ctx: PContext) =
           dateSelected = true
           nk_layout_row_begin(ctx, NK_DYNAMIC, 20, 3);
           nk_layout_row_push(ctx, 0.05)
-          if nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_LEFT) == nk_true:
+          if nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_LEFT):
             if selectedDate.month == mJan:
               selectedDate.monthZero = 12
               selectedDate.year = selectedDate.year - 1
@@ -456,9 +456,9 @@ proc overview*(ctx: PContext) =
               selectedDate.monthZero = selectedDate.month.ord - 1
           nk_layout_row_push(ctx, 0.9)
           sum = $selectedDate.month & " " & $selectedDate.year
-          nk_label(ctx, sum.cstring, NK_TEXT_CENTERED.cint)
+          nk_label(ctx, sum.cstring, NK_TEXT_CENTERED)
           nk_layout_row_push(ctx, 0.05)
-          if nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_RIGHT) == nk_true:
+          if nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_RIGHT):
             if selectedDate.month == mDec:
               selectedDate.monthZero = 1
               selectedDate.year = selectedDate.year + 1
@@ -468,60 +468,60 @@ proc overview*(ctx: PContext) =
           nk_layout_row_dynamic(ctx, 35, 7)
           for day in WeekDay:
             sum = $day
-            nk_label(ctx, sum.cstring, NK_TEXT_CENTERED.cint)
+            nk_label(ctx, sum.cstring, NK_TEXT_CENTERED)
           var spacing = getDayOfWeek(1, selectedDate.month,
               selectedDate.year).ord - dMon.ord
           if spacing > 0:
             nk_spacing(ctx, spacing.cint)
           for i in 1 .. getDaysInMonth(selectedDate.month, selectedDate.year):
             sum = $i
-            if nk_button_label(ctx, sum.cstring) == nk_true:
+            if nk_button_label(ctx, sum.cstring):
               selectedDate.monthdayZero = i
               nk_combo_close(ctx)
           {.warning[Deprecated]: on.}
           nk_combo_end(ctx)
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Input", NK_MINIMIZED,
-          "overview461", 12, 461) == nk_true:
+          "overview461", 12, 461):
         nk_layout_row(ctx, NK_STATIC, 25, 2, ratio.unsafeAddr)
-        nk_label(ctx, "Default:", NK_TEXT_LEFT.cint)
-        discard nk_edit_string(ctx, NK_EDIT_SIMPLE.cint, text[0].unsafeAddr,
+        nk_label(ctx, "Default:", NK_TEXT_LEFT)
+        discard nk_edit_string(ctx, NK_EDIT_SIMPLE, text[0].unsafeAddr,
             text_len[0], 64, nk_filter_default)
-        nk_label(ctx, "Int:", NK_TEXT_LEFT.cint)
-        discard nk_edit_string(ctx, NK_EDIT_SIMPLE.cint, text[1].unsafeAddr,
+        nk_label(ctx, "Int:", NK_TEXT_LEFT)
+        discard nk_edit_string(ctx, NK_EDIT_SIMPLE, text[1].unsafeAddr,
             text_len[1], 64, nk_filter_decimal)
-        nk_label(ctx, "Float:", NK_TEXT_LEFT.cint)
-        discard nk_edit_string(ctx, NK_EDIT_SIMPLE.cint, text[2].unsafeAddr,
+        nk_label(ctx, "Float:", NK_TEXT_LEFT)
+        discard nk_edit_string(ctx, NK_EDIT_SIMPLE, text[2].unsafeAddr,
             text_len[2], 64, nk_filter_float)
-        nk_label(ctx, "Hex:", NK_TEXT_LEFT.cint)
-        discard nk_edit_string(ctx, NK_EDIT_SIMPLE.cint, text[4].unsafeAddr,
+        nk_label(ctx, "Hex:", NK_TEXT_LEFT)
+        discard nk_edit_string(ctx, NK_EDIT_SIMPLE, text[4].unsafeAddr,
             text_len[4], 64, nk_filter_hex)
-        nk_label(ctx, "Octal:", NK_TEXT_LEFT.cint)
-        discard nk_edit_string(ctx, NK_EDIT_SIMPLE.cint, text[5].unsafeAddr,
+        nk_label(ctx, "Octal:", NK_TEXT_LEFT)
+        discard nk_edit_string(ctx, NK_EDIT_SIMPLE, text[5].unsafeAddr,
             text_len[5], 64, nk_filter_oct)
-        nk_label(ctx, "Binary:", NK_TEXT_LEFT.cint)
-        discard nk_edit_string(ctx, NK_EDIT_SIMPLE.cint, text[6].unsafeAddr,
+        nk_label(ctx, "Binary:", NK_TEXT_LEFT)
+        discard nk_edit_string(ctx, NK_EDIT_SIMPLE, text[6].unsafeAddr,
             text_len[6], 64, nk_filter_binary)
-        nk_label(ctx, "Password:", NK_TEXT_LEFT.cint)
+        nk_label(ctx, "Password:", NK_TEXT_LEFT)
         let oldLen = text_len[8]
         var buffer: array[64, char]
         for i in 0 .. oldLen:
           buffer[i] = '*'
-        discard nk_edit_string(ctx, NK_EDIT_FIELD.cint, buffer.unsafeAddr,
+        discard nk_edit_string(ctx, NK_EDIT_FIELD, buffer.unsafeAddr,
             text_len[8], 64, nk_filter_default)
         if old_len < text_len[8]:
           text[8][oldLen] = buffer[text_len[8] - 1]
-        nk_label(ctx, "Field:", NK_TEXT_LEFT.cint)
-        discard nk_edit_string(ctx, NK_EDIT_FIELD.cint, fieldBuffer.unsafeAddr,
+        nk_label(ctx, "Field:", NK_TEXT_LEFT)
+        discard nk_edit_string(ctx, NK_EDIT_FIELD, fieldBuffer.unsafeAddr,
             fieldLen, 64, nk_filter_default)
-        nk_label(ctx, "Box:", NK_TEXT_LEFT.cint)
+        nk_label(ctx, "Box:", NK_TEXT_LEFT)
         nk_layout_row_static(ctx, 180, 278, 1)
-        discard nk_edit_string(ctx, NK_EDIT_BOX.cint, boxBuffer.unsafeAddr,
+        discard nk_edit_string(ctx, NK_EDIT_BOX, boxBuffer.unsafeAddr,
             boxLen, 512, nk_filter_default)
         nk_layout_row(ctx, NK_STATIC, 25, 2, ratio.unsafeAddr)
         boxActive = nk_edit_string(ctx, (NK_EDIT_FIELD.cint or
             NK_EDIT_SIG_ENTER.cint), text[7].unsafeAddr, text_len[7], 64, nk_filter_ascii)
-        if nk_button_label(ctx, "Submit") == nk_true or (boxActive.cint and
+        if nk_button_label(ctx, "Submit") or (boxActive.cint and
             NK_EDIT_COMMITED.cint) == NK_EDIT_COMMITED.cint:
           text[7][text_len[7]] = '\n'
           text_len[7].inc
@@ -532,12 +532,12 @@ proc overview*(ctx: PContext) =
         nk_tree_pop(ctx)
       nk_tree_pop(ctx)
     if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Charts", NK_MINIMIZED,
-        "overview517", 12, 517) == nk_true:
+        "overview517", 12, 517):
       var
         chartId: cfloat = 0
         chartIndex = -1
       nk_layout_row_dynamic(ctx, 100, 1)
-      if nk_chart_begin(ctx, NK_CHART_LINES, 32, -1.0, 1.0) == nk_true:
+      if nk_chart_begin(ctx, NK_CHART_LINES, 32, -1.0, 1.0):
         for i in 0 .. 31:
           var res = nk_chart_push(ctx, cos(chartId).cfloat)
           if (res and NK_CHART_HOVERING.cint) == NK_CHART_HOVERING.cint:
@@ -551,10 +551,10 @@ proc overview*(ctx: PContext) =
             chartStep).cfloat)
       if lineIndex != 1:
         nk_layout_row_dynamic(ctx, 20, 1)
-        nk_labelf(ctx, NK_TEXT_LEFT.cint, "Selected value: %.2f", cos(
+        nk_labelf(ctx, NK_TEXT_LEFT, "Selected value: %.2f", cos(
             chartIndex.cfloat * chartStep).cfloat)
       nk_layout_row_dynamic(ctx, 100, 1)
-      if nk_chart_begin(ctx, NK_CHART_COLUMN, 32, 0.0, 1.0) == nk_true:
+      if nk_chart_begin(ctx, NK_CHART_COLUMN, 32, 0.0, 1.0):
         for i in 0 .. 31:
           var res = nk_chart_push(ctx, abs(sin(chartId)))
           if (res and NK_CHART_HOVERING.cint) == NK_CHART_HOVERING.cint:
@@ -568,10 +568,10 @@ proc overview*(ctx: PContext) =
             chartIndex.cfloat).cfloat));
       if col_index != -1:
         nk_layout_row_dynamic(ctx, 20, 1)
-        nk_labelf(ctx, NK_TEXT_LEFT.cint, "Selected value: %.2f", abs(sin(
+        nk_labelf(ctx, NK_TEXT_LEFT, "Selected value: %.2f", abs(sin(
             chartStep * colIndex.cfloat).cfloat))
       nk_layout_row_dynamic(ctx, 100, 1)
-      if nk_chart_begin(ctx, NK_CHART_COLUMN, 32, 0.0, 1.0) == nk_true:
+      if nk_chart_begin(ctx, NK_CHART_COLUMN, 32, 0.0, 1.0):
         nk_chart_add_slot(ctx, NK_CHART_LINES, 32, -1.0, 1.0)
         nk_chart_add_slot(ctx, NK_CHART_LINES, 32, -1.0, 1.0)
         chartId = 0
@@ -597,33 +597,33 @@ proc overview*(ctx: PContext) =
         nk_chart_end(ctx)
       nk_tree_pop(ctx)
     if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Popup", NK_MINIMIZED,
-        "overview584", 12, 584) == nk_true:
+        "overview584", 12, 584):
       nk_layout_row_static(ctx, 30, 160, 1)
       var bounds = getWidgetBounds(ctx)
-      nk_label(ctx, "Right click me for menu", NK_TEXT_LEFT.cint)
+      nk_label(ctx, "Right click me for menu", NK_TEXT_LEFT)
       if createContextual(ctx, 0, 100, 300, bounds):
         nk_layout_row_dynamic(ctx, 25, 1);
         discard nk_checkbox_label(ctx, "Menu", showMenu)
         discard nk_progress(ctx, prog, 100, nk_true)
         discard nk_slider_int(ctx, 0, slider, 16, 1)
-        if nk_contextual_item_label(ctx, "About", NK_TEXT_CENTERED.cint) == nk_true:
+        if nk_contextual_item_label(ctx, "About", NK_TEXT_CENTERED):
           showAppAbout = nk_true.cint
         discard nk_selectable_label(ctx, ((if selected[0] ==
-            nk_true: "Uns" else: "S") & "elect").cstring, NK_TEXT_LEFT.cint,
+            nk_true: "Uns" else: "S") & "elect").cstring, NK_TEXT_LEFT,
             selected[0])
         discard nk_selectable_label(ctx, ((if selected[1] ==
-            nk_true: "Uns" else: "S") & "elect").cstring, NK_TEXT_LEFT.cint,
+            nk_true: "Uns" else: "S") & "elect").cstring, NK_TEXT_LEFT,
             selected[1])
         discard nk_selectable_label(ctx, ((if selected[2] ==
-            nk_true: "Uns" else: "S") & "elect").cstring, NK_TEXT_LEFT.cint,
+            nk_true: "Uns" else: "S") & "elect").cstring, NK_TEXT_LEFT,
             selected[2])
         discard nk_selectable_label(ctx, ((if selected[3] ==
-            nk_true: "Uns" else: "S") & "elect").cstring, NK_TEXT_LEFT.cint,
+            nk_true: "Uns" else: "S") & "elect").cstring, NK_TEXT_LEFT,
             selected[3])
         nk_contextual_end(ctx)
       nk_layout_row_begin(ctx, NK_STATIC, 30, 2)
       nk_layout_row_push(ctx, 120)
-      nk_label(ctx, "Right Click here:", NK_TEXT_LEFT.cint)
+      nk_label(ctx, "Right Click here:", NK_TEXT_LEFT)
       nk_layout_row_push(ctx, 50)
       bounds = getWidgetBounds(ctx)
       discard colorButton(ctx, popupColor.r, popupColor.g, popupColor.b)
@@ -637,20 +637,20 @@ proc overview*(ctx: PContext) =
         nk_contextual_end(ctx)
       nk_layout_row_begin(ctx, NK_STATIC, 30, 2)
       nk_layout_row_push(ctx, 120)
-      nk_label(ctx, "Popup:", NK_TEXT_LEFT.cint)
+      nk_label(ctx, "Popup:", NK_TEXT_LEFT)
       nk_layout_row_push(ctx, 50)
-      if nk_button_label(ctx, "Popup") == nk_true:
+      if nk_button_label(ctx, "Popup"):
         popup_active = true
       nk_layout_row_end(ctx)
       if popupActive:
         if createPopup(ctx, NK_POPUP_STATIC, "Error", 0, 20, 100, 220, 90):
           nk_layout_row_dynamic(ctx, 25, 1)
-          nk_label(ctx, "A terrible error as occurred", NK_TEXT_LEFT.cint)
+          nk_label(ctx, "A terrible error as occurred", NK_TEXT_LEFT)
           nk_layout_row_dynamic(ctx, 25, 2)
-          if nk_button_label(ctx, "OK") == nk_true:
+          if nk_button_label(ctx, "OK"):
             popupActive = false
             nk_popup_close(ctx)
-          if nk_button_label(ctx, "Cancel") == nk_true:
+          if nk_button_label(ctx, "Cancel"):
             popupActive = false
             nk_popup_close(ctx)
           nk_popup_end(ctx)
@@ -658,45 +658,45 @@ proc overview*(ctx: PContext) =
           popupActive = false
       nk_layout_row_static(ctx, 30, 150, 1)
       bounds = getWidgetBounds(ctx)
-      nk_label(ctx, "Hover me for tooltip", NK_TEXT_LEFT.cint)
+      nk_label(ctx, "Hover me for tooltip", NK_TEXT_LEFT)
       if isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h):
         nk_tooltip(ctx, "This is a tooltip")
       nk_tree_pop(ctx)
     if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Layout", NK_MINIMIZED,
-        "overview651", 12, 651) == nk_true:
+        "overview651", 12, 651):
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Widget", NK_MINIMIZED,
-          "overview653", 12, 653) == nk_true:
+          "overview653", 12, 653):
         nk_layout_row_dynamic(ctx, 30, 1)
         nk_label(ctx, "Dynamic fixed column layout with generated position and size:",
-            NK_TEXT_LEFT.cint)
+            NK_TEXT_LEFT)
         nk_layout_row_dynamic(ctx, 30, 3)
         discard nk_button_label(ctx, "button")
         discard nk_button_label(ctx, "button")
         discard nk_button_label(ctx, "button")
         nk_layout_row_dynamic(ctx, 30, 1)
         nk_label(ctx, "static fixed column layout with generated position and size:",
-            NK_TEXT_LEFT.cint)
+            NK_TEXT_LEFT)
         nk_layout_row_static(ctx, 30, 100, 3)
         discard nk_button_label(ctx, "button")
         discard nk_button_label(ctx, "button")
         discard nk_button_label(ctx, "button")
         nk_layout_row_dynamic(ctx, 30, 1)
         nk_label(ctx, "Dynamic array-based custom column layout with generated position and custom size:",
-            NK_TEXT_LEFT.cint)
+            NK_TEXT_LEFT)
         nk_layout_row(ctx, NK_DYNAMIC, 30, 3, ratioTwo.unsafeAddr)
         discard nk_button_label(ctx, "button")
         discard nk_button_label(ctx, "button")
         discard nk_button_label(ctx, "button")
         nk_layout_row_dynamic(ctx, 30, 1)
         nk_label(ctx, "Static array-based custom column layout with generated position and custom size:",
-            NK_TEXT_LEFT.cint)
+            NK_TEXT_LEFT)
         nk_layout_row(ctx, NK_STATIC, 30, 3, widthTwo.unsafeAddr)
         discard nk_button_label(ctx, "button")
         discard nk_button_label(ctx, "button")
         discard nk_button_label(ctx, "button")
         nk_layout_row_dynamic(ctx, 30, 1)
         nk_label(ctx, "Dynamic immediate mode custom column layout with generated position and custom size:",
-            NK_TEXT_LEFT.cint)
+            NK_TEXT_LEFT)
         nk_layout_row_begin(ctx, NK_DYNAMIC, 30, 3)
         nk_layout_row_push(ctx, 0.2)
         discard nk_button_label(ctx, "button")
@@ -707,7 +707,7 @@ proc overview*(ctx: PContext) =
         nk_layout_row_end(ctx)
         nk_layout_row_dynamic(ctx, 30, 1)
         nk_label(ctx, "Static immediate mode custom column layout with generated position and custom size:",
-            NK_TEXT_LEFT.cint)
+            NK_TEXT_LEFT)
         nk_layout_row_begin(ctx, NK_STATIC, 30, 3)
         nk_layout_row_push(ctx, 100)
         discard nk_button_label(ctx, "button")
@@ -718,7 +718,7 @@ proc overview*(ctx: PContext) =
         nk_layout_row_end(ctx)
         nk_layout_row_dynamic(ctx, 30, 1)
         nk_label(ctx, "Static free space with custom position and custom size:",
-            NK_TEXT_LEFT.cint)
+            NK_TEXT_LEFT)
         nk_layout_space_begin(ctx, NK_STATIC, 60, 4)
         layoutSpacePush(ctx, 100, 0, 100, 30)
         discard nk_button_label(ctx, "button")
@@ -730,7 +730,7 @@ proc overview*(ctx: PContext) =
         discard nk_button_label(ctx, "button")
         nk_layout_space_end(ctx)
         nk_layout_row_dynamic(ctx, 30, 1)
-        nk_label(ctx, "Row template:", NK_TEXT_LEFT.cint)
+        nk_label(ctx, "Row template:", NK_TEXT_LEFT)
         nk_layout_row_template_begin(ctx, 30)
         nk_layout_row_template_push_dynamic(ctx)
         nk_layout_row_template_push_variable(ctx, 80)
@@ -741,7 +741,7 @@ proc overview*(ctx: PContext) =
         discard nk_button_label(ctx, "button")
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Group", NK_MINIMIZED,
-          "overview731", 12, 731) == nk_true:
+          "overview731", 12, 731):
         var groupFlags: nk_flags = 0
         if groupBorder == nk_true.cint:
           groupFlags = groupFlags or nkWindowBorder
@@ -755,33 +755,33 @@ proc overview*(ctx: PContext) =
         discard nk_checkbox_label(ctx, "No Scrollbar", groupNoScrollbar)
         nk_layout_row_begin(ctx, NK_STATIC, 22, 3)
         nk_layout_row_push(ctx, 50)
-        nk_label(ctx, "size:", NK_TEXT_LEFT.cint)
+        nk_label(ctx, "size:", NK_TEXT_LEFT)
         nk_layout_row_push(ctx, 130)
         nk_property_int(ctx, "#Width:", 100, groupWidth, 500, 10, 1)
         nk_layout_row_push(ctx, 130)
         nk_property_int(ctx, "#Height:", 100, groupHeight, 500, 10, 1)
         nk_layout_row_end(ctx)
         nk_layout_row_static(ctx, groupHeight.cfloat, groupWidth, 2)
-        if nk_group_begin(ctx, "Group", groupFlags) == nk_true:
+        if nk_group_begin(ctx, "Group", groupFlags):
           nk_layout_row_static(ctx, 18, 100, 1)
           for i in 0 .. 15:
             discard nk_selectable_label(ctx, (if selected2[i] ==
                 nk_true: "Selected" else: "Unselected").cstring,
-                NK_TEXT_CENTERED.cint, selected2[i])
+                NK_TEXT_CENTERED, selected2[i])
           nk_group_end(ctx)
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Tree", NK_MINIMIZED,
-          "overview766", 12, 766) == nk_true:
+          "overview766", 12, 766):
         var sel = rootSelected
         if nk_tree_element_push_hashed(ctx, NK_TREE_NODE, "Root", NK_MINIMIZED,
-            sel, "overview771", 12, 771) == nk_true:
+            sel, "overview771", 12, 771):
           var nodeSelect = selected3[0]
           if sel != rootSelected:
             rootSelected = sel
             for i in 0 .. 7:
               selected3[i] = sel
           if nk_tree_element_push_hashed(ctx, NK_TREE_NODE, "Node",
-              NK_MINIMIZED, node_select, "overview778", 12, 778) == nk_true:
+              NK_MINIMIZED, node_select, "overview778", 12, 778):
             if nodeSelect != selected3[0]:
               selected3[0] = nodeSelect
               for i in 0 .. 3:
@@ -791,18 +791,18 @@ proc overview*(ctx: PContext) =
               discard nk_selectable_symbol_label(ctx, NK_SYMBOL_CIRCLE_SOLID, (
                   if selected[j] ==
                   nk_true: "Selected" else: "Unselected").cstring,
-                  NK_TEXT_RIGHT.cint, selected[j])
+                  NK_TEXT_RIGHT, selected[j])
             nk_tree_element_pop(ctx)
           nk_layout_row_static(ctx, 18, 100, 1)
           for i in 0 .. 7:
             discard nk_selectable_symbol_label(ctx, NK_SYMBOL_CIRCLE_SOLID, (
                 if selected3[i] ==
                 nk_true: "Selected" else: "Unselected").cstring,
-                NK_TEXT_RIGHT.cint, selected3[i])
+                NK_TEXT_RIGHT, selected3[i])
           nk_tree_element_pop(ctx)
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Notebook", NK_MINIMIZED,
-          "overview799", 12, 799) == nk_true:
+          "overview799", 12, 799):
         discard stylePushVec2(ctx, spacing, 0, 0)
         discard stylePushFloat(ctx, rounding, 0)
         nk_layout_row_begin(ctx, NK_STATIC, 20, 3);
@@ -823,7 +823,7 @@ proc overview*(ctx: PContext) =
         nk_style_pop_float(ctx)
         nk_style_pop_vec2(ctx)
         nk_layout_row_dynamic(ctx, 140, 1)
-        if nk_group_begin(ctx, "Notebook", nkWindowBorder) == nk_true:
+        if nk_group_begin(ctx, "Notebook", nkWindowBorder):
           var id: cfloat
           let step: cfloat = (2 * 3.141592654f) / 32
           case currentTab
@@ -870,15 +870,15 @@ proc overview*(ctx: PContext) =
           nk_group_end(ctx)
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Simple", NK_MINIMIZED,
-          "overview868", 12, 868) == nk_true:
+          "overview868", 12, 868):
         nk_layout_row_dynamic(ctx, 300, 2)
-        if nk_group_begin(ctx, "Group_Without_Border", 0) == nk_true:
+        if nk_group_begin(ctx, "Group_Without_Border", 0):
           nk_layout_row_static(ctx, 18, 150, 1)
           for i in 0 .. 63:
-            nk_labelf(ctx, NK_TEXT_LEFT.cint, "%s: scrollable region",
+            nk_labelf(ctx, NK_TEXT_LEFT, "%s: scrollable region",
                 fmt"{i:#X}".cstring)
           nk_group_end(ctx)
-        if nk_group_begin(ctx, "Group_With_Border", nkWindowBorder) == nk_true:
+        if nk_group_begin(ctx, "Group_With_Border", nkWindowBorder):
           nk_layout_row_dynamic(ctx, 25, 2)
           for i in 0 .. 63:
             let number = (((i mod 7) * 10)) + (64 + (i mod 2) * 2)
@@ -886,18 +886,18 @@ proc overview*(ctx: PContext) =
           nk_group_end(ctx)
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Complex", NK_MINIMIZED,
-          "overview884", 12, 884) == nk_true:
+          "overview884", 12, 884):
         nk_layout_space_begin(ctx, NK_STATIC, 500, 64)
         layoutSpacePush(ctx, 0, 0, 150, 500)
-        if nk_group_begin(ctx, "Group_left", nkWindowBorder) == nk_true:
+        if nk_group_begin(ctx, "Group_left", nkWindowBorder):
           nk_layout_row_static(ctx, 18, 100, 1)
           for i in 0 .. 31:
             discard nk_selectable_label(ctx, (if selected4[i] ==
                 nk_true: "Selected" else: "Unselected").cstring,
-                NK_TEXT_CENTERED.cint, selected4[i])
+                NK_TEXT_CENTERED, selected4[i])
           nk_group_end(ctx);
         layoutSpacePush(ctx, 160, 0, 150, 240)
-        if nk_group_begin(ctx, "Group_top", nkWindowBorder) == nk_true:
+        if nk_group_begin(ctx, "Group_top", nkWindowBorder):
           nk_layout_row_dynamic(ctx, 25, 1)
           discard nk_button_label(ctx, "#FFAA")
           discard nk_button_label(ctx, "#FFBB")
@@ -907,7 +907,7 @@ proc overview*(ctx: PContext) =
           discard nk_button_label(ctx, "#FFFF")
           nk_group_end(ctx)
         layoutSpacePush(ctx, 160, 250, 150, 250)
-        if nk_group_begin(ctx, "Group_buttom", nkWindowBorder) == nk_true:
+        if nk_group_begin(ctx, "Group_buttom", nkWindowBorder):
           nk_layout_row_dynamic(ctx, 25, 1)
           discard nk_button_label(ctx, "#FFAA")
           discard nk_button_label(ctx, "#FFBB")
@@ -917,51 +917,51 @@ proc overview*(ctx: PContext) =
           discard nk_button_label(ctx, "#FFFF")
           nk_group_end(ctx);
         layoutSpacePush(ctx, 320, 0, 150, 150)
-        if nk_group_begin(ctx, "Group_right_top", nkWindowBorder) == nk_true:
+        if nk_group_begin(ctx, "Group_right_top", nkWindowBorder):
           nk_layout_row_static(ctx, 18, 100, 1)
           for i in 0 .. 3:
             discard nk_selectable_label(ctx, (if selected[i] ==
                 nk_true: "Selected" else: "Unselected").cstring,
-                NK_TEXT_CENTERED.cint, selected[i])
+                NK_TEXT_CENTERED, selected[i])
           nk_group_end(ctx)
         layoutSpacePush(ctx, 320, 160, 150, 150)
-        if nk_group_begin(ctx, "Group_right_center", nkWindowBorder) == nk_true:
+        if nk_group_begin(ctx, "Group_right_center", nkWindowBorder):
           nk_layout_row_static(ctx, 18, 100, 1)
           for i in 0 .. 3:
             discard nk_selectable_label(ctx, (if selected[i] ==
                 nk_true: "Selected" else: "Unselected").cstring,
-                NK_TEXT_CENTERED.cint, selected[i])
+                NK_TEXT_CENTERED, selected[i])
           nk_group_end(ctx);
         layoutSpacePush(ctx, 320, 320, 150, 150)
-        if nk_group_begin(ctx, "Group_right_bottom", nkWindowBorder) == nk_true:
+        if nk_group_begin(ctx, "Group_right_bottom", nkWindowBorder):
           nk_layout_row_static(ctx, 18, 100, 1)
           for i in 0 .. 3:
             discard nk_selectable_label(ctx, (if selected[i] ==
                 nk_true: "Selected" else: "Unselected").cstring,
-                NK_TEXT_CENTERED.cint, selected[i])
+                NK_TEXT_CENTERED, selected[i])
           nk_group_end(ctx);
         nk_layout_space_end(ctx)
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Splitter", NK_MINIMIZED,
-          "overview942", 12, 942) == nk_true:
+          "overview942", 12, 942):
         nk_layout_row_static(ctx, 20, 320, 1)
         nk_label(ctx, "Use slider and spinner to change tile size",
-            NK_TEXT_LEFT.cint)
+            NK_TEXT_LEFT)
         nk_label(ctx, "Drag the space between tiles to change tile ratio",
-            NK_TEXT_LEFT.cint)
+            NK_TEXT_LEFT)
         if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Vertical", NK_MINIMIZED,
-            "overview948", 12, 948) == nk_true:
+            "overview948", 12, 948):
           var rowLayout: array[5, cfloat] = [a, 8, b, 8, c]
           nk_layout_row_static(ctx, 30, 100, 2)
-          nk_label(ctx, "left:", NK_TEXT_LEFT.cint)
+          nk_label(ctx, "left:", NK_TEXT_LEFT)
           discard nk_slider_float(ctx, 10.0, a, 200.0, 10.0)
-          nk_label(ctx, "middle:", NK_TEXT_LEFT.cint)
+          nk_label(ctx, "middle:", NK_TEXT_LEFT)
           discard nk_slider_float(ctx, 10.0, b, 200.0, 10.0)
-          nk_label(ctx, "right:", NK_TEXT_LEFT.cint)
+          nk_label(ctx, "right:", NK_TEXT_LEFT)
           discard nk_slider_float(ctx, 10.0, c, 200.0, 10.0)
           nk_layout_row(ctx, NK_STATIC, 200, 5, rowLayout.unsafeAddr)
           if nk_group_begin(ctx, "left", nkWindowNoScrollbar or
-              nkWindowBorder or nkWindowNoScrollbar) == nk_true:
+              nkWindowBorder or nkWindowNoScrollbar):
             nk_layout_row_dynamic(ctx, 25, 1)
             discard nk_button_label(ctx, "#FFAA")
             discard nk_button_label(ctx, "#FFBB")
@@ -978,7 +978,7 @@ proc overview*(ctx: PContext) =
             a = rowLayout[0] + getMouseDelta(ctx).x
             b = rowLayout[2] - getMouseDelta(ctx).x
           if nk_group_begin(ctx, "center", nkWindowBorder or
-              nkWindowNoScrollbar) == nk_true:
+              nkWindowNoScrollbar):
             nk_layout_row_dynamic(ctx, 25, 1)
             discard nk_button_label(ctx, "#FFAA")
             discard nk_button_label(ctx, "#FFBB")
@@ -995,7 +995,7 @@ proc overview*(ctx: PContext) =
             b = rowLayout[2] + getMouseDelta(ctx).x
             c = rowLayout[4] - getMouseDelta(ctx).x
           if nk_group_begin(ctx, "right", nkWindowBorder or
-              nkWindowNoScrollbar) == nk_true:
+              nkWindowNoScrollbar):
             nk_layout_row_dynamic(ctx, 25, 1)
             discard nk_button_label(ctx, "#FFAA")
             discard nk_button_label(ctx, "#FFBB")
@@ -1006,17 +1006,17 @@ proc overview*(ctx: PContext) =
             nk_group_end(ctx)
           nk_tree_pop(ctx)
         if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Horizontal", NK_MINIMIZED,
-            "overview1006", 13, 106) == nk_true:
+            "overview1006", 13, 106):
           nk_layout_row_static(ctx, 30, 100, 2)
-          nk_label(ctx, "top:", NK_TEXT_LEFT.cint)
+          nk_label(ctx, "top:", NK_TEXT_LEFT)
           discard nk_slider_float(ctx, 10.0, a, 200.0, 10.0)
-          nk_label(ctx, "middle:", NK_TEXT_LEFT.cint)
+          nk_label(ctx, "middle:", NK_TEXT_LEFT)
           discard nk_slider_float(ctx, 10.0, b, 200.0, 10.0)
-          nk_label(ctx, "bottom:", NK_TEXT_LEFT.cint)
+          nk_label(ctx, "bottom:", NK_TEXT_LEFT)
           discard nk_slider_float(ctx, 10.0, c, 200.0, 10.0)
           nk_layout_row_dynamic(ctx, a, 1)
           if nk_group_begin(ctx, "top", nkWindowBorder or
-              nkWindowNoScrollbar) == nk_true:
+              nkWindowNoScrollbar):
             nk_layout_row_dynamic(ctx, 25, 3)
             discard nk_button_label(ctx, "#FFAA")
             discard nk_button_label(ctx, "#FFBB")
@@ -1035,7 +1035,7 @@ proc overview*(ctx: PContext) =
             b = b - getMouseDelta(ctx).y
           nk_layout_row_dynamic(ctx, b, 1)
           if nk_group_begin(ctx, "middle", nkWindowBorder or
-              nkWindowNoScrollbar) == nk_true:
+              nkWindowNoScrollbar):
             nk_layout_row_dynamic(ctx, 25, 3)
             discard nk_button_label(ctx, "#FFAA")
             discard nk_button_label(ctx, "#FFBB")
@@ -1053,7 +1053,7 @@ proc overview*(ctx: PContext) =
             c = c - getMouseDelta(ctx).y
           nk_layout_row_dynamic(ctx, c, 1)
           if nk_group_begin(ctx, "bottom", nkWindowBorder or
-              nkWindowNoScrollbar) == nk_true:
+              nkWindowNoScrollbar):
             nk_layout_row_dynamic(ctx, 25, 3)
             discard nk_button_label(ctx, "#FFAA")
             discard nk_button_label(ctx, "#FFBB")
