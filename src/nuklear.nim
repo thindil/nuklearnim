@@ -409,13 +409,21 @@ type
   WindowStyleTypes* = enum
     spacing
 
+# Converters
+converter toBool*(x: nk_bool): bool =
+  x == nk_true
+converter toNkFlags*(x: nk_text_alignment): nk_flags =
+  x.ord.cint
+converter toNkFlags*(x: nk_edit_types): nk_flags =
+  x.ord.cint
+
 # General
 proc createWin*(ctx: PContext; name: cstring; x, y, w, h: cfloat;
     flags: nk_flags): bool =
-  return nk_begin(ctx, name, new_nk_rect(x, y, w, h), flags) == nk_true
+  return nk_begin(ctx, name, new_nk_rect(x, y, w, h), flags)
 proc createPopup*(ctx: PContext; pType: nk_popup_type; title: cstring;
     flags: nk_flags; x, y, w, h: cfloat): bool =
-  return nk_popup_begin(ctx, pType, title, flags, new_nk_rect(x, y, w, h)) == nk_true
+  return nk_popup_begin(ctx, pType, title, flags, new_nk_rect(x, y, w, h))
 proc getWidgetBounds*(ctx: PContext): NimRect =
   let rect = nk_widget_bounds(ctx)
   return NimRect(x: rect.x, y: rect.y, w: rect.w, h: rect.h)
@@ -425,11 +433,11 @@ proc getTextWidth*(ctx: PContext; text: cstring): cfloat =
 
 # Labels
 proc colorLabel*(ctx: PContext; str: cstring; align: nk_flags; r, g, b: cint) =
-  nk_label_colored(ctx, str, align.cint, nk_rgb(r, g, b))
+  nk_label_colored(ctx, str, align, nk_rgb(r, g, b))
 
 # Buttons
 proc colorButton*(ctx: PContext; r, g, b: cint): bool =
-  return nk_button_color(ctx, nk_rgb(r, g, b)) == nk_true
+  return nk_button_color(ctx, nk_rgb(r, g, b))
 
 # Layouts
 proc layoutSpacePush*(ctx: PContext; x, y, w, h: cfloat) =
@@ -438,7 +446,7 @@ proc layoutSpacePush*(ctx: PContext; x, y, w, h: cfloat) =
 # Menu
 proc createMenu*(ctx: PContext; text: cstring; align: nk_flags; x,
     y: cfloat): bool =
-  return nk_menu_begin_label(ctx, text, align.cint, new_nk_vec2(x, y)) == nk_true
+  return nk_menu_begin_label(ctx, text, align, new_nk_vec2(x, y))
 
 # Style
 proc headerAlign*(ctx: PContext; value: nk_style_header_align) =
@@ -479,12 +487,12 @@ proc stylePushVec2*(ctx: PContext; field: WindowStyleTypes; x,
     y: cfloat): bool =
   if field == spacing:
     return nk_style_push_vec2(ctx, ctx.style.window.spacing, new_nk_vec2(x,
-        y)) == nk_true
+        y))
 proc stylePushFloat*(ctx: PContext; field: ButtonStyleTypes;
     value: cfloat): bool =
   case field
   of rounding:
-    return nk_style_push_float(ctx, ctx.style.button.rounding, value) == nk_true
+    return nk_style_push_float(ctx, ctx.style.button.rounding, value)
   else:
     return false
 proc styleFromTable*(ctx: PContext; table: openArray[NimColor]) =
@@ -500,12 +508,12 @@ proc createCombo*(ctx: PContext; items: openArray[cstring]; selected,
       new_nk_vec2(x, y))
 proc createColorCombo*(ctx: PContext; color: NimColor; x, y: cfloat): bool =
   return nk_combo_begin_color(ctx, nk_rgb(color.r, color.g, color.b),
-      new_nk_vec2(x, y)) == nk_true
+      new_nk_vec2(x, y))
 proc createColorCombo*(ctx: PContext; color: NimColorF; x, y: cfloat): bool =
   return nk_combo_begin_color(ctx, nk_rgb_cf(nk_colorf(r: color.r, g: color.g,
-      b: color.b, a: color.a)), new_nk_vec2(x, y)) == nk_true
+      b: color.b, a: color.a)), new_nk_vec2(x, y))
 proc createLabelCombo*(ctx: PContext; selected: cstring; x, y: cfloat): bool =
-  return nk_combo_begin_label(ctx, selected, new_nk_vec2(x, y)) == nk_true
+  return nk_combo_begin_label(ctx, selected, new_nk_vec2(x, y))
 
 # Colors
 proc colorfToHsva*(hsva: var array[4, cfloat]; color: NimColorF) =
@@ -520,7 +528,7 @@ proc createColorChart*(ctx: PContext; ctype: nk_chart_type; color,
     higlight: NimColor; count: cint; min_value, max_value: cfloat): bool =
   return nk_chart_begin_colored(ctx, ctype, nk_rgb(color.r, color.g, color.b),
       nk_rgb(higlight.r, higlight.g, higlight.b), count, min_value,
-    max_value) == nk_true
+    max_value)
 proc addColorChartSlot*(ctx: PContext; ctype: nk_chart_type; color,
     higlight: NimColor; count: cint; min_value, max_value: cfloat) =
   nk_chart_add_slot_colored(ctx, ctype, nk_rgb(color.r, color.g, color.b),
@@ -531,17 +539,17 @@ proc createContextual*(ctx: PContext; flags: nk_flags; x, y: cfloat;
     trigger_bounds: NimRect): bool =
   return nk_contextual_begin(ctx, flags, new_nk_vec2(x, y), new_nk_rect(
       trigger_bounds.x, trigger_bounds.y, trigger_bounds.w,
-      trigger_bounds.h)) == nk_true
+      trigger_bounds.h))
 
 # Input
 proc isMouseHovering*(ctx: PContext; x, y, w, h: cfloat): bool =
   return nk_input_is_mouse_hovering_rect(ctx.input.unsafeAddr, new_nk_rect(x, y,
-      w, h)) == nk_true
+      w, h))
 proc isMousePrevHovering*(ctx: PContext; x, y, w, h: cfloat): bool =
   return nk_input_is_mouse_prev_hovering_rect(ctx.input.unsafeAddr, new_nk_rect(
-      x, y, w, h)) == nk_true
+      x, y, w, h))
 proc isMouseDown*(ctx: PContext; id: nk_buttons): bool =
-  return nk_input_is_mouse_down(ctx.input.unsafeAddr, id) == nk_true
+  return nk_input_is_mouse_down(ctx.input.unsafeAddr, id)
 proc getMouseDelta*(ctx: PContext): NimVec2 =
   return NimVec2(x: ctx.input.mouse.delta.x, y: ctx.input.mouse.delta.y)
 

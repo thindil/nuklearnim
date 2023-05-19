@@ -62,12 +62,12 @@ proc main() =
         nkWindowBorder, nkWindowMoveable, nkWindowScalable, nkWindowCloseable,
         nkWindowMinimizable, nkWindowTitle)):
       nk_layout_row_static(ctx, 30.0, 80, 1)
-      if nk_button_label(ctx, "button") == nk_true:
+      if nk_button_label(ctx, "button"):
         echo "button pressed"
       nk_layout_row_dynamic(ctx, 30.0, 2)
-      if nk_option_label(ctx, "easy", (if op == easy: 1 else: 0)) == nk_true:
+      if nk_option_label(ctx, "easy", (if op == easy: 1 else: 0)):
         op = easy
-      if nk_option_label(ctx, "hard", (if op == hard: 1 else: 0)) == nk_true:
+      if nk_option_label(ctx, "hard", (if op == hard: 1 else: 0)):
         op = hard
       nk_layout_row_dynamic(ctx, 25.0, 1)
       nk_property_int(ctx, "Compression:", 0, property, 100, 10, 1.0)
