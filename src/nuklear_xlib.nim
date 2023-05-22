@@ -132,10 +132,19 @@ proc nk_xlib_shutdown() {.importc, nodecl.}
 
 import std/bitops
 
-var xw: XWindow
+var xw: XWindow ## The main X window of the program
 
 proc nuklearInit*(windowWidth, windowHeight: cint; name,
     font: cstring = "fixed"): PContext =
+  ## Initialize Nuklear library, create the main program's window with the
+  ## selected parameters.
+  ##
+  ## * windowWidth  - the default main window width
+  ## * windowHeight - the default main window height
+  ## * name         - the title of the main window
+  ## * font         - the name of the font used in UI. Default value is "fixed".
+  ##
+  ## Returns pointer to the Nuklear context.
   xw.dpy = XOpenDisplay("")
   if xw.dpy == nil:
     quit "Could not open a display; perhaps $DISPLAY is not set?"
@@ -162,6 +171,11 @@ proc nuklearInit*(windowWidth, windowHeight: cint; name,
   return nk_xlib_init(xw.font, xw.dpy, xw.screen, xw.win, xw.width, xw.height)
 
 proc nuklearInput*(ctx: PContext): bool =
+  ## Handle the user input
+  ##
+  ## * ctx - the pointer to the Nuklear context
+  ##
+  ## Returns true if user requested to close the window, otherwise false
   nk_input_begin(ctx)
   while XPending(xw.dpy) > 0:
     var evt: XEvent
@@ -174,14 +188,28 @@ proc nuklearInput*(ctx: PContext): bool =
   nk_input_end(ctx)
 
 proc nuklearDraw*() =
+  ## Draw the main window content
   XClearWindow(xw.dpy, xw.win)
   nk_xlib_render(xw.win, nk_rgb(30, 30, 30))
   XFlush(xw.dpy)
 
 proc nuklearClose*() =
+  ## Release all resources related to Xlib and Nuklear
   nk_xfont_del(xw.dpy, xw.font)
   nk_xlib_shutdown()
   XUnmapWindow(xw.dpy, xw.win)
   XFreeColormap(xw.dpy, xw.cmap)
   XDestroyWindow(xw.dpy, xw.win)
   XCloseDisplay(xw.dpy)
+
+proc windowWidth*(): cfloat =
+  ## Get the current width of the main window
+  discard XGetWindowAttributes(xw.dpy, xw.win, xw.attr.addr)
+  xw.width = xw.attr.width
+  return xw.width.cfloat
+
+proc windowHeight*(): cfloat =
+  ## Get the current height of the main window
+  discard XGetWindowAttributes(xw.dpy, xw.win, xw.attr.addr)
+  xw.height = xw.attr.height
+  return xw.height.cfloat
