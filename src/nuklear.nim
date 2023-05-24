@@ -497,14 +497,49 @@ converter toCint*(x: bool): cint =
 # -------
 proc createWin*(ctx: PContext; name: cstring; x, y, w, h: cfloat;
     flags: nk_flags): bool =
+  ## Create a new Nuklear window/widget
+  ##
+  ## * ctx   - the Nuklear context
+  ## * name  - the window title
+  ## * x     - the X position of the top left corner of the window
+  ## * y     - the Y position of the top left corner of the window
+  ## * w     - the width of the window
+  ## * h     - the height of the window
+  ## * flags - the flags for the window
+  ##
+  ## Returns true if window was succesfully created otherwise false.
   return nk_begin(ctx, name, new_nk_rect(x, y, w, h), flags)
 proc createPopup*(ctx: PContext; pType: nk_popup_type; title: cstring;
     flags: nk_flags; x, y, w, h: cfloat): bool =
+  ## Create a new Nuklear popup window
+  ##
+  ## * ctx   - the Nuklear context
+  ## * pType - the type of the popup
+  ## * title - the title of the popup
+  ## * flags - the flags for the popup
+  ## * x     - the X position of the top left corner of the popup
+  ## * y     - the Y position of the top left corner of the popup
+  ## * w     - the width of the popup
+  ## * h     - the height of the popup
+  ##
+  ## Returns true if the popup was successfully created, otherwise false.
   return nk_popup_begin(ctx, pType, title, flags, new_nk_rect(x, y, w, h))
 proc getWidgetBounds*(ctx: PContext): NimRect =
+  ## Get the rectable with the current Nuklear widget coordinates
+  ##
+  ## * ctx - the Nuklear context
+  ##
+  ## Returns a rectangle with the current Nuklear widget coordinates
+  ## converted to NimRect
   let rect = nk_widget_bounds(ctx)
   return NimRect(x: rect.x, y: rect.y, w: rect.w, h: rect.h)
 proc getTextWidth*(ctx: PContext; text: cstring): cfloat =
+  ## Get the width in pixels of the selected text in the current font
+  ##
+  ## * ctx  - the Nuklear context
+  ## * text - the text which width will be count
+  ##
+  ## Returns width in pixels of the text paramter
   return ctx.style.font.width(ctx.style.font.userdata, ctx.style.font.height,
       text, text.len.cint)
 
@@ -512,18 +547,41 @@ proc getTextWidth*(ctx: PContext; text: cstring): cfloat =
 # Labels
 # ------
 proc colorLabel*(ctx: PContext; str: cstring; align: nk_flags; r, g, b: cint) =
+  ## Draw a text with the selected color
+  ##
+  ## * ctx   - the Nuklear context
+  ## * str   - the text to display
+  ## * align - the text aligmnent flags
+  ## * r     - the red value for the text color in RGB
+  ## * g     - the green value for the text color in RGB
+  ## * b     - the blue value for the text color in RGB
   nk_label_colored(ctx, str, align, nk_rgb(r, g, b))
 
 # -------
 # Buttons
 # -------
 proc colorButton*(ctx: PContext; r, g, b: cint): bool =
+  ## Draw a button with the selected color background
+  ##
+  ## * ctx - the Nuklear context
+  ## * r   - the red value for the button color in RGB
+  ## * g   - the green value for the button color in RGB
+  ## * b   - the blue value for the button color in RGB
+  ##
+  ## Returns true if button was pressed
   return nk_button_color(ctx, nk_rgb(r, g, b))
 
 # -------
 # Layouts
 # -------
 proc layoutSpacePush*(ctx: PContext; x, y, w, h: cfloat) =
+  ## Push the next widget's position and size
+  ##
+  ## * ctx - the Nuklear context
+  ## * x   - the amount of pixels or ratio to push the position in X axis
+  ## * y   - the amount of pixels or ratio to push the position in Y axis
+  ## * w   - the amount of pixels or ratio to push the width
+  ## * h   - the amount of pixels or ratio to push the height
   nk_layout_space_push(ctx, new_nk_rect(x, y, w, h))
 
 # ----
@@ -531,19 +589,45 @@ proc layoutSpacePush*(ctx: PContext; x, y, w, h: cfloat) =
 # ----
 proc createMenu*(ctx: PContext; text: cstring; align: nk_flags; x,
     y: cfloat): bool =
+  ## Create a Nuklear menu
+  ##
+  ## * ctx   - the Nuklear context
+  ## * text  - the label for the menu
+  ## * align - the menu alignment
+  ## * x     - the X position of the top left corner of the menu
+  ## * y     - the Y position of the top left corner of the menu
+  ##
+  ## Returns true if menu were created, otherwise false
   return nk_menu_begin_label(ctx, text, align, new_nk_vec2(x, y))
 
 # -----
 # Style
 # -----
 proc headerAlign*(ctx: PContext; value: nk_style_header_align) =
+  ## Set the Nuklear windows header alignment
+  ##
+  ## * ctx   - the Nuklear context
+  ## * value - the new value for the alignment
   ctx.style.window.header.align = value
-var buttonStyle: nk_style_button
+var buttonStyle: nk_style_button ## Used to store the Nuklear buttons style
 proc saveButtonStyle*(ctx: PContext) =
+  ## Save the Nuklear buttons style to variable, so it can be restored later
+  ##
+  ## * ctx - the Nuklear context
   buttonStyle = ctx.style.button
 proc restoreButtonStyle*(ctx: PContext) =
+  ## Restore previously save to the variable Nuklear buttons style
+  ##
+  ## * ctx - the Nuklear context
   ctx.style.button = buttonStyle
 proc setButtonStyle*(ctx: PContext; field: ButtonStyleTypes; r, g, b: cint) =
+  ## Set the color for the selcted field of the Nuklear buttons style
+  ##
+  ## * ctx   - the Nuklear context
+  ## * field - the style's field which value will be changed
+  ## * r     - the red value for the style color in RGB
+  ## * g     - the green value for the style color in RGB
+  ## * b     - the blue value for the style color in RGB
   case field
   of normal:
     ctx.style.button.normal = nk_style_item_color(nk_rgb(r, g, b))
@@ -564,25 +648,57 @@ proc setButtonStyle*(ctx: PContext; field: ButtonStyleTypes; r, g, b: cint) =
   else:
     discard
 proc setButtonStyle2*(ctx: PContext; source, destination: ButtonStyleTypes) =
+  ## Copy one field of Nuklear buttons style to another
+  ##
+  ## * ctx         - the Nuklear context
+  ## * source      - the field which value will be copied
+  ## * destination - the field to which the source value will be copied
   if source == active:
     if destination == normal:
       ctx.style.button.normal = ctx.style.button.active
 proc getButtonStyle*(ctx: PContext; field: ButtonStyleTypes): NimVec2 =
+  ## Get the value of the selected field of Nuklear buttons style
+  ##
+  ## * ctx   - the Nuklear context
+  ## * field - the field which value will be taken
+  ##
+  ## Returns vector with the value of the selected field
   if field == padding:
     return NimVec2(x: ctx.style.button.padding.x, y: ctx.style.button.padding.y)
 proc stylePushVec2*(ctx: PContext; field: WindowStyleTypes; x,
     y: cfloat): bool =
+  ## Push the vector value for the selected Nuklear window style on a
+  ## temporary stack
+  ##
+  ## * ctx   - the Nuklear context
+  ## * field - the Nuklear windows style field which will be modified
+  ## * x     - the X value of the vector to push
+  ## * y     - the Y value of the vector to push
+  ##
+  ## Returns true if value was succesfully pushed, otherwise false
   if field == spacing:
     return nk_style_push_vec2(ctx, ctx.style.window.spacing, new_nk_vec2(x,
         y))
 proc stylePushFloat*(ctx: PContext; field: ButtonStyleTypes;
     value: cfloat): bool =
+  ## Push the float value for the selected Nuklear buttons style on a
+  ## temporary stack
+  ##
+  ## * ctx   - the Nuklear context
+  ## * field - the Nuklear buttons style field which will be modified
+  ## * value - the float value to push
+  ##
+  ## Returns true if value was succesfully pushed, otherwise false
   case field
   of rounding:
     return nk_style_push_float(ctx, ctx.style.button.rounding, value)
   else:
     return false
 proc styleFromTable*(ctx: PContext; table: openArray[NimColor]) =
+  ## Set the Nuklear style colors from the table
+  ##
+  ## * ctx   - the Nuklear context
+  ## * table - the colors table which will be set
   var newTable: array[NK_COLOR_COUNT.ord, nk_color]
   for index, color in table.pairs:
     newTable[index] = nk_rgba(color.r, color.g, color.b, color.a)
@@ -593,24 +709,70 @@ proc styleFromTable*(ctx: PContext; table: openArray[NimColor]) =
 # ------
 proc createCombo*(ctx: PContext; items: openArray[cstring]; selected,
     item_height: cint; x, y: cfloat): cint =
+  ## Create a Nuklear combo widget
+  ##
+  ## * ctx         - the Nuklear context
+  ## * items       - the list of values for the combo
+  ## * selected    - the index of the selected value on the combo's list
+  ## * item_height - the height in pixels for the values in the combo's list
+  ## * x           - the width of the combo
+  ## * y           - the height of the combo's values list
+  ##
+  ## Returns the index of the currently selected valu on the combo's list
   return nk_combo(ctx, items.unsafeAddr, items.len.cint, selected, item_height,
       new_nk_vec2(x, y))
 proc createColorCombo*(ctx: PContext; color: NimColor; x, y: cfloat): bool =
+  ## Create a Nuklear combo widget which display color as the value
+  ##
+  ## * ctx   - the Nuklear context
+  ## * color - the color displayed as the value of the combo
+  ## * x     - the width of the combo
+  ## * y     - the height of the combo's values list
+  ##
+  ## Returns true if combo was successfully created, otherwise false
   return nk_combo_begin_color(ctx, nk_rgb(color.r, color.g, color.b),
       new_nk_vec2(x, y))
 proc createColorCombo*(ctx: PContext; color: NimColorF; x, y: cfloat): bool =
+  ## Create a Nuklear combo widget which display color with float values as
+  ## the value
+  ##
+  ## * ctx   - the Nuklear context
+  ## * color - the color with float values displayed as the value of the combo
+  ## * x     - the width of the combo
+  ## * y     - the height of the combo's values list
+  ##
+  ## Returns true if combo was successfully created, otherwise false
   return nk_combo_begin_color(ctx, nk_rgb_cf(nk_colorf(r: color.r, g: color.g,
       b: color.b, a: color.a)), new_nk_vec2(x, y))
 proc createLabelCombo*(ctx: PContext; selected: cstring; x, y: cfloat): bool =
+  ## Create a Nuklear combo widget which display the custom text as the value
+  ##
+  ## * ctx      - the Nuklear context
+  ## * selected - the text to display as the value of the combo
+  ## * x        - the width of the combo
+  ## * y        - the height of the combo's values list
+  ##
+  ## Returns true if combo was successfully created, otherwise false
   return nk_combo_begin_label(ctx, selected, new_nk_vec2(x, y))
 
 # ------
 # Colors
 # ------
 proc colorfToHsva*(hsva: var array[4, cfloat]; color: NimColorF) =
+  ## Convert Nim float color object to HSVA values
+  ##
+  ## * hsva  - the array of 4 values for HSVA color
+  ## * color - the Nim color to convert
+  ##
+  ## Returns converted color as hsva argument
   nk_colorf_hsva_fv(hsva.unsafeAddr, nk_colorf(r: color.r, g: color.g,
       b: color.b, a: color.a))
 proc hsvaToColorf*(hsva: array[4, cfloat]): NimColorF =
+  ## Convert HSVA values to Nim color with float values
+  ##
+  ## * hsva - the array with HSVA values to convert
+  ##
+  ## Returns converted hsva parameter to Nim color with float values
   let newColor = nk_hsva_colorf(hsva[0], hsva[1], hsva[2], hsva[3])
   result = NimColorF(r: newColor.r, g: newColor.g, b: newColor.b, a: newColor.a)
 
@@ -619,11 +781,33 @@ proc hsvaToColorf*(hsva: array[4, cfloat]): NimColorF =
 # ------
 proc createColorChart*(ctx: PContext; ctype: nk_chart_type; color,
     higlight: NimColor; count: cint; min_value, max_value: cfloat): bool =
+  ## Create a colored chart
+  ##
+  ## * ctx       - the Nuklear context
+  ## * ctype     - the type of the chart
+  ## * color     - the color used for drawing the chart
+  ## * highligh  - the color used for highlighting point when mouse hovering
+  ##               over it
+  ## * count     - the amount of values on the chart
+  ## * min_value - the minimal value of the chart
+  ## * max_value - the maximum value of the chart
+  ##
+  ## Returns true if the chart was succesfully created otherwise false
   return nk_chart_begin_colored(ctx, ctype, nk_rgb(color.r, color.g, color.b),
       nk_rgb(higlight.r, higlight.g, higlight.b), count, min_value,
     max_value)
 proc addColorChartSlot*(ctx: PContext; ctype: nk_chart_type; color,
     higlight: NimColor; count: cint; min_value, max_value: cfloat) =
+  ## Add another chart to the existing one
+  ##
+  ## * ctx       - the Nuklear context
+  ## * ctype     - the type of the chart
+  ## * color     - the color used for drawing the chart
+  ## * highligh  - the color used for highlighting point when mouse hovering
+  ##               over it
+  ## * count     - the amount of values on the chart
+  ## * min_value - the minimal value of the chart
+  ## * max_value - the maximum value of the chart
   nk_chart_add_slot_colored(ctx, ctype, nk_rgb(color.r, color.g, color.b),
       nk_rgb(higlight.r, higlight.g, higlight.b), count, min_value, max_value)
 
@@ -632,6 +816,17 @@ proc addColorChartSlot*(ctx: PContext; ctype: nk_chart_type; color,
 # ----------
 proc createContextual*(ctx: PContext; flags: nk_flags; x, y: cfloat;
     trigger_bounds: NimRect): bool =
+  ## Create a contextual menu
+  ##
+  ## * ctx            - the Nuklear context
+  ## * flags          - the flags for the menu
+  ## * x              - the width of the menu
+  ## * y              - the height of the menu
+  ## * trigger_bounds - the rectange of coordinates in the window where clicking
+  ##                    cause the menu to appear
+  ##
+  ## Return true if the contextual menu was created successfully, otherwise
+  ## false
   return nk_contextual_begin(ctx, flags, new_nk_vec2(x, y), new_nk_rect(
       trigger_bounds.x, trigger_bounds.y, trigger_bounds.w,
       trigger_bounds.h))
@@ -640,14 +835,43 @@ proc createContextual*(ctx: PContext; flags: nk_flags; x, y: cfloat;
 # Input
 # -----
 proc isMouseHovering*(ctx: PContext; x, y, w, h: cfloat): bool =
+  ## Check if mouse is hovering over the selected rectangle
+  ##
+  ## * ctx - the Nuklear context
+  ## * x   - the X coordinate of top left corner of the rectangle
+  ## * y   - the Y coordinate of top left corner of the rectangle
+  ## * w   - the width of the rectangle in pixels
+  ## * h   - the height of the rectangle in pixels
+  ##
+  ## Returns true if the mouse is hovering over the rectangle, otherwise false
   return nk_input_is_mouse_hovering_rect(ctx.input.unsafeAddr, new_nk_rect(x, y,
       w, h))
 proc isMousePrevHovering*(ctx: PContext; x, y, w, h: cfloat): bool =
+  ## Check if the mouse was previously hovering over the selected rectangle
+  ##
+  ## * ctx - the Nuklear context
+  ## * x   - the X coordinate of top left corner of the rectangle
+  ## * y   - the Y coordinate of top left corner of the rectangle
+  ## * w   - the width of the rectangle in pixels
+  ## * h   - the height of the rectangle in pixels
+  ##
+  ## Returns true if the mouse was hovering over the rectangle, otherwise false
   return nk_input_is_mouse_prev_hovering_rect(ctx.input.unsafeAddr, new_nk_rect(
       x, y, w, h))
 proc isMouseDown*(ctx: PContext; id: nk_buttons): bool =
+  ## Check if mouse is pressed
+  ##
+  ## * ctx - the Nuklear context
+  ## * id  - the mouse button which is pressed
+  ##
+  ## Returns true if the selected mouse button is pressed, otherwise false
   return nk_input_is_mouse_down(ctx.input.unsafeAddr, id)
 proc getMouseDelta*(ctx: PContext): NimVec2 =
+  ## Get the mouse vector between last check and current position of the mouse
+  ##
+  ## * ctx - the Nuklear context
+  ##
+  ## Returns vector with information about the mouse movement delta
   return NimVec2(x: ctx.input.mouse.delta.x, y: ctx.input.mouse.delta.y)
 
 # -------
@@ -655,6 +879,13 @@ proc getMouseDelta*(ctx: PContext): NimVec2 =
 # -------
 proc colorPicker*(ctx: PContext; color: NimColorF;
     format: nk_color_format): NimColorF =
+  ## Create the color picker widget
+  ##
+  ## * ctx    - the Nuklear context
+  ## * color  - the starting color for the widget
+  ## * format - the color format for the widget
+  ##
+  ## Returns Nim color selected by the user in the widget
   let newColor = nk_color_picker(ctx, nk_colorf(r: color.r, g: color.g,
       b: color.b, a: color.a), format)
   result = NimColorF(r: newColor.r, g: newColor.g, b: newColor.b, a: newColor.a)

@@ -202,13 +202,13 @@ proc nuklearClose*() =
   XDestroyWindow(xw.dpy, xw.win)
   XCloseDisplay(xw.dpy)
 
-proc windowWidth*(): cfloat =
+proc getWindowWidth*(): cfloat =
   ## Get the current width of the main window
   discard XGetWindowAttributes(xw.dpy, xw.win, xw.attr.addr)
   xw.width = xw.attr.width
   return xw.width.cfloat
 
-proc windowHeight*(): cfloat =
+proc getWindowHeight*(): cfloat =
   ## Get the current height of the main window
   discard XGetWindowAttributes(xw.dpy, xw.win, xw.attr.addr)
   xw.height = xw.attr.height
