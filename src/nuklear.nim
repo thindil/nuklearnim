@@ -192,6 +192,11 @@ type
   nk_font_config* {.importc: "struct nk_font_config", nodecl.} = object
   PContext* = ptr nk_context
 
+# ---------------------
+# Procedures parameters
+# ---------------------
+using ctx: PContext
+
 # -------------------
 # Creating structures
 # -------------------
@@ -202,8 +207,8 @@ proc new_nk_font_config*(pixel_height: cfloat): nk_font_config {.importc: "nk_fo
 # -----
 # Input
 # -----
-proc nk_input_begin*(ctx: PContext) {.importc, nodecl.}
-proc nk_input_end*(ctx: PContext) {.importc, nodecl.}
+proc nk_input_begin*(ctx) {.importc, nodecl.}
+proc nk_input_end*(ctx) {.importc, nodecl.}
 proc nk_input_is_mouse_hovering_rect*(i: ptr nk_input;
     rect: nk_rect): nk_bool {.importc, nodecl.}
 proc nk_input_is_mouse_prev_hovering_rect*(i: ptr nk_input;
@@ -214,158 +219,158 @@ proc nk_input_is_mouse_down*(i: ptr nk_input;
 # -------
 # General
 # -------
-proc nk_begin*(ctx: PContext; title: cstring; bounds: nk_rect;
+proc nk_begin*(ctx; title: cstring; bounds: nk_rect;
     flags: nk_flags): nk_bool {.importc, nodecl.}
-proc nk_end*(ctx: PContext) {.importc, cdecl.}
-proc nk_window_is_hidden*(ctx: PContext; name: cstring): cint {.importc, cdecl.}
-proc nk_spacing*(ctx: PContext; cols: cint) {.importc, cdecl.}
-proc nk_widget_bounds*(ctx: PContext): nk_rect {.importc, nodecl.}
+proc nk_end*(ctx) {.importc, cdecl.}
+proc nk_window_is_hidden*(ctx; name: cstring): cint {.importc, cdecl.}
+proc nk_spacing*(ctx; cols: cint) {.importc, cdecl.}
+proc nk_widget_bounds*(ctx): nk_rect {.importc, nodecl.}
 
 # ----
 # Text
 # ----
-proc nk_label*(ctx: PContext; str: cstring;
+proc nk_label*(ctx; str: cstring;
     alignment: nk_flags) {.importc, cdecl.}
-proc nk_label_colored*(ctx: PContext; str: cstring; align: nk_flags;
+proc nk_label_colored*(ctx; str: cstring; align: nk_flags;
     color: nk_color) {.importc, nodecl.}
-proc nk_text*(ctx: PContext; str: cstring; len: cint;
+proc nk_text*(ctx; str: cstring; len: cint;
     alignment: nk_flags) {.importc, cdecl.}
-proc nk_label_wrap*(ctx: PContext; str: cstring) {.importc, cdecl.}
-proc nk_labelf*(ctx: PContext; flags: nk_flags; fmt: cstring) {.importc,
+proc nk_label_wrap*(ctx; str: cstring) {.importc, cdecl.}
+proc nk_labelf*(ctx; flags: nk_flags; fmt: cstring) {.importc,
     varargs, cdecl.}
 
 # -------
 # Layouts
 # -------
-proc nk_layout_row_static*(ctx: PContext; height: cfloat; item_width,
+proc nk_layout_row_static*(ctx; height: cfloat; item_width,
     cols: cint) {.importc, cdecl.}
-proc nk_layout_row_dynamic*(ctx: PContext; height: cfloat;
+proc nk_layout_row_dynamic*(ctx; height: cfloat;
     cols: cint) {.importc, cdecl.}
-proc nk_layout_row_end*(ctx: PContext) {.importc, cdecl.}
-proc nk_layout_row_begin*(ctx: PContext; fmt: nk_layout_format;
+proc nk_layout_row_end*(ctx) {.importc, cdecl.}
+proc nk_layout_row_begin*(ctx; fmt: nk_layout_format;
     row_height: cfloat; cols: cint) {.importc, cdecl.}
-proc nk_layout_row_push*(ctx: PContext; width: cfloat) {.importc, cdecl.}
-proc nk_layout_row*(ctx: PContext; fmt: nk_layout_format; height: cfloat;
+proc nk_layout_row_push*(ctx; width: cfloat) {.importc, cdecl.}
+proc nk_layout_row*(ctx; fmt: nk_layout_format; height: cfloat;
     cols: cint; ratio: pointer) {.importc, cdecl.}
-proc nk_layout_space_begin*(ctx: PContext; fmt: nk_layout_format;
+proc nk_layout_space_begin*(ctx; fmt: nk_layout_format;
     height: cfloat; widget_count: cint) {.importc, cdecl.}
-proc nk_layout_space_end*(ctx: PContext) {.importc, cdecl.}
-proc nk_layout_space_push*(ctx: PContext; rect: nk_rect) {.importc, nodecl.}
-proc nk_layout_row_template_begin*(ctx: PContext; height: cfloat) {.importc, cdecl.}
-proc nk_layout_row_template_push_dynamic*(ctx: PContext) {.importc, cdecl.}
-proc nk_layout_row_template_push_variable*(ctx: PContext;
+proc nk_layout_space_end*(ctx) {.importc, cdecl.}
+proc nk_layout_space_push*(ctx; rect: nk_rect) {.importc, nodecl.}
+proc nk_layout_row_template_begin*(ctx; height: cfloat) {.importc, cdecl.}
+proc nk_layout_row_template_push_dynamic*(ctx) {.importc, cdecl.}
+proc nk_layout_row_template_push_variable*(ctx;
     min_width: cfloat) {.importc, cdecl.}
-proc nk_layout_row_template_push_static*(ctx: PContext;
+proc nk_layout_row_template_push_static*(ctx;
     width: cfloat) {.importc, cdecl.}
-proc nk_layout_row_template_end*(ctx: PContext) {.importc, cdecl.}
+proc nk_layout_row_template_end*(ctx) {.importc, cdecl.}
 
 # -----
 # Menus
 # -----
-proc nk_menubar_begin*(ctx: PContext) {.importc, cdecl.}
-proc nk_menubar_end*(ctx: PContext) {.importc, cdecl.}
-proc nk_menu_begin_label*(ctx: PContext; text: cstring; align: nk_flags;
+proc nk_menubar_begin*(ctx) {.importc, cdecl.}
+proc nk_menubar_end*(ctx) {.importc, cdecl.}
+proc nk_menu_begin_label*(ctx; text: cstring; align: nk_flags;
      size: nk_vec2): nk_bool {.importc, nodecl.}
-proc nk_menu_end*(ctx: PContext) {.importc, cdecl.}
-proc nk_menu_item_label*(ctx: PContext; text: cstring;
+proc nk_menu_end*(ctx) {.importc, cdecl.}
+proc nk_menu_item_label*(ctx; text: cstring;
     aligmnent: nk_flags): nk_bool {.importc, cdecl.}
 
 # ------
 # Charts
 # ------
-proc nk_chart_begin*(ctx: PContext; ctype: nk_chart_type; num: cint; min,
+proc nk_chart_begin*(ctx; ctype: nk_chart_type; num: cint; min,
     max: cfloat): nk_bool {.importc, cdecl.}
-proc nk_chart_push*(ctx: PContext; value: cfloat): nk_flags {.importc, cdecl.}
-proc nk_chart_end*(ctx: PContext) {.importc, cdecl.}
-proc nk_chart_add_slot*(ctx: PContext; ctype: nk_chart_type; count: cint;
+proc nk_chart_push*(ctx; value: cfloat): nk_flags {.importc, cdecl.}
+proc nk_chart_end*(ctx) {.importc, cdecl.}
+proc nk_chart_add_slot*(ctx; ctype: nk_chart_type; count: cint;
     min_value, max_value: cfloat) {.importc, cdecl.}
-proc nk_chart_push_slot*(ctx: PContext; value: cfloat;
+proc nk_chart_push_slot*(ctx; value: cfloat;
     slot: cint): nk_flags {.importc, cdecl.}
-proc nk_chart_begin_colored*(ctx: PContext; ctype: nk_chart_type; color,
+proc nk_chart_begin_colored*(ctx; ctype: nk_chart_type; color,
     higlight: nk_color; count: cint; min_value,
     max_value: cfloat): nk_bool {.importc, nodecl.}
-proc nk_chart_add_slot_colored*(ctx: PContext; ctype: nk_chart_type; color,
+proc nk_chart_add_slot_colored*(ctx; ctype: nk_chart_type; color,
     higlight: nk_color; count: cint; min_value, max_value: cfloat) {.importc, nodecl.}
 
 # ------
 # Popups
 # ------
-proc nk_popup_begin*(ctx: PContext; pType: nk_popup_type; title: cstring;
+proc nk_popup_begin*(ctx; pType: nk_popup_type; title: cstring;
     flags: nk_flags; rect: nk_rect): nk_bool {.importc, nodecl.}
-proc nk_popup_end*(ctx: PContext) {.importc, nodecl.}
-proc nk_popup_close*(ctx: PContext) {.importc, nodecl.}
+proc nk_popup_end*(ctx) {.importc, nodecl.}
+proc nk_popup_close*(ctx) {.importc, nodecl.}
 
 # -----
 # Trees
 # -----
-proc nk_tree_state_push*(ctx: PContext; ttype: nk_tree_type;
+proc nk_tree_state_push*(ctx; ttype: nk_tree_type;
     title: cstring; state: var nk_collapse_states): nk_bool {.importc, cdecl.}
-proc nk_tree_pop*(ctx: PContext) {.importc, cdecl.}
-proc nk_tree_push_hashed*(ctx: PContext; ttype: nk_tree_type;
+proc nk_tree_pop*(ctx) {.importc, cdecl.}
+proc nk_tree_push_hashed*(ctx; ttype: nk_tree_type;
     title: cstring; state: nk_collapse_states; hash: cstring; len,
     id: cint): nk_bool {.importc, cdecl.}
-proc nk_tree_element_push_hashed*(ctx: PContext; ttype: nk_tree_type;
+proc nk_tree_element_push_hashed*(ctx; ttype: nk_tree_type;
     title: cstring; state: nk_collapse_states; selected: var nk_bool;
     hash: cstring; len, sed: cint): nk_bool {.importc, cdecl.}
-proc nk_tree_element_pop*(ctx: PContext) {.importc, cdecl.}
+proc nk_tree_element_pop*(ctx) {.importc, cdecl.}
 
 # -------
 # Buttons
 # -------
-proc nk_button_label*(ctx: PContext; title: cstring): nk_bool {.importc, cdecl.}
-proc nk_button_set_behavior*(ctx: PContext;
+proc nk_button_label*(ctx; title: cstring): nk_bool {.importc, cdecl.}
+proc nk_button_set_behavior*(ctx;
     behavior: nk_button_behavior) {.importc, cdecl.}
-proc nk_button_color*(ctx: PContext; color: nk_color): nk_bool {.importc, nodecl.}
-proc nk_button_symbol*(ctx: PContext; symbol: nk_symbol_type): nk_bool {.importc, cdecl.}
-proc nk_button_symbol_label*(ctx: PContext; symbol: nk_symbol_type;
+proc nk_button_color*(ctx; color: nk_color): nk_bool {.importc, nodecl.}
+proc nk_button_symbol*(ctx; symbol: nk_symbol_type): nk_bool {.importc, cdecl.}
+proc nk_button_symbol_label*(ctx; symbol: nk_symbol_type;
     label: cstring; align: nk_flags): nk_bool {.importc, cdecl.}
 
 # -------
 # Sliders
 # -------
-proc nk_slider_int*(ctx: PContext; min: cint; val: var cint; max,
+proc nk_slider_int*(ctx; min: cint; val: var cint; max,
     step: cint): nk_bool {.importc, cdecl.}
-proc nk_slider_float*(ctx: PContext; min: cfloat; val: var cfloat; max,
+proc nk_slider_float*(ctx; min: cfloat; val: var cfloat; max,
     value_step: cfloat): nk_bool {.importc, cdecl.}
-proc nk_slide_int*(ctx: PContext; min, val, max, step: cint): cint {.importc, cdecl.}
+proc nk_slide_int*(ctx; min, val, max, step: cint): cint {.importc, cdecl.}
 
 # ----------
 # Properties
 # ----------
-proc nk_property_int*(ctx: PContext; name: cstring; min: cint;
+proc nk_property_int*(ctx; name: cstring; min: cint;
     val: var cint; max, step: cint; inc_per_pixel: cfloat) {.importc, cdecl.}
-proc nk_property_float*(ctx: PContext; name: cstring; min: cfloat;
+proc nk_property_float*(ctx; name: cstring; min: cfloat;
     val: var cfloat; max, step, inc_per_pixel: cfloat) {.importc, cdecl.}
-proc nk_propertyf*(ctx: PContext; name: cstring; min, val, max, step,
+proc nk_propertyf*(ctx; name: cstring; min, val, max, step,
     inc_per_pixel: cfloat): cfloat {.importc, cdecl.}
-proc nk_propertyi*(ctx: PContext; name: cstring; min, val, max, step: cint;
+proc nk_propertyi*(ctx; name: cstring; min, val, max, step: cint;
     inc_per_pixel: cfloat): cint {.importc, cdecl.}
 
 # -----
 # Style
 # -----
 proc nk_style_item_color*(col: nk_color): nk_style_item {.importc, cdecl.}
-proc nk_style_push_vec2*(ctx: PContext; dest: var nk_vec2;
+proc nk_style_push_vec2*(ctx; dest: var nk_vec2;
     source: nk_vec2): nk_bool {.importc, nodecl.}
-proc nk_style_push_float*(ctx: PContext; dest: var cfloat;
+proc nk_style_push_float*(ctx; dest: var cfloat;
     source: cfloat): nk_bool {.importc, nodecl.}
-proc nk_style_pop_float*(ctx: PContext) {.importc, cdecl.}
-proc nk_style_pop_vec2*(ctx: PContext) {.importc, cdecl.}
-proc nk_style_from_table*(ctx: PContext; table: pointer) {.importc, nodecl.}
-proc nk_style_default*(ctx: PContext) {.importc, cdecl.}
-proc nk_style_set_font*(ctx: PContext; font: ptr nk_user_font) {.importc, nodecl.}
+proc nk_style_pop_float*(ctx) {.importc, cdecl.}
+proc nk_style_pop_vec2*(ctx) {.importc, cdecl.}
+proc nk_style_from_table*(ctx; table: pointer) {.importc, nodecl.}
+proc nk_style_default*(ctx) {.importc, cdecl.}
+proc nk_style_set_font*(ctx; font: ptr nk_user_font) {.importc, nodecl.}
 
 # ------
 # Combos
 # ------
-proc nk_combo*(ctx: PContext; items: pointer; count,
+proc nk_combo*(ctx; items: pointer; count,
     selected, item_height: cint; size: nk_vec2): cint {.importc, nodecl.}
-proc nk_combo_begin_color*(ctx: PContext; color: nk_color;
+proc nk_combo_begin_color*(ctx; color: nk_color;
     size: nk_vec2): nk_bool {.importc, nodecl.}
-proc nk_combo_end*(ctx: PContext) {.importc, cdecl.}
-proc nk_combo_begin_label*(ctx: PContext; selected: cstring;
+proc nk_combo_end*(ctx) {.importc, cdecl.}
+proc nk_combo_begin_label*(ctx; selected: cstring;
     size: nk_vec2): nk_bool {.importc, nodecl.}
-proc nk_combo_close*(ctx: PContext) {.importc, cdecl.}
+proc nk_combo_close*(ctx) {.importc, cdecl.}
 
 # ------
 # Colors
@@ -397,45 +402,45 @@ proc nk_filter_ascii*(box: ptr nk_text_edit;
 # ----------
 # Contextual
 # ----------
-proc nk_contextual_begin*(ctx: PContext; flags: nk_flags; size: nk_vec2;
+proc nk_contextual_begin*(ctx; flags: nk_flags; size: nk_vec2;
     trigger_bounds: nk_rect): nk_bool {.importc, nodecl.}
-proc nk_contextual_end*(ctx: PContext) {.importc, cdecl.}
-proc nk_contextual_item_label*(ctx: PContext; label: cstring;
+proc nk_contextual_end*(ctx) {.importc, cdecl.}
+proc nk_contextual_item_label*(ctx; label: cstring;
     align: nk_flags): nk_bool {.importc, cdecl.}
 
 # --------
 # Tooltips
 # --------
-proc nk_tooltipf*(ctx: PContext; fmt: cstring) {.importc, nodecl, varargs.}
-proc nk_tooltip*(ctx: PContext; text: cstring) {.importc, nodecl.}
+proc nk_tooltipf*(ctx; fmt: cstring) {.importc, nodecl, varargs.}
+proc nk_tooltip*(ctx; text: cstring) {.importc, nodecl.}
 
 # ------
 # Groups
 # ------
-proc nk_group_begin*(ctx: PContext; title: cstring;
+proc nk_group_begin*(ctx; title: cstring;
     flags: nk_flags): nk_bool {.importc, cdecl.}
-proc nk_group_end*(ctx: PContext) {.importc, cdecl.}
+proc nk_group_end*(ctx) {.importc, cdecl.}
 
 # -----------
 # Selectables
 # -----------
-proc nk_selectable_label*(ctx: PContext; str: cstring; align: nk_flags;
+proc nk_selectable_label*(ctx; str: cstring; align: nk_flags;
     value: var nk_bool): nk_bool {.importc, cdecl.}
-proc nk_selectable_symbol_label*(ctx: PContext; sym: nk_symbol_type;
+proc nk_selectable_symbol_label*(ctx; sym: nk_symbol_type;
     title: cstring; align: nk_flags; value: var nk_bool): nk_bool {.importc, cdecl.}
 
 # -------
 # Widgets
 # -------
-proc nk_option_label*(ctx: PContext; name: cstring;
+proc nk_option_label*(ctx; name: cstring;
     active: cint): nk_bool {.importc, cdecl.}
-proc nk_checkbox_label*(ctx: PContext; text: cstring;
+proc nk_checkbox_label*(ctx; text: cstring;
     active: var cint): nk_bool {.importc, cdecl.}
-proc nk_progress*(ctx: PContext; cur: var nk_size; max: nk_size;
+proc nk_progress*(ctx; cur: var nk_size; max: nk_size;
     modifyable: nk_bool): nk_bool {.importc, cdecl.}
-proc nk_color_picker*(ctx: PContext; color: nk_colorf;
+proc nk_color_picker*(ctx; color: nk_colorf;
     fmt: nk_color_format): nk_colorf {.importc, nodecl.}
-proc nk_edit_string*(ctx: PContext; flags: nk_flags; memory: pointer;
+proc nk_edit_string*(ctx; flags: nk_flags; memory: pointer;
     len: var cint; max: cint; filter: nk_plugin_filter): nk_flags {.importc, cdecl.}
 
 # -----
@@ -495,7 +500,7 @@ converter toCint*(x: bool): cint =
 # -------
 # General
 # -------
-proc createWin*(ctx: PContext; name: cstring; x, y, w, h: cfloat;
+proc createWin*(ctx; name: cstring; x, y, w, h: cfloat;
     flags: nk_flags): bool =
   ## Create a new Nuklear window/widget
   ##
@@ -509,7 +514,7 @@ proc createWin*(ctx: PContext; name: cstring; x, y, w, h: cfloat;
   ##
   ## Returns true if window was succesfully created otherwise false.
   return nk_begin(ctx, name, new_nk_rect(x, y, w, h), flags)
-proc createPopup*(ctx: PContext; pType: nk_popup_type; title: cstring;
+proc createPopup*(ctx; pType: nk_popup_type; title: cstring;
     flags: nk_flags; x, y, w, h: cfloat): bool =
   ## Create a new Nuklear popup window
   ##
@@ -524,7 +529,7 @@ proc createPopup*(ctx: PContext; pType: nk_popup_type; title: cstring;
   ##
   ## Returns true if the popup was successfully created, otherwise false.
   return nk_popup_begin(ctx, pType, title, flags, new_nk_rect(x, y, w, h))
-proc getWidgetBounds*(ctx: PContext): NimRect =
+proc getWidgetBounds*(ctx): NimRect =
   ## Get the rectable with the current Nuklear widget coordinates
   ##
   ## * ctx - the Nuklear context
@@ -533,7 +538,7 @@ proc getWidgetBounds*(ctx: PContext): NimRect =
   ## converted to NimRect
   let rect = nk_widget_bounds(ctx)
   return NimRect(x: rect.x, y: rect.y, w: rect.w, h: rect.h)
-proc getTextWidth*(ctx: PContext; text: cstring): cfloat =
+proc getTextWidth*(ctx; text: cstring): cfloat =
   ## Get the width in pixels of the selected text in the current font
   ##
   ## * ctx  - the Nuklear context
@@ -546,7 +551,7 @@ proc getTextWidth*(ctx: PContext; text: cstring): cfloat =
 # ------
 # Labels
 # ------
-proc colorLabel*(ctx: PContext; str: cstring; align: nk_flags; r, g, b: cint) =
+proc colorLabel*(ctx; str: cstring; align: nk_flags; r, g, b: cint) =
   ## Draw a text with the selected color
   ##
   ## * ctx   - the Nuklear context
@@ -560,7 +565,7 @@ proc colorLabel*(ctx: PContext; str: cstring; align: nk_flags; r, g, b: cint) =
 # -------
 # Buttons
 # -------
-proc colorButton*(ctx: PContext; r, g, b: cint): bool =
+proc colorButton*(ctx; r, g, b: cint): bool =
   ## Draw a button with the selected color background
   ##
   ## * ctx - the Nuklear context
@@ -574,7 +579,7 @@ proc colorButton*(ctx: PContext; r, g, b: cint): bool =
 # -------
 # Layouts
 # -------
-proc layoutSpacePush*(ctx: PContext; x, y, w, h: cfloat) =
+proc layoutSpacePush*(ctx; x, y, w, h: cfloat) =
   ## Push the next widget's position and size
   ##
   ## * ctx - the Nuklear context
@@ -587,7 +592,7 @@ proc layoutSpacePush*(ctx: PContext; x, y, w, h: cfloat) =
 # ----
 # Menu
 # ----
-proc createMenu*(ctx: PContext; text: cstring; align: nk_flags; x,
+proc createMenu*(ctx; text: cstring; align: nk_flags; x,
     y: cfloat): bool =
   ## Create a Nuklear menu
   ##
@@ -603,24 +608,24 @@ proc createMenu*(ctx: PContext; text: cstring; align: nk_flags; x,
 # -----
 # Style
 # -----
-proc headerAlign*(ctx: PContext; value: nk_style_header_align) =
+proc headerAlign*(ctx; value: nk_style_header_align) =
   ## Set the Nuklear windows header alignment
   ##
   ## * ctx   - the Nuklear context
   ## * value - the new value for the alignment
   ctx.style.window.header.align = value
 var buttonStyle: nk_style_button ## Used to store the Nuklear buttons style
-proc saveButtonStyle*(ctx: PContext) =
+proc saveButtonStyle*(ctx) =
   ## Save the Nuklear buttons style to variable, so it can be restored later
   ##
   ## * ctx - the Nuklear context
   buttonStyle = ctx.style.button
-proc restoreButtonStyle*(ctx: PContext) =
+proc restoreButtonStyle*(ctx) =
   ## Restore previously save to the variable Nuklear buttons style
   ##
   ## * ctx - the Nuklear context
   ctx.style.button = buttonStyle
-proc setButtonStyle*(ctx: PContext; field: ButtonStyleTypes; r, g, b: cint) =
+proc setButtonStyle*(ctx; field: ButtonStyleTypes; r, g, b: cint) =
   ## Set the color for the selcted field of the Nuklear buttons style
   ##
   ## * ctx   - the Nuklear context
@@ -647,7 +652,7 @@ proc setButtonStyle*(ctx: PContext; field: ButtonStyleTypes; r, g, b: cint) =
     ctx.style.button.text_active = nk_rgb(r, g, b)
   else:
     discard
-proc setButtonStyle2*(ctx: PContext; source, destination: ButtonStyleTypes) =
+proc setButtonStyle2*(ctx; source, destination: ButtonStyleTypes) =
   ## Copy one field of Nuklear buttons style to another
   ##
   ## * ctx         - the Nuklear context
@@ -656,7 +661,7 @@ proc setButtonStyle2*(ctx: PContext; source, destination: ButtonStyleTypes) =
   if source == active:
     if destination == normal:
       ctx.style.button.normal = ctx.style.button.active
-proc getButtonStyle*(ctx: PContext; field: ButtonStyleTypes): NimVec2 =
+proc getButtonStyle*(ctx; field: ButtonStyleTypes): NimVec2 =
   ## Get the value of the selected field of Nuklear buttons style
   ##
   ## * ctx   - the Nuklear context
@@ -665,7 +670,7 @@ proc getButtonStyle*(ctx: PContext; field: ButtonStyleTypes): NimVec2 =
   ## Returns vector with the value of the selected field
   if field == padding:
     return NimVec2(x: ctx.style.button.padding.x, y: ctx.style.button.padding.y)
-proc stylePushVec2*(ctx: PContext; field: WindowStyleTypes; x,
+proc stylePushVec2*(ctx; field: WindowStyleTypes; x,
     y: cfloat): bool =
   ## Push the vector value for the selected Nuklear window style on a
   ## temporary stack
@@ -679,7 +684,7 @@ proc stylePushVec2*(ctx: PContext; field: WindowStyleTypes; x,
   if field == spacing:
     return nk_style_push_vec2(ctx, ctx.style.window.spacing, new_nk_vec2(x,
         y))
-proc stylePushFloat*(ctx: PContext; field: ButtonStyleTypes;
+proc stylePushFloat*(ctx; field: ButtonStyleTypes;
     value: cfloat): bool =
   ## Push the float value for the selected Nuklear buttons style on a
   ## temporary stack
@@ -694,7 +699,7 @@ proc stylePushFloat*(ctx: PContext; field: ButtonStyleTypes;
     return nk_style_push_float(ctx, ctx.style.button.rounding, value)
   else:
     return false
-proc styleFromTable*(ctx: PContext; table: openArray[NimColor]) =
+proc styleFromTable*(ctx; table: openArray[NimColor]) =
   ## Set the Nuklear style colors from the table
   ##
   ## * ctx   - the Nuklear context
@@ -707,8 +712,8 @@ proc styleFromTable*(ctx: PContext; table: openArray[NimColor]) =
 # ------
 # Combos
 # ------
-proc createCombo*(ctx: PContext; items: openArray[cstring]; selected,
-    item_height: cint; x, y: cfloat): cint =
+proc createCombo*(ctx; items: openArray[cstring]; selected,
+    item_height: cint; x, y: cfloat; amount: int = items.len): cint =
   ## Create a Nuklear combo widget
   ##
   ## * ctx         - the Nuklear context
@@ -717,11 +722,13 @@ proc createCombo*(ctx: PContext; items: openArray[cstring]; selected,
   ## * item_height - the height in pixels for the values in the combo's list
   ## * x           - the width of the combo
   ## * y           - the height of the combo's values list
+  ## * amount      - the amount of items in the items list. Default to the length
+  ##                 of the list
   ##
   ## Returns the index of the currently selected valu on the combo's list
-  return nk_combo(ctx, items.unsafeAddr, items.len.cint, selected, item_height,
+  return nk_combo(ctx, items.unsafeAddr, amount.cint, selected, item_height,
       new_nk_vec2(x, y))
-proc createColorCombo*(ctx: PContext; color: NimColor; x, y: cfloat): bool =
+proc createColorCombo*(ctx; color: NimColor; x, y: cfloat): bool =
   ## Create a Nuklear combo widget which display color as the value
   ##
   ## * ctx   - the Nuklear context
@@ -732,7 +739,7 @@ proc createColorCombo*(ctx: PContext; color: NimColor; x, y: cfloat): bool =
   ## Returns true if combo was successfully created, otherwise false
   return nk_combo_begin_color(ctx, nk_rgb(color.r, color.g, color.b),
       new_nk_vec2(x, y))
-proc createColorCombo*(ctx: PContext; color: NimColorF; x, y: cfloat): bool =
+proc createColorCombo*(ctx; color: NimColorF; x, y: cfloat): bool =
   ## Create a Nuklear combo widget which display color with float values as
   ## the value
   ##
@@ -744,7 +751,7 @@ proc createColorCombo*(ctx: PContext; color: NimColorF; x, y: cfloat): bool =
   ## Returns true if combo was successfully created, otherwise false
   return nk_combo_begin_color(ctx, nk_rgb_cf(nk_colorf(r: color.r, g: color.g,
       b: color.b, a: color.a)), new_nk_vec2(x, y))
-proc createLabelCombo*(ctx: PContext; selected: cstring; x, y: cfloat): bool =
+proc createLabelCombo*(ctx; selected: cstring; x, y: cfloat): bool =
   ## Create a Nuklear combo widget which display the custom text as the value
   ##
   ## * ctx      - the Nuklear context
@@ -779,7 +786,7 @@ proc hsvaToColorf*(hsva: array[4, cfloat]): NimColorF =
 # ------
 # Charts
 # ------
-proc createColorChart*(ctx: PContext; ctype: nk_chart_type; color,
+proc createColorChart*(ctx; ctype: nk_chart_type; color,
     higlight: NimColor; count: cint; min_value, max_value: cfloat): bool =
   ## Create a colored chart
   ##
@@ -796,7 +803,7 @@ proc createColorChart*(ctx: PContext; ctype: nk_chart_type; color,
   return nk_chart_begin_colored(ctx, ctype, nk_rgb(color.r, color.g, color.b),
       nk_rgb(higlight.r, higlight.g, higlight.b), count, min_value,
     max_value)
-proc addColorChartSlot*(ctx: PContext; ctype: nk_chart_type; color,
+proc addColorChartSlot*(ctx; ctype: nk_chart_type; color,
     higlight: NimColor; count: cint; min_value, max_value: cfloat) =
   ## Add another chart to the existing one
   ##
@@ -814,7 +821,7 @@ proc addColorChartSlot*(ctx: PContext; ctype: nk_chart_type; color,
 # ----------
 # Contextual
 # ----------
-proc createContextual*(ctx: PContext; flags: nk_flags; x, y: cfloat;
+proc createContextual*(ctx; flags: nk_flags; x, y: cfloat;
     trigger_bounds: NimRect): bool =
   ## Create a contextual menu
   ##
@@ -834,7 +841,7 @@ proc createContextual*(ctx: PContext; flags: nk_flags; x, y: cfloat;
 # -----
 # Input
 # -----
-proc isMouseHovering*(ctx: PContext; x, y, w, h: cfloat): bool =
+proc isMouseHovering*(ctx; x, y, w, h: cfloat): bool =
   ## Check if mouse is hovering over the selected rectangle
   ##
   ## * ctx - the Nuklear context
@@ -846,7 +853,7 @@ proc isMouseHovering*(ctx: PContext; x, y, w, h: cfloat): bool =
   ## Returns true if the mouse is hovering over the rectangle, otherwise false
   return nk_input_is_mouse_hovering_rect(ctx.input.unsafeAddr, new_nk_rect(x, y,
       w, h))
-proc isMousePrevHovering*(ctx: PContext; x, y, w, h: cfloat): bool =
+proc isMousePrevHovering*(ctx; x, y, w, h: cfloat): bool =
   ## Check if the mouse was previously hovering over the selected rectangle
   ##
   ## * ctx - the Nuklear context
@@ -858,7 +865,7 @@ proc isMousePrevHovering*(ctx: PContext; x, y, w, h: cfloat): bool =
   ## Returns true if the mouse was hovering over the rectangle, otherwise false
   return nk_input_is_mouse_prev_hovering_rect(ctx.input.unsafeAddr, new_nk_rect(
       x, y, w, h))
-proc isMouseDown*(ctx: PContext; id: nk_buttons): bool =
+proc isMouseDown*(ctx; id: nk_buttons): bool =
   ## Check if mouse is pressed
   ##
   ## * ctx - the Nuklear context
@@ -866,7 +873,7 @@ proc isMouseDown*(ctx: PContext; id: nk_buttons): bool =
   ##
   ## Returns true if the selected mouse button is pressed, otherwise false
   return nk_input_is_mouse_down(ctx.input.unsafeAddr, id)
-proc getMouseDelta*(ctx: PContext): NimVec2 =
+proc getMouseDelta*(ctx): NimVec2 =
   ## Get the mouse vector between last check and current position of the mouse
   ##
   ## * ctx - the Nuklear context
@@ -877,7 +884,7 @@ proc getMouseDelta*(ctx: PContext): NimVec2 =
 # -------
 # Widgets
 # -------
-proc colorPicker*(ctx: PContext; color: NimColorF;
+proc colorPicker*(ctx; color: NimColorF;
     format: nk_color_format): NimColorF =
   ## Create the color picker widget
   ##

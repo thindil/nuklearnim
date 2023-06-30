@@ -5,10 +5,8 @@ a WYSIWYG (or DIY) type of the project. ;)
 I created the project because I needed a GUI library for my other projects in
 Nim. It is more like backup than a real project. I will occasionally update the
 binding as I will work more with it in other cases. For this reason I
-don't accept any bug reports or requests for features. Not until first 3.0
-version of the project (for roadmap, please look below).
-
-If you want a mature Nim binding for Nuklear, use: https://github.com/zacharycarter/nuklear-nim
+don't accept any bug reports or requests for features. Not until stage 3 of the
+project (for roadmap, please look below).
 
 If you read this file on GitHub: **please don't send pull requests here**. All will
 be automatically closed. Any code propositions should go to the
@@ -16,10 +14,9 @@ be automatically closed. Any code propositions should go to the
 
 ### Roadmap
 
-* 1.0 - Basic, low level binding with Nuklear GUI library. Current focus of the
-  development.
-* 2.0 - High level binding with Nuklear GUI library.
-* 3.0 - Rewrite everything in Nim.
+* Stage 1: Basic, low level binding with Nuklear GUI library. The current stage.
+* Stage 2: High level binding with Nuklear GUI library.
+* Stage 3: Rewrite everything in Nim.
 
 ### Usage
 
@@ -48,7 +45,7 @@ Xlib backend, type `./build.nims xlib`.
 ### Documentation
 
 At the moment only in form of the code, in *demo* directory plus comments in
-*nuklear.h* file. Don't expect anything better soon(TM). ;)
+*nuklear.h* and *nuklear.nim* files. Don't expect anything better soon(TM). ;)
 
 ### License
 
