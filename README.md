@@ -14,8 +14,7 @@ be automatically closed. Any code propositions should go to the
 
 ### Roadmap
 
-* Stage 1: Basic, low level binding with Nuklear GUI library. The current stage.
-* Stage 2: High level binding with Nuklear GUI library.
+* Stage 2: High level binding with Nuklear GUI library. The current stage.
 * Stage 3: Rewrite everything in Nim.
 
 ### Usage

@@ -134,8 +134,8 @@ import std/bitops
 
 var xw: XWindow ## The main X window of the program
 
-proc nuklearInit*(windowWidth, windowHeight: cint; name,
-    font: cstring = "fixed"): PContext =
+proc nuklearInit*(windowWidth, windowHeight: cint; name: cstring;
+    font: cstring = "fixed"): PContext {.discardable.} =
   ## Initialize Nuklear library, create the main program's window with the
   ## selected parameters.
   ##
@@ -143,8 +143,6 @@ proc nuklearInit*(windowWidth, windowHeight: cint; name,
   ## * windowHeight - the default main window height
   ## * name         - the title of the main window
   ## * font         - the name of the font used in UI. Default value is "fixed".
-  ##
-  ## Returns pointer to the Nuklear context.
   xw.dpy = XOpenDisplay("")
   if xw.dpy == nil:
     quit "Could not open a display; perhaps $DISPLAY is not set?"
@@ -168,14 +166,14 @@ proc nuklearInit*(windowWidth, windowHeight: cint; name,
   xw.width = xw.attr.width
   xw.height = xw.attr.height
   xw.font = nk_xfont_create(xw.dpy, font)
-  return nk_xlib_init(xw.font, xw.dpy, xw.screen, xw.win, xw.width, xw.height)
+  setContext(nk_xlib_init(xw.font, xw.dpy, xw.screen, xw.win, xw.width, xw.height))
+  return getContext()
 
-proc nuklearInput*(ctx: PContext): bool =
+proc nuklearInput*(): bool =
   ## Handle the user input
   ##
-  ## * ctx - the pointer to the Nuklear context
-  ##
   ## Returns true if user requested to close the window, otherwise false
+  let ctx = getContext()
   nk_input_begin(ctx)
   while XPending(xw.dpy) > 0:
     var evt: XEvent
