@@ -94,11 +94,18 @@ proc nk_sdl_shutdown() {.importc, nodecl.}
 # High level bindings
 
 var
-  win: WindowPtr
-  renderer: RendererPtr
+  win: WindowPtr        ## The main X window of the program
+  renderer: RendererPtr ## The SDL renderer
 
-proc nuklearInit*(windowWidth, windowHeight: cint; name,
-    font: cstring = ""): PContext =
+proc nuklearInit*(windowWidth, windowHeight: cint; name: cstring = "";
+    font: cstring = ""): PContext {.discardable.} =
+  ## Initialize Nuklear library, create the main program's window with the
+  ## selected parameters.
+  ##
+  ## * windowWidth  - the default main window width
+  ## * windowHeight - the default main window height
+  ## * name         - the title of the main window
+  ## * font         - the name of the font used in UI. Default value is "".
   SDL_SetHint("SDL_HINT_VIDEO_HIGHDPI_DISABLED", "0")
   discard SDL_Init(SDL_INIT_VIDEO)
   win = SDL_CreateWindow(name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -117,7 +124,7 @@ proc nuklearInit*(windowWidth, windowHeight: cint; name,
   let scaleY: cfloat = renderH.cfloat / windowH.cfloat
   SDL_RenderSetScale(renderer, scaleX, scaleY)
   let fontScale = scaleY
-  result = nk_sdl_init(win, renderer)
+  setContext(nk_sdl_init(win, renderer))
   var
     atlas: ptr nk_font_atlas
     config = new_nk_font_config(0)
@@ -125,10 +132,14 @@ proc nuklearInit*(windowWidth, windowHeight: cint; name,
   var font = nk_font_atlas_add_default(atlas, 13 * font_scale,
       config.unsafeAddr)
   nk_sdl_font_stash_end()
-  nk_style_set_font(result, font.handle.unsafeAddr)
+  nk_style_set_font(getContext(), font.handle.unsafeAddr)
+  return getContext()
 
-
-proc nuklearInput*(ctx: PContext): bool =
+proc nuklearInput*(): bool =
+  ## Handle the user input
+  ##
+  ## Returns true if user requested to close the window, otherwise false
+  let ctx = getContext()
   var evt: SDL_Event
   nk_input_begin(ctx)
   while SDL_PollEvent(evt.unsafeAddr) != 0:
@@ -138,6 +149,7 @@ proc nuklearInput*(ctx: PContext): bool =
   nk_input_end(ctx)
 
 proc nuklearDraw*() =
+  ## Draw the main window content
   discard SDL_SetRenderDrawColor(renderer, (0.10 * 255).uint8, (0.18 *
       255).uint8, (0.24 * 255).uint8, 255)
   discard SDL_RenderClear(renderer)
@@ -145,6 +157,7 @@ proc nuklearDraw*() =
   SDL_RenderPresent(renderer)
 
 proc nuklearClose*() =
+  ## Release all resources related to Xlib and Nuklear
   nk_sdl_shutdown()
   SDL_DestroyRenderer(renderer)
   SDL_DestroyWindow(win)

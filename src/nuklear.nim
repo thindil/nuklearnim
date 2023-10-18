@@ -70,8 +70,6 @@ type
     NK_TREE_NODE, NK_TREE_TAB
   nk_chart_type* = enum
     NK_CHART_LINES, NK_CHART_COLUMN, NK_CHART_MAX
-  nk_popup_type* = enum
-    NK_POPUP_STATIC, NK_POPUP_DYNAMIC
   nk_bool* = enum
     nk_false, nk_true
   nk_modify* = enum
@@ -106,14 +104,6 @@ type
     NK_EDIT_ALWAYS_INSERT_MODE = 1 shl 9,
     NK_EDIT_MULTILINE = 1 shl 10,
     NK_EDIT_GOTO_END_ON_ACTIVATE = 1 shl 11
-  nk_edit_types* = enum
-    NK_EDIT_SIMPLE = NK_EDIT_ALWAYS_INSERT_MODE,
-    NK_EDIT_FIELD = NK_EDIT_SIMPLE.int or NK_EDIT_SELECTABLE.int or
-        NK_EDIT_CLIPBOARD.int,
-    NK_EDIT_EDITOR = NK_EDIT_ALLOW_TAB.int or NK_EDIT_SELECTABLE.int or
-        NK_EDIT_CLIPBOARD.int or NK_EDIT_MULTILINE.int,
-    NK_EDIT_BOX = NK_EDIT_ALWAYS_INSERT_MODE.int or NK_EDIT_SELECTABLE.int or
-        NK_EDIT_MULTILINE.int or NK_EDIT_ALLOW_TAB.int or NK_EDIT_CLIPBOARD.int
   nk_edit_events* = enum
     NK_EDIT_ACTIVE = 1 shl 0,
     NK_EDIT_INACTIVE = 1 shl 1,
@@ -184,8 +174,6 @@ type
   nk_rect* {.importc: "struct nk_rect", nodecl.} = object
     x*, y*, w*, h*: cfloat
   nk_text_edit* = object
-  nk_plugin_filter* = proc (box: ptr nk_text_edit;
-      unicode: nk_rune): nk_bool {.cdecl.}
   nk_font* {.importc: "struct nk_font", nodecl.} = object
     handle*: nk_user_font
   nk_font_atlas* {.importc: "struct nk_font_atlas", nodecl.} = object
@@ -219,9 +207,7 @@ proc nk_input_is_mouse_down*(i: ptr nk_input;
 # -------
 # General
 # -------
-proc nk_begin*(ctx; title: cstring; bounds: nk_rect;
-    flags: nk_flags): nk_bool {.importc, nodecl.}
-proc nk_end*(ctx) {.importc, cdecl.}
+proc nk_end(ctx) {.importc, cdecl.}
 proc nk_window_is_hidden*(ctx; name: cstring): cint {.importc, cdecl.}
 proc nk_spacing*(ctx; cols: cint) {.importc, cdecl.}
 proc nk_widget_bounds*(ctx): nk_rect {.importc, nodecl.}
@@ -229,8 +215,6 @@ proc nk_widget_bounds*(ctx): nk_rect {.importc, nodecl.}
 # ----
 # Text
 # ----
-proc nk_label*(ctx; str: cstring;
-    alignment: nk_flags) {.importc, cdecl.}
 proc nk_label_colored*(ctx; str: cstring; align: nk_flags;
     color: nk_color) {.importc, nodecl.}
 proc nk_text*(ctx; str: cstring; len: cint;
@@ -243,8 +227,6 @@ proc nk_labelf*(ctx; flags: nk_flags; fmt: cstring) {.importc,
 # Layouts
 # -------
 proc nk_layout_row_static*(ctx; height: cfloat; item_width,
-    cols: cint) {.importc, cdecl.}
-proc nk_layout_row_dynamic*(ctx; height: cfloat;
     cols: cint) {.importc, cdecl.}
 proc nk_layout_row_end*(ctx) {.importc, cdecl.}
 proc nk_layout_row_begin*(ctx; fmt: nk_layout_format;
@@ -295,10 +277,7 @@ proc nk_chart_add_slot_colored*(ctx; ctype: nk_chart_type; color,
 # ------
 # Popups
 # ------
-proc nk_popup_begin*(ctx; pType: nk_popup_type; title: cstring;
-    flags: nk_flags; rect: nk_rect): nk_bool {.importc, nodecl.}
-proc nk_popup_end*(ctx) {.importc, nodecl.}
-proc nk_popup_close*(ctx) {.importc, nodecl.}
+proc nk_popup_end(ctx) {.importc, nodecl.}
 
 # -----
 # Trees
@@ -317,7 +296,7 @@ proc nk_tree_element_pop*(ctx) {.importc, cdecl.}
 # -------
 # Buttons
 # -------
-proc nk_button_label*(ctx; title: cstring): nk_bool {.importc, cdecl.}
+proc nk_button_label(ctx; title: cstring): nk_bool {.importc, cdecl.}
 proc nk_button_set_behavior*(ctx;
     behavior: nk_button_behavior) {.importc, cdecl.}
 proc nk_button_color*(ctx; color: nk_color): nk_bool {.importc, nodecl.}
@@ -363,8 +342,6 @@ proc nk_style_set_font*(ctx; font: ptr nk_user_font) {.importc, nodecl.}
 # ------
 # Combos
 # ------
-proc nk_combo*(ctx; items: pointer; count,
-    selected, item_height: cint; size: nk_vec2): cint {.importc, nodecl.}
 proc nk_combo_begin_color*(ctx; color: nk_color;
     size: nk_vec2): nk_bool {.importc, nodecl.}
 proc nk_combo_end*(ctx) {.importc, cdecl.}
@@ -434,14 +411,10 @@ proc nk_selectable_symbol_label*(ctx; sym: nk_symbol_type;
 # -------
 proc nk_option_label*(ctx; name: cstring;
     active: cint): nk_bool {.importc, cdecl.}
-proc nk_checkbox_label*(ctx; text: cstring;
-    active: var cint): nk_bool {.importc, cdecl.}
 proc nk_progress*(ctx; cur: var nk_size; max: nk_size;
     modifyable: nk_bool): nk_bool {.importc, cdecl.}
 proc nk_color_picker*(ctx; color: nk_colorf;
     fmt: nk_color_format): nk_colorf {.importc, nodecl.}
-proc nk_edit_string*(ctx; flags: nk_flags; memory: pointer;
-    len: var cint; max: cint; filter: nk_plugin_filter): nk_flags {.importc, cdecl.}
 
 # -----
 # Fonts
@@ -450,7 +423,7 @@ proc nk_font_atlas_add_default*(atlas: ptr nk_font_atlas; height: cfloat;
     config: ptr nk_font_config): ptr nk_font {.importc, nodecl.}
 
 # ------------------------------------------------------------------
-# High level bindings. Necessary to workaround some limitations/bugs
+# High level bindings. The new version of the binding
 # ------------------------------------------------------------------
 
 # -----
@@ -480,6 +453,39 @@ type
   WindowStyleTypes* = enum
     ## The types of fields in style's settings for windows
     spacing
+  WindowFlags* {.size: sizeof(cint).} = enum
+    ## The settings for windows
+    windowNoFlags = 0,
+    windowBorder = 1 shl 0,
+    windowMoveable = 1 shl 1,
+    windowScalable = 1 shl 2,
+    windowCloseable = 1 shl 3
+    windowMinimizable = 1 shl 4,
+    windowNoScrollbar = 1 shl 5,
+    windowTitle = 1 shl 6,
+    windowScaleLeft = 1 shl 9
+  NuklearException* = object of CatchableError
+    ## An exception thrown when there is an issue with Nuklear library
+  PopupType* = enum
+    ## The types of popup windows
+    staticPopup, dynamicPopup
+  TextAlignment* {.size: sizeof(cint).} = enum
+    ## The alignments of a text
+    left = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_LEFT.int,
+    centered = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_CENTERED.int,
+    right = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_RIGHT.int
+  EditTypes* {.size: sizeof(cint).} = enum
+    ## The types of edit fields
+    simple = NK_EDIT_ALWAYS_INSERT_MODE,
+    field = simple.int or NK_EDIT_SELECTABLE.int or
+        NK_EDIT_CLIPBOARD.int,
+    editor = NK_EDIT_ALLOW_TAB.int or NK_EDIT_SELECTABLE.int or
+        NK_EDIT_CLIPBOARD.int or NK_EDIT_MULTILINE.int,
+    box = NK_EDIT_ALWAYS_INSERT_MODE.int or NK_EDIT_SELECTABLE.int or
+        NK_EDIT_MULTILINE.int or NK_EDIT_ALLOW_TAB.int or NK_EDIT_CLIPBOARD.int
+  PluginFilter* = proc (box: ptr nk_text_edit;
+      unicode: nk_rune): nk_bool {.cdecl.}
+    ## The procedure used to filter input in edit fields
 
 # ----------
 # Converters
@@ -490,45 +496,91 @@ converter toBool*(x: nk_bool): bool =
 converter toNkFlags*(x: nk_text_alignment): nk_flags =
   ## Converts Nuklear nk_text_alignment enum to Nuklear nk_flags type
   x.ord.cint
-converter toNkFlags*(x: nk_edit_types): nk_flags =
-  ## Converts Nuklear nk_edit_types enum to Nuklear nk_flags type
+converter toNkFlags(x: EditTypes): nk_flags =
+  ## Converts EditTypes enum to Nuklear nk_flags type
   x.ord.cint
 converter toCint*(x: bool): cint =
   ## Converts Nim bool type to Nim cint type
   if x: 1 else: 0
 
+# ---------
+# Variables
+# ---------
+var ctx: PContext ## Pointer to the Nuklear context
+
 # -------
 # General
 # -------
-proc createWin*(ctx; name: cstring; x, y, w, h: cfloat;
-    flags: nk_flags): bool =
-  ## Create a new Nuklear window/widget
+proc setContext*(context: PContext) =
+  ## Set the Nuklear lib context
   ##
-  ## * ctx   - the Nuklear context
+  ## * context - the pointer to the Nuklear context
+  ctx = context
+
+proc getContext*(): PContext =
+  ## Get the Nuklear lib context, temporary code
+  ##
+  ## Returns the pointer to the Nuklear context
+  return ctx
+
+proc charArrayToString(charArray: openArray[char]; length: int): string =
+  ## Convert a characters' array to Nim string, internal use only, temporary
+  ## code
+  ##
+  ## * charArray - the array of characters to convert
+  ##
+  ## Returns a string with text converted from the chars' array
+  result = ""
+  for i in 0 .. length - 1:
+    result.add(charArray[i])
+
+proc stringToCharArray(str: string; length: int): tuple[charArray: seq[char];
+    length: cint] =
+  ## Convert a Nim string to a characters array, internal use only, temporary
+  ## code
+  ##
+  ## * str - the string to convert
+  ##
+  ## Returns a tuple with two fields, charArray with the converted text from
+  ## the string and lenght with the amount of the characters.
+  for ch in str:
+    result.charArray.add(ch)
+  if str.len < length:
+    for i in str.len .. length:
+      result.charArray.add('\0')
+  result.length = str.len.cint
+
+proc createWin(name: cstring; x, y, w, h: cfloat; flags: nk_flags): bool =
+  ## Create a new Nuklear window/widget, internal use only, temporary code
+  ##
+  ## Returns true if window was succesfully created otherwise false.
+  proc nk_begin(ctx; title: cstring; bounds: nk_rect;
+      flags: nk_flags): nk_bool {.importc, nodecl.}
+  return nk_begin(ctx, name, new_nk_rect(x, y, w, h), flags)
+
+proc winSetToInt(flags: set[WindowFlags]): cint =
+  result = 0
+  {.warning[HoleEnumConv]: off.}
+  for flag in flags:
+    result = result or flag.cint
+  {.warning[HoleEnumConv]: on.}
+
+template window*(name: string; x, y, w, h: float; flags: set[WindowFlags];
+    content: untyped) =
+  ## Create a new Nuklear window/widget with the content
+  ##
   ## * name  - the window title
   ## * x     - the X position of the top left corner of the window
   ## * y     - the Y position of the top left corner of the window
   ## * w     - the width of the window
   ## * h     - the height of the window
   ## * flags - the flags for the window
-  ##
-  ## Returns true if window was succesfully created otherwise false.
-  return nk_begin(ctx, name, new_nk_rect(x, y, w, h), flags)
-proc createPopup*(ctx; pType: nk_popup_type; title: cstring;
-    flags: nk_flags; x, y, w, h: cfloat): bool =
-  ## Create a new Nuklear popup window
-  ##
-  ## * ctx   - the Nuklear context
-  ## * pType - the type of the popup
-  ## * title - the title of the popup
-  ## * flags - the flags for the popup
-  ## * x     - the X position of the top left corner of the popup
-  ## * y     - the Y position of the top left corner of the popup
-  ## * w     - the width of the popup
-  ## * h     - the height of the popup
-  ##
-  ## Returns true if the popup was successfully created, otherwise false.
-  return nk_popup_begin(ctx, pType, title, flags, new_nk_rect(x, y, w, h))
+  if not createWin(name.cstring, x, y, w, h, winSetToInt(flags)):
+    raise newException(NuklearException,
+        "Can't create the window with title: '" & name & "'.")
+  content
+  ctx.nk_end
+
 proc getWidgetBounds*(ctx): NimRect =
   ## Get the rectable with the current Nuklear widget coordinates
   ##
@@ -538,15 +590,52 @@ proc getWidgetBounds*(ctx): NimRect =
   ## converted to NimRect
   let rect = nk_widget_bounds(ctx)
   return NimRect(x: rect.x, y: rect.y, w: rect.w, h: rect.h)
-proc getTextWidth*(ctx; text: cstring): cfloat =
+
+proc getTextWidth*(text: string): float =
   ## Get the width in pixels of the selected text in the current font
   ##
-  ## * ctx  - the Nuklear context
   ## * text - the text which width will be count
   ##
   ## Returns width in pixels of the text paramter
   return ctx.style.font.width(ctx.style.font.userdata, ctx.style.font.height,
       text, text.len.cint)
+
+# ------
+# Popups
+# ------
+proc createPopup(pType: PopupType; title: cstring;
+    flags: nk_flags; x, y, w, h: cfloat): bool =
+  ## Create a new Nuklear popup window, internal use only, temporary code
+  ##
+  ## Returns true if the popup was successfully created, otherwise false.
+  type nk_popup_type = enum
+    NK_POPUP_STATIC, NK_POPUP_DYNAMIC
+  proc nk_popup_begin(ctx; pType: nk_popup_type; title: cstring;
+      flags: nk_flags; rect: nk_rect): nk_bool {.importc, nodecl.}
+  return nk_popup_begin(ctx, pType.ord.nk_popup_type, title, flags, new_nk_rect(
+      x, y, w, h))
+
+template popup*(pType: PopupType; title: string; flags: set[WindowFlags]; x,
+    y, w, h: float; content: untyped) =
+  ## Create a new Nuklear popup window with the selected content
+  ##
+  ## * pType - the type of the popup
+  ## * title - the title of the popup
+  ## * flags - the flags for the popup
+  ## * x     - the X position of the top left corner of the popup
+  ## * y     - the Y position of the top left corner of the popup
+  ## * w     - the width of the popup
+  ## * h     - the height of the popup
+  if not createPopup(pType, title.cstring, winSetToInt(flags), x.cfloat, y, w, h):
+    raise newException(NuklearException,
+        "Can't create the popup window with title: '" & title & "'.")
+  content
+  ctx.nk_popup_end
+
+proc closePopup*() =
+  ## Close the last popup window
+  proc nk_popup_close(ctx) {.importc, nodecl.}
+  ctx.nk_popup_close()
 
 # ------
 # Labels
@@ -561,6 +650,13 @@ proc colorLabel*(ctx; str: cstring; align: nk_flags; r, g, b: cint) =
   ## * g     - the green value for the text color in RGB
   ## * b     - the blue value for the text color in RGB
   nk_label_colored(ctx, str, align, nk_rgb(r, g, b))
+proc label*(str: string; alignment: TextAlignment = left) =
+  ## Draw the text with the selected alignment
+  ##
+  ## * str       - the text to draw
+  ## * alignment - the alignment of the text. Default is alignment to the left
+  proc nk_label(ctx; str: cstring; alignment: nk_flags) {.importc, nodecl.}
+  nk_label(ctx, str.cstring, alignment.nk_flags)
 
 # -------
 # Buttons
@@ -575,6 +671,14 @@ proc colorButton*(ctx; r, g, b: cint): bool =
   ##
   ## Returns true if button was pressed
   return nk_button_color(ctx, nk_rgb(r, g, b))
+template labelButton*(title: string; onPressCode: untyped) =
+  ## Draw the button with the selected text on it. Execute the selected code
+  ## on pressing it.
+  ##
+  ## * title       - the text to shown on the button
+  ## * onPressCode - the Nim code to execute when the button was pressed
+  if nk_button_label(ctx, title.cstring):
+    onPressCode
 
 # -------
 # Layouts
@@ -588,6 +692,15 @@ proc layoutSpacePush*(ctx; x, y, w, h: cfloat) =
   ## * w   - the amount of pixels or ratio to push the width
   ## * h   - the amount of pixels or ratio to push the height
   nk_layout_space_push(ctx, new_nk_rect(x, y, w, h))
+
+proc setLayoutRowDynamic*(height: float; cols: int) =
+  ## Set the current widgets layout to divide it into selected amount of
+  ## columns with the selected height in rows
+  ##
+  ## * height - the height in pixels of each row
+  ## * cols   - the amount of columns in each row
+  proc nk_layout_row_dynamic(ctx; height: cfloat; cols: cint) {.importc, cdecl.}
+  nk_layout_row_dynamic(ctx, height.cfloat, cols.cint)
 
 # ----
 # Menu
@@ -712,11 +825,10 @@ proc styleFromTable*(ctx; table: openArray[NimColor]) =
 # ------
 # Combos
 # ------
-proc createCombo*(ctx; items: openArray[cstring]; selected,
-    item_height: cint; x, y: cfloat; amount: int = items.len): cint =
+proc comboList*(items: openArray[string]; selected, itemHeight: int; x,
+    y: float; amount: int = items.len - 1): int =
   ## Create a Nuklear combo widget
   ##
-  ## * ctx         - the Nuklear context
   ## * items       - the list of values for the combo
   ## * selected    - the index of the selected value on the combo's list
   ## * item_height - the height in pixels for the values in the combo's list
@@ -726,8 +838,13 @@ proc createCombo*(ctx; items: openArray[cstring]; selected,
   ##                 of the list
   ##
   ## Returns the index of the currently selected valu on the combo's list
-  return nk_combo(ctx, items.unsafeAddr, amount.cint, selected, item_height,
-      new_nk_vec2(x, y))
+  proc nk_combo(ctx; items: pointer; count,
+      selected, item_height: cint; size: nk_vec2): cint {.importc, nodecl.}
+  var optionsList: seq[cstring]
+  for i in 0 .. amount:
+    optionsList.add(items[i].cstring)
+  return nk_combo(ctx, optionsList[0].unsafeAddr, amount.cint + 1, selected.cint,
+      itemHeight.cint, new_nk_vec2(x.cfloat, y.cfloat)).int
 proc createColorCombo*(ctx; color: NimColor; x, y: cfloat): bool =
   ## Create a Nuklear combo widget which display color as the value
   ##
@@ -881,6 +998,33 @@ proc getMouseDelta*(ctx): NimVec2 =
   ## Returns vector with information about the mouse movement delta
   return NimVec2(x: ctx.input.mouse.delta.x, y: ctx.input.mouse.delta.y)
 
+# ---------
+# Edit text
+# ---------
+proc editString*(text: var string; maxLen: int; editType: EditTypes = simple;
+    filter: PluginFilter = nk_filter_default): int {.discardable.} =
+  ## Draw the field of hte selected type and with the selected filter to edit a
+  ## text
+  ##
+  ##  * text     - the text which will be edited in the field
+  ##  * maxLen   - the maximum lenght of the text to edit
+  ##  * editType - the type of the edit field. By default it is a simple, one
+  ##               line field
+  ##  * filter   - the procedure used to filter the user's input in the edit
+  ##               field. By default there is no filtering.
+  ##
+  ## Returns the current state of the edit field and the modified text
+  ## parameter.
+
+  proc nk_edit_string(ctx; flags: nk_flags; memory: pointer;
+      len: var cint; max: cint; filter: PluginFilter): nk_flags {.importc, nodecl.}
+
+  var (cText, length) = stringToCharArray(text, maxLen)
+  result = nk_edit_string(ctx = ctx, flags = editType,
+      memory = cText[0].unsafeAddr, len = length.cint, max = maxLen.cint,
+      filter = filter)
+  text = charArrayToString(cText, length)
+
 # -------
 # Widgets
 # -------
@@ -896,3 +1040,17 @@ proc colorPicker*(ctx; color: NimColorF;
   let newColor = nk_color_picker(ctx, nk_colorf(r: color.r, g: color.g,
       b: color.b, a: color.a), format)
   result = NimColorF(r: newColor.r, g: newColor.g, b: newColor.b, a: newColor.a)
+
+proc checkBox*(label: string; checked: var bool): bool {.discardable.} =
+  ## Create a Nuklear checkbox widget
+  ##
+  ## * label   - the text to show with the checkbox
+  ## * checked - the state of the checkbox, if true, the checkbox is checked
+  ##
+  ## Returns true if the state of the checkbox was changed, otherwise false.
+  proc nk_checkbox_label(ctx; text: cstring;
+      active: var cint): nk_bool {.importc, nodecl.}
+  var active: cint = (if checked: 1 else: 0)
+  result = nk_checkbox_label(ctx = ctx, text = label.cstring,
+      active = active) == nk_true
+  checked = active == 1
