@@ -45,7 +45,7 @@ type
 
 proc main() =
 
-  var ctx = nuklearInit(windowWidth, windowHeight, windowName)
+  let ctx = nuklearInit(windowWidth, windowHeight, windowName)
 
   var
     op: difficulty = easy
@@ -54,13 +54,13 @@ proc main() =
   while true:
     let started = cpuTime()
     # Input
-    if nuklearInput(ctx):
+    if nuklearInput():
       break
 
     # GUI
-    if createWin(ctx, "Demo", 50.0, 50.0, 200.0, 200.0, bitor(
-        nkWindowBorder, nkWindowMoveable, nkWindowScalable, nkWindowCloseable,
-        nkWindowMinimizable, nkWindowTitle)):
+    window(name = "Demo", x = 50, y = 50, w = 200, h = 200, {nkWindowBorder,
+        nkWindowMoveable, nkWindowScalable, nkWindowCloseable,
+        nkWindowMinimizable, nkWindowTitle}):
       nk_layout_row_static(ctx, 30.0, 80, 1)
       if nk_button_label(ctx, "button"):
         echo "button pressed"
@@ -71,7 +71,6 @@ proc main() =
         op = hard
       nk_layout_row_dynamic(ctx, 25.0, 1)
       nk_property_int(ctx, "Compression:", 0, property, 100, 10, 1.0)
-    nk_end(ctx)
     if nk_window_is_hidden(ctx, "Demo") > 0:
       break
     overview(ctx)

@@ -48,20 +48,12 @@ const
   widthTwo = [100.cfloat, 200, 50]
   names = ["Lines".cstring, "Columns", "Mixed"]
 var
-  showMenu: cint = nk_true.cint
-  titlebar: cint = nk_true.cint
-  border: cint = nk_true.cint
-  resize: cint = nk_true.cint
-  movable: cint = nk_true.cint
-  noScrollbar: cint = nk_false.cint
-  scaleLeft: cint = nk_false.cint
-  windowFlags: nk_flags = 0
-  minimizable: cint = nk_true.cint
-  showAppAbout: cint = 0
+  showMenu, titlebar, border, resize, movable, noScrollbar, scaleLeft, minimizable, check, mcheck, checkbox, inactive: bool = true
+  windowFlags: set[WindowFlags]
+  showAppAbout: bool = false
   headerAlign: nk_style_header_align = NK_HEADER_RIGHT
   prog, progValue = 40
   slider, mslider, propertyInt, propertyNeg: cint = 10
-  check, mcheck, checkbox: cint = nk_true.cint
   mprog = 60
   menuState = MENU_NONE
   state = NK_MINIMIZED
@@ -75,7 +67,6 @@ var
   rangeIntMin: cint = 0
   rangeIntMax: cint = 2048
   rangeIntValue: cint = 4096
-  inactive: cint = 1
   selected: array[4, nk_bool] = [nk_false, nk_false, nk_true, nk_false]
   selected2: array[16, nk_bool] = [nk_true, nk_false, nk_false, nk_false,
     nk_false, nk_true, nk_false, nk_false, nk_false, nk_false, nk_true,
@@ -113,36 +104,36 @@ var
   a, b, c: cfloat = 100
 
 proc overview*(ctx: PContext) =
-  windowFlags = 0
+  windowFlags = {}
   headerAlign(ctx, header_align)
-  if border.bool:
-    windowFlags = windowFlags or nkWindowBorder
-  if resize.bool:
-    windowFlags = windowFlags or nkWindowScalable
-  if movable.bool:
-    windowFlags = windowFlags or nkWindowMoveable
-  if noScrollbar.bool:
-    windowFlags = windowFlags or nkWindowNoScrollbar
-  if scaleLeft.bool:
-    windowFlags = windowFlags or nkWindowScaleLeft
-  if minimizable.bool:
-    windowFlags = windowFlags or nkWindowMinimizable
-  if createWin(ctx, "Overview", 275, 10, 400, 600, windowFlags):
-    if showMenu.bool:
+  if border:
+    windowFlags.incl(windowBorder)
+  if resize:
+    windowFlags.incl(windowScalable)
+  if movable:
+    windowFlags.incl(windowMoveable)
+  if noScrollbar:
+    windowFlags.incl(windowNoScrollbar)
+  if scaleLeft:
+    windowFlags.incl(windowScaleLeft)
+  if minimizable:
+    windowFlags.incl(windowMinimizable)
+  window("Overview", 275, 10, 400, 600, windowFlags):
+    if showMenu:
       # menubar
       nk_menubar_begin(ctx)
       # menu #1
       nk_layout_row_begin(ctx, NK_STATIC, 25, 5)
       nk_layout_row_push(ctx, 45)
       if createMenu(ctx, "MENU", NK_TEXT_LEFT, 120, 200):
-        nk_layout_row_dynamic(ctx, 25, 1)
+        setLayoutRowDynamic(25, 1)
         if nk_menu_item_label(ctx, "Hide", NK_TEXT_LEFT):
-          showMenu = 0
+          showMenu = true
         if nk_menu_item_label(ctx, "About", NK_TEXT_LEFT):
-          showAppAbout = 1
+          showAppAbout = true
         discard nk_progress(ctx, prog, 100, nk_true)
         discard nk_slider_int(ctx, 0, slider, 16, 1)
-        discard nk_checkbox_label(ctx, "check", check)
+        checkbox("check", check)
         nk_menu_end(ctx)
       # menu 2
       nk_layout_row_push(ctx, 60)
@@ -180,7 +171,7 @@ proc overview*(ctx: PContext) =
         state = (if menuState == MENU_CHART: NK_MAXIMIZED else: NK_MINIMIZED)
         if nk_tree_state_push(ctx, NK_TREE_TAB, "CHART", state):
           menuState = MENU_CHART
-          nk_layout_row_dynamic(ctx, 150, 1)
+          setLayoutRowDynamic(150, 1)
           discard nk_chart_begin(ctx, NK_CHART_COLUMN, values.len, 0, 50)
           for value in values:
             discard nk_chart_push(ctx, value)
@@ -193,54 +184,53 @@ proc overview*(ctx: PContext) =
       nk_layout_row_push(ctx, 70)
       discard nk_progress(ctx, mprog, 100, nk_true)
       discard nk_slider_int(ctx, 0, mslider, 16, 1);
-      discard nk_checkbox_label(ctx, "check", mcheck)
+      checkbox("check", mcheck)
       nk_menubar_end(ctx)
-    if showAppAbout.bool:
-      if createPopup(ctx, NK_POPUP_STATIC, "About", nkWindowCloseable, 20, 100,
-          300, 190):
-        nk_layout_row_dynamic(ctx, 20, 1)
-        nk_label(ctx, "Nuklear", NK_TEXT_LEFT)
-        nk_label(ctx, "By Micha Mettke", NK_TEXT_LEFT)
-        nk_label(ctx, "nuklear is licensed under the public domain License.",
-            NK_TEXT_LEFT)
-        nk_popup_end(ctx)
-      else:
-        showAppAbout = 0
+    if showAppAbout:
+      try:
+        popup(staticPopup, "About", {windowCloseable}, 20, 100,
+            300, 190):
+          setLayoutRowDynamic(20, 1)
+          label("Nuklear")
+          label("By Micha Mettke")
+          label("nuklear is licensed under the public domain License.")
+      except:
+        showAppAbout = false
     if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Window", NK_MINIMIZED,
         "overview151", 12, 151):
-      nk_layout_row_dynamic(ctx, 30, 2)
-      discard nk_checkbox_label(ctx, "Titlebar", titlebar)
-      discard nk_checkbox_label(ctx, "Menu", showMenu)
-      discard nk_checkbox_label(ctx, "Border", border)
-      discard nk_checkbox_label(ctx, "Resizable", resize)
-      discard nk_checkbox_label(ctx, "Movable", movable)
-      discard nk_checkbox_label(ctx, "No Scrollbar", noScrollbar)
-      discard nk_checkbox_label(ctx, "Minimizable", minimizable)
-      discard nk_checkbox_label(ctx, "Scale Left", scaleLeft)
+      setLayoutRowDynamic(30, 2)
+      checkbox("Titlebar", titlebar)
+      checkbox("Menu", showMenu)
+      checkbox("Border", border)
+      checkbox("Resizable", resize)
+      checkbox("Movable", movable)
+      checkbox("No Scrollbar", noScrollbar)
+      checkbox("Minimizable", minimizable)
+      checkbox("Scale Left", scaleLeft)
       nk_tree_pop(ctx)
     if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Widgets", NK_MINIMIZED,
         "overview163", 12, 163):
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Text", NK_MINIMIZED,
           "overview165", 12, 165):
-        nk_layout_row_dynamic(ctx, 20, 1)
-        nk_label(ctx, "Label aligned left", NK_TEXT_LEFT)
-        nk_label(ctx, "Label aligned centered", NK_TEXT_CENTERED)
-        nk_label(ctx, "Label aligned right", NK_TEXT_RIGHT)
+        setLayoutRowDynamic(20, 1)
+        label("Label aligned left")
+        label("Label aligned centered", centered)
+        label("Label aligned right", right)
         colorLabel(ctx, "Blue text", NK_TEXT_LEFT, 0, 0, 255)
         colorLabel(ctx, "Yellow text", NK_TEXT_LEFT, 255, 255, 0)
         nk_text(ctx, "Text without /0", 15, NK_TEXT_RIGHT)
         nk_layout_row_static(ctx, 100, 200, 1)
         nk_label_wrap(ctx, "This is a very long line to hopefully get this text to be wrapped into multiple lines to show line wrapping")
-        nk_layout_row_dynamic(ctx, 100, 1)
+        setLayoutRowDynamic(100, 1)
         nk_label_wrap(ctx, "This is another long text to show dynamic window changes on multiline text")
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Button", NK_MINIMIZED,
           "overview180", 12, 180):
         nk_layout_row_static(ctx, 30, 100, 3)
-        if nk_button_label(ctx, "Button"):
+        labelButton("Button"):
           echo "Button pressed!"
         nk_button_set_behavior(ctx, NK_BUTTON_REPEATER)
-        if nk_button_label(ctx, "Repeater"):
+        labelButton("Repeater"):
           echo "Repeater is being pressed!"
         nk_button_set_behavior(ctx, NK_BUTTON_DEFAULT)
         discard colorButton(ctx, 0, 0, 255)
@@ -262,7 +252,7 @@ proc overview*(ctx: PContext) =
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Basic", NK_MINIMIZED,
           "overview204", 12, 204):
         nk_layout_row_static(ctx, 30, 100, 1)
-        discard nk_checkbox_label(ctx, "Checkbox", checkbox)
+        checkbox("Checkbox", checkbox)
         nk_layout_row_static(ctx, 30, 80, 3)
         if nk_option_label(ctx, "optionA", (if option == A: 1 else: 0)):
           option = A
@@ -273,20 +263,20 @@ proc overview*(ctx: PContext) =
         nk_layout_row(ctx, NK_STATIC, 30, 2, ratio.unsafeAddr)
         nk_labelf(ctx, NK_TEXT_LEFT, "Slider int")
         discard nk_slider_int(ctx, 0, intSlider, 10, 1)
-        nk_label(ctx, "Slider float", NK_TEXT_LEFT)
+        label("Slider float")
         discard nk_slider_float(ctx, 0, float_slider, 5.0, 0.5f)
         nk_labelf(ctx, NK_TEXT_LEFT, "Progressbar: %u", progValue)
         discard nk_progress(ctx, prog_value, 100, nk_true)
         nk_layout_row(ctx, NK_STATIC, 25, 2, ratio.unsafeAddr)
-        nk_label(ctx, "Property float:", NK_TEXT_LEFT)
+        label("Property float:")
         nk_property_float(ctx, "Float:", 0, propertyFloat, 64.0, 0.1, 0.2)
-        nk_label(ctx, "Property int:", NK_TEXT_LEFT)
+        label("Property int:")
         nk_property_int(ctx, "Int:", 0, propertyInt, 100, 1, 1)
-        nk_label(ctx, "Property neg:", NK_TEXT_LEFT)
+        label("Property neg:")
         nk_property_int(ctx, "Neg:", -10, propertyNeg, 10, 1, 1)
-        nk_layout_row_dynamic(ctx, 25, 1)
-        nk_label(ctx, "Range:", NK_TEXT_LEFT)
-        nk_layout_row_dynamic(ctx, 25, 3)
+        setLayoutRowDynamic(25, 1)
+        label("Range:")
+        setLayoutRowDynamic(25, 3)
         nk_property_float(ctx, "#min:", 0, rangeFloatMin, rangeFloatMax, 1.0, 0.2)
         nk_property_float(ctx, "#float:", rangeFloatMin, rangeFloatValue,
             rangeFloatMax, 1.0, 0.2)
@@ -298,8 +288,8 @@ proc overview*(ctx: PContext) =
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Inactive", NK_MINIMIZED,
           "overview257", 12, 257):
-        nk_layout_row_dynamic(ctx, 30, 1)
-        discard nk_checkbox_label(ctx, "Inactive", inactive)
+        setLayoutRowDynamic(30, 1)
+        checkbox("Inactive", inactive)
         nk_layout_row_static(ctx, 30, 80, 1)
         if inactive == 1:
           saveButtonStyle(ctx)
@@ -311,10 +301,12 @@ proc overview*(ctx: PContext) =
           setButtonStyle(ctx, textNormal, 60, 60, 60)
           setButtonStyle(ctx, textHover, 60, 60, 60)
           setButtonStyle(ctx, textActive, 60, 60, 60)
-          discard nk_button_label(ctx, "button")
+          labelButton("button"):
+            discard
           restoreButtonStyle(ctx)
-        elif nk_button_label(ctx, "button"):
-          echo "button pressed"
+        else:
+          labelButton("button"):
+            echo "button pressed"
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Selectable", NK_MINIMIZED,
           "overview275", 12, 275):
