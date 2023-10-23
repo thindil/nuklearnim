@@ -42,7 +42,7 @@ const
   values = [26.0, 13.0, 30.0, 15.0, 25.0, 10.0, 20.0, 40.0, 12.0, 8.0, 22.0,
       28.0, 5.0]
   ratio = [120.0.cfloat, 150.0]
-  weapons = ["Fist".cstring, "Pistol", "Shotgun", "Plasma", "BFG"]
+  weapons = ["Fist", "Pistol", "Shotgun", "Plasma", "BFG"]
   chartStep = ((2.0 * 3.141592654) / 32.0).float
   ratioTwo = [0.2.cfloat, 0.6, 0.2]
   widthTwo = [100.cfloat, 200, 50]
@@ -71,7 +71,7 @@ var
   selected2: array[16, nk_bool] = [nk_true, nk_false, nk_false, nk_false,
     nk_false, nk_true, nk_false, nk_false, nk_false, nk_false, nk_true,
     nk_false, nk_false, nk_false, nk_false, nk_true]
-  currentWeapon: cint = 0
+  currentWeapon: int = 0
   comboColor: NimColor = NimColor(r: 130, g: 50, b: 50, a: 255)
   comboColor2: NimColorF = NimColorF(r: 0.509, g: 0.705, b: 0.2, a: 1.0)
   colMode: ColorMode
@@ -79,16 +79,16 @@ var
   progB: nk_size = 40
   progC: nk_size = 10
   progD: nk_size = 90
-  checkValues: array[5, cint]
+  checkValues: array[5, bool]
   position: array[3, cfloat]
   chartSelection: cfloat = 8.0
   timeSelected, dateSelected, popupActive: bool = false
   selectedDate: DateTime
-  text: array[9, array[64, char]]
+  text: array[9, string]
   textLen: array[9, cint] = [0.cint, 0, 0, 0, 0, 0, 0, 0, 0]
-  fieldLen, boxLen: cint
-  fieldBuffer: array[64, char]
-  boxBuffer: array[512, char]
+  boxLen: cint
+  fieldBuffer: string
+  boxBuffer: string
   boxActive: nk_flags
   lineIndex, colIndex = -1
   popupColor: NimColor = NimColor(r: 255, g: 0, b: 0, a: 255)
@@ -317,7 +317,7 @@ proc overview*(ctx: PContext) =
               selected[0])
           discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT,
               selected[1])
-          nk_label(ctx, "Not Selectable", NK_TEXT_LEFT)
+          label("Not Selectable")
           discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT,
               selected[2])
           discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT,
@@ -344,28 +344,28 @@ proc overview*(ctx: PContext) =
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Combo", NK_MINIMIZED,
           "overview312", 12, 312):
         nk_layout_row_static(ctx, 25, 200, 1);
-        currentWeapon = createCombo(ctx, weapons, currentWeapon, 25, 200, 200)
+        currentWeapon = comboList(weapons, currentWeapon, 25, 200, 200)
         if createColorCombo(ctx, comboColor, 200, 200):
           let ratios: array[2, cfloat] = [0.15.cfloat, 0.85]
           nk_layout_row(ctx, NK_DYNAMIC, 30, 2, ratios.unsafeAddr)
-          nk_label(ctx, "R:", NK_TEXT_LEFT)
+          label("R:")
           comboColor.r = nk_slide_int(ctx, 0, comboColor.r, 255, 5)
-          nk_label(ctx, "G:", NK_TEXT_LEFT)
+          label("G:")
           comboColor.g = nk_slide_int(ctx, 0, comboColor.g, 255, 5)
-          nk_label(ctx, "B:", NK_TEXT_LEFT)
+          label("B:")
           comboColor.b = nk_slide_int(ctx, 0, comboColor.b, 255, 5)
-          nk_label(ctx, "A:", NK_TEXT_LEFT)
+          label("A:")
           comboColor.a = nk_slide_int(ctx, 0, comboColor.a, 255, 5)
           nk_combo_end(ctx)
         if createColorCombo(ctx, comboColor2, 200, 400):
-          nk_layout_row_dynamic(ctx, 120, 1)
+          setLayoutRowDynamic(120, 1)
           comboColor2 = colorPicker(ctx, comboColor2, NK_RGBA)
-          nk_layout_row_dynamic(ctx, 25, 2);
+          setLayoutRowDynamic(25, 2)
           if nk_option_label(ctx, "RGB", (if colMode == COL_RGB: 1 else: 0)):
             colMode = COL_RGB
           if nk_option_label(ctx, "HSV", (if colMode == COL_HSV: 1 else: 0)):
             colMode = COL_HSV
-          nk_layout_row_dynamic(ctx, 25, 1)
+          setLayoutRowDynamic(25, 1)
           if colMode == COL_RGB:
             comboColor2.r = nk_propertyf(ctx, "#R:", 0, comboColor2.r, 1.0,
                 0.01, 0.005)
@@ -386,7 +386,7 @@ proc overview*(ctx: PContext) =
           nk_combo_end(ctx)
         var sum = $(progA + progB + progC + progD)
         if createLabelCombo(ctx, sum.cstring, 200, 200):
-          nk_layout_row_dynamic(ctx, 30, 1)
+          setLayoutRowDynamic(30, 1)
           discard nk_progress(ctx, progA, 100, nk_true)
           discard nk_progress(ctx, progB, 100, nk_true)
           discard nk_progress(ctx, progC, 100, nk_true)
@@ -394,23 +394,23 @@ proc overview*(ctx: PContext) =
           nk_combo_end(ctx)
         sum = $checkValues.sum()
         if createLabelCombo(ctx, sum.cstring, 200, 200):
-          nk_layout_row_dynamic(ctx, 30, 1)
-          discard nk_checkbox_label(ctx, weapons[0], checkValues[0])
-          discard nk_checkbox_label(ctx, weapons[1], checkValues[1])
-          discard nk_checkbox_label(ctx, weapons[2], checkValues[2])
-          discard nk_checkbox_label(ctx, weapons[3], checkValues[3])
-          discard nk_checkbox_label(ctx, weapons[4], checkValues[4])
+          setLayoutRowDynamic(30, 1)
+          checkBox(weapons[0], checkValues[0])
+          checkBox(weapons[1], checkValues[1])
+          checkBox(weapons[2], checkValues[2])
+          checkBox(weapons[3], checkValues[3])
+          checkBox(weapons[4], checkValues[4])
           nk_combo_end(ctx)
         sum = $position[0] & " " & $position[1] & " " & $position[2]
         if createLabelCombo(ctx, sum.cstring, 200, 200):
-          nk_layout_row_dynamic(ctx, 25, 1)
+          setLayoutRowDynamic(25, 1)
           nk_property_float(ctx, "#X:", -1024.0, position[0], 1024.0, 1, 0.5)
           nk_property_float(ctx, "#Y:", -1024.0, position[1], 1024.0, 1, 0.5)
           nk_property_float(ctx, "#Z:", -1024.0, position[2], 1024.0, 1, 0.5)
           nk_combo_end(ctx)
         sum = $chartSelection
         if createLabelCombo(ctx, sum.cstring, 200, 250):
-          nk_layout_row_dynamic(ctx, 150, 1)
+          setLayoutRowDynamic(150, 1)
           discard nk_chart_begin(ctx, NK_CHART_COLUMN, values.len, 0, 50)
           for value in values:
             var res = nk_chart_push(ctx, value)
@@ -425,7 +425,7 @@ proc overview*(ctx: PContext) =
             $selectedDate.second
         if createLabelCombo(ctx, sum.cstring, 200, 250):
           timeSelected = true
-          nk_layout_row_dynamic(ctx, 25, 1)
+          setLayoutRowDynamic(25, 1)
           {.warning[Deprecated]: off.}
           selectedDate.second = nk_propertyi(ctx, "#S:", 0, selectedDate.second,
               60, 1, 1)
@@ -448,7 +448,7 @@ proc overview*(ctx: PContext) =
               selectedDate.monthZero = selectedDate.month.ord - 1
           nk_layout_row_push(ctx, 0.9)
           sum = $selectedDate.month & " " & $selectedDate.year
-          nk_label(ctx, sum.cstring, NK_TEXT_CENTERED)
+          label(sum, centered)
           nk_layout_row_push(ctx, 0.05)
           if nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_RIGHT):
             if selectedDate.month == mDec:
@@ -457,17 +457,17 @@ proc overview*(ctx: PContext) =
             else:
               selectedDate.monthZero = selectedDate.month.ord + 1
           nk_layout_row_end(ctx)
-          nk_layout_row_dynamic(ctx, 35, 7)
+          setLayoutRowDynamic(35, 7)
           for day in WeekDay:
             sum = $day
-            nk_label(ctx, sum.cstring, NK_TEXT_CENTERED)
+            label(sum, centered)
           var spacing = getDayOfWeek(1, selectedDate.month,
               selectedDate.year).ord - dMon.ord
           if spacing > 0:
             nk_spacing(ctx, spacing.cint)
           for i in 1 .. getDaysInMonth(selectedDate.month, selectedDate.year):
             sum = $i
-            if nk_button_label(ctx, sum.cstring):
+            labelButton(sum):
               selectedDate.monthdayZero = i
               nk_combo_close(ctx)
           {.warning[Deprecated]: on.}
@@ -476,40 +476,29 @@ proc overview*(ctx: PContext) =
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Input", NK_MINIMIZED,
           "overview461", 12, 461):
         nk_layout_row(ctx, NK_STATIC, 25, 2, ratio.unsafeAddr)
-        nk_label(ctx, "Default:", NK_TEXT_LEFT)
-        discard nk_edit_string(ctx, NK_EDIT_SIMPLE, text[0].unsafeAddr,
-            text_len[0], 64, nk_filter_default)
-        nk_label(ctx, "Int:", NK_TEXT_LEFT)
-        discard nk_edit_string(ctx, NK_EDIT_SIMPLE, text[1].unsafeAddr,
-            text_len[1], 64, nk_filter_decimal)
-        nk_label(ctx, "Float:", NK_TEXT_LEFT)
-        discard nk_edit_string(ctx, NK_EDIT_SIMPLE, text[2].unsafeAddr,
-            text_len[2], 64, nk_filter_float)
-        nk_label(ctx, "Hex:", NK_TEXT_LEFT)
-        discard nk_edit_string(ctx, NK_EDIT_SIMPLE, text[4].unsafeAddr,
-            text_len[4], 64, nk_filter_hex)
-        nk_label(ctx, "Octal:", NK_TEXT_LEFT)
-        discard nk_edit_string(ctx, NK_EDIT_SIMPLE, text[5].unsafeAddr,
-            text_len[5], 64, nk_filter_oct)
-        nk_label(ctx, "Binary:", NK_TEXT_LEFT)
-        discard nk_edit_string(ctx, NK_EDIT_SIMPLE, text[6].unsafeAddr,
-            text_len[6], 64, nk_filter_binary)
-        nk_label(ctx, "Password:", NK_TEXT_LEFT)
-        let oldLen = text_len[8]
-        var buffer: array[64, char]
-        for i in 0 .. oldLen:
-          buffer[i] = '*'
-        discard nk_edit_string(ctx, NK_EDIT_FIELD, buffer.unsafeAddr,
-            text_len[8], 64, nk_filter_default)
-        if old_len < text_len[8]:
-          text[8][oldLen] = buffer[text_len[8] - 1]
-        nk_label(ctx, "Field:", NK_TEXT_LEFT)
-        discard nk_edit_string(ctx, NK_EDIT_FIELD, fieldBuffer.unsafeAddr,
-            fieldLen, 64, nk_filter_default)
-        nk_label(ctx, "Box:", NK_TEXT_LEFT)
+        label("Default:")
+        editString(text[0], 64)
+        label("Int:")
+        editString(text[1], 64, filter = nk_filter_decimal)
+        label("Float:")
+        editString(text[2], 64, filter = nk_filter_float)
+        label("Hex:")
+        editString(text[4], 64, filter = nk_filter_hex)
+        label("Octal:")
+        editString(text[5], 64, filter = nk_filter_oct)
+        label("Binary:")
+        editString(text[6], 64, filter = nk_filter_binary)
+        label("Password:")
+        var buffer = text[8]
+        for ch in buffer.mitems:
+          ch = '*'
+        editString(buffer, 64, field)
+        text[8] = buffer
+        label("Field:")
+        editString(fieldBuffer, 64, field)
+        label("Box:")
         nk_layout_row_static(ctx, 180, 278, 1)
-        discard nk_edit_string(ctx, NK_EDIT_BOX, boxBuffer.unsafeAddr,
-            boxLen, 512, nk_filter_default)
+        editString(boxBuffer, 512, box)
         nk_layout_row(ctx, NK_STATIC, 25, 2, ratio.unsafeAddr)
         boxActive = nk_edit_string(ctx, (NK_EDIT_FIELD.cint or
             NK_EDIT_SIG_ENTER.cint), text[7].unsafeAddr, text_len[7], 64, nk_filter_ascii)
