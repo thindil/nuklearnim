@@ -89,7 +89,7 @@ var
   boxLen: cint
   fieldBuffer: string
   boxBuffer: string
-  boxActive: nk_flags
+  boxActive: EditEvent
   lineIndex, colIndex = -1
   popupColor: NimColor = NimColor(r: 255, g: 0, b: 0, a: 255)
   groupTitlebar: cint = nk_false.cint
@@ -392,7 +392,7 @@ proc overview*(ctx: PContext) =
           discard nk_progress(ctx, progC, 100, nk_true)
           discard nk_progress(ctx, progD, 100, nk_true)
           nk_combo_end(ctx)
-        sum = $checkValues.sum()
+        sum = $(checkValues[0] + checkValues[1] + checkValues[2] + checkValues[3] + checkValues[4])
         if createLabelCombo(ctx, sum.cstring, 200, 200):
           setLayoutRowDynamic(30, 1)
           checkBox(weapons[0], checkValues[0])
@@ -500,10 +500,15 @@ proc overview*(ctx: PContext) =
         nk_layout_row_static(ctx, 180, 278, 1)
         editString(boxBuffer, 512, box)
         nk_layout_row(ctx, NK_STATIC, 25, 2, ratio.unsafeAddr)
-        boxActive = nk_edit_string(ctx, (NK_EDIT_FIELD.cint or
-            NK_EDIT_SIG_ENTER.cint), text[7].unsafeAddr, text_len[7], 64, nk_filter_ascii)
-        if nk_button_label(ctx, "Submit") or (boxActive.cint and
-            NK_EDIT_COMMITED.cint) == NK_EDIT_COMMITED.cint:
+        boxActive = editString(text[7], 64, field, nk_filter_ascii, {sigEnter})
+        labelButton("Submit"):
+          text[7][text_len[7]] = '\n'
+          text_len[7].inc
+          for i in 0 .. text_len[7]:
+            boxBuffer[i + boxLen] = text[7][i]
+          boxLen = boxLen + textLen[7]
+          textLen[7] = 0
+        if boxActive == commited:
           text[7][text_len[7]] = '\n'
           text_len[7].inc
           for i in 0 .. text_len[7]:
@@ -517,7 +522,7 @@ proc overview*(ctx: PContext) =
       var
         chartId: cfloat = 0
         chartIndex = -1
-      nk_layout_row_dynamic(ctx, 100, 1)
+      setLayoutRowDynamic(100, 1)
       if nk_chart_begin(ctx, NK_CHART_LINES, 32, -1.0, 1.0):
         for i in 0 .. 31:
           var res = nk_chart_push(ctx, cos(chartId).cfloat)
@@ -531,10 +536,10 @@ proc overview*(ctx: PContext) =
         nk_tooltipf(ctx, "Value: %.2f", cos(chartIndex.cfloat *
             chartStep).cfloat)
       if lineIndex != 1:
-        nk_layout_row_dynamic(ctx, 20, 1)
+        setLayoutRowDynamic(20, 1)
         nk_labelf(ctx, NK_TEXT_LEFT, "Selected value: %.2f", cos(
             chartIndex.cfloat * chartStep).cfloat)
-      nk_layout_row_dynamic(ctx, 100, 1)
+      setLayoutRowDynamic(100, 1)
       if nk_chart_begin(ctx, NK_CHART_COLUMN, 32, 0.0, 1.0):
         for i in 0 .. 31:
           var res = nk_chart_push(ctx, abs(sin(chartId)))
@@ -548,10 +553,10 @@ proc overview*(ctx: PContext) =
         nk_tooltipf(ctx, "Value: %.2f", abs(sin(chartStep *
             chartIndex.cfloat).cfloat));
       if col_index != -1:
-        nk_layout_row_dynamic(ctx, 20, 1)
+        setLayoutRowDynamic(20, 1)
         nk_labelf(ctx, NK_TEXT_LEFT, "Selected value: %.2f", abs(sin(
             chartStep * colIndex.cfloat).cfloat))
-      nk_layout_row_dynamic(ctx, 100, 1)
+      setLayoutRowDynamic(100, 1)
       if nk_chart_begin(ctx, NK_CHART_COLUMN, 32, 0.0, 1.0):
         nk_chart_add_slot(ctx, NK_CHART_LINES, 32, -1.0, 1.0)
         nk_chart_add_slot(ctx, NK_CHART_LINES, 32, -1.0, 1.0)
@@ -562,7 +567,7 @@ proc overview*(ctx: PContext) =
           discard nk_chart_push_slot(ctx, sin(chartId), 2)
           chartId = chartId + chartStep
         nk_chart_end(ctx)
-      nk_layout_row_dynamic(ctx, 100, 1)
+      setLayoutRowDynamic(100, 1)
       if createColorChart(ctx, NK_CHART_LINES, NimColor(r: 255, g: 0, b: 0),
           NimColor(r: 150, g: 0, b: 0), 32, 0.0, 1.0):
         addColorChartSlot(ctx, NK_CHART_LINES, NimColor(r: 0, g: 0, b: 255),
@@ -581,14 +586,14 @@ proc overview*(ctx: PContext) =
         "overview584", 12, 584):
       nk_layout_row_static(ctx, 30, 160, 1)
       var bounds = getWidgetBounds(ctx)
-      nk_label(ctx, "Right click me for menu", NK_TEXT_LEFT)
+      label("Right click me for menu")
       if createContextual(ctx, 0, 100, 300, bounds):
-        nk_layout_row_dynamic(ctx, 25, 1);
-        discard nk_checkbox_label(ctx, "Menu", showMenu)
+        setLayoutRowDynamic(25, 1);
+        checkbox("Menu", showMenu)
         discard nk_progress(ctx, prog, 100, nk_true)
         discard nk_slider_int(ctx, 0, slider, 16, 1)
         if nk_contextual_item_label(ctx, "About", NK_TEXT_CENTERED):
-          showAppAbout = nk_true.cint
+          showAppAbout = true
         discard nk_selectable_label(ctx, ((if selected[0] ==
             nk_true: "Uns" else: "S") & "elect").cstring, NK_TEXT_LEFT,
             selected[0])
@@ -604,13 +609,13 @@ proc overview*(ctx: PContext) =
         nk_contextual_end(ctx)
       nk_layout_row_begin(ctx, NK_STATIC, 30, 2)
       nk_layout_row_push(ctx, 120)
-      nk_label(ctx, "Right Click here:", NK_TEXT_LEFT)
+      label("Right Click here:")
       nk_layout_row_push(ctx, 50)
       bounds = getWidgetBounds(ctx)
       discard colorButton(ctx, popupColor.r, popupColor.g, popupColor.b)
       nk_layout_row_end(ctx)
       if createContextual(ctx, 0, 350, 60, bounds):
-        nk_layout_row_dynamic(ctx, 30, 4);
+        setLayoutRowDynamic(30, 4);
         popupColor.r = nk_propertyi(ctx, "#r", 0, popupColor.r, 255, 1, 1)
         popupColor.g = nk_propertyi(ctx, "#g", 0, popupColor.g, 255, 1, 1)
         popupColor.b = nk_propertyi(ctx, "#b", 0, popupColor.b, 255, 1, 1)
@@ -618,24 +623,24 @@ proc overview*(ctx: PContext) =
         nk_contextual_end(ctx)
       nk_layout_row_begin(ctx, NK_STATIC, 30, 2)
       nk_layout_row_push(ctx, 120)
-      nk_label(ctx, "Popup:", NK_TEXT_LEFT)
+      label("Popup:")
       nk_layout_row_push(ctx, 50)
-      if nk_button_label(ctx, "Popup"):
+      labelButton("Popup"):
         popup_active = true
       nk_layout_row_end(ctx)
       if popupActive:
-        if createPopup(ctx, NK_POPUP_STATIC, "Error", 0, 20, 100, 220, 90):
-          nk_layout_row_dynamic(ctx, 25, 1)
-          nk_label(ctx, "A terrible error as occurred", NK_TEXT_LEFT)
-          nk_layout_row_dynamic(ctx, 25, 2)
-          if nk_button_label(ctx, "OK"):
-            popupActive = false
-            nk_popup_close(ctx)
-          if nk_button_label(ctx, "Cancel"):
-            popupActive = false
-            nk_popup_close(ctx)
-          nk_popup_end(ctx)
-        else:
+        try:
+          popup(staticPopup, "Error", {windowNoFlags}, 20, 100, 220, 90):
+            setLayoutRowDynamic(25, 1)
+            label("A terrible error as occurred")
+            setLayoutRowDynamic(25, 2)
+            labelButton("OK"):
+              popupActive = false
+              closePopup()
+            labelButton("Cancel"):
+              popupActive = false
+              closePopup()
+        except:
           popupActive = false
       nk_layout_row_static(ctx, 30, 150, 1)
       bounds = getWidgetBounds(ctx)
