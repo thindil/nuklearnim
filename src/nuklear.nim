@@ -90,26 +90,6 @@ type
   nk_chart_event* = enum
     NK_CHART_HOVERING = 0x01,
     NK_CHART_CLICKED = 0x02
-  nk_edit_flags* = enum
-    NK_EDIT_DEFAULT = 0,
-    NK_EDIT_READ_ONLY = 1 shl 0,
-    NK_EDIT_AUTO_SELECT = 1 shl 1,
-    NK_EDIT_SIG_ENTER = 1 shl 2,
-    NK_EDIT_ALLOW_TAB = 1 shl 3,
-    NK_EDIT_NO_CURSOR = 1 shl 4,
-    NK_EDIT_SELECTABLE = 1 shl 5,
-    NK_EDIT_CLIPBOARD = 1 shl 6,
-    NK_EDIT_CTRL_ENTER_NEWLINE = 1 shl 7,
-    NK_EDIT_NO_HORIZONTAL_SCROLL = 1 shl 8,
-    NK_EDIT_ALWAYS_INSERT_MODE = 1 shl 9,
-    NK_EDIT_MULTILINE = 1 shl 10,
-    NK_EDIT_GOTO_END_ON_ACTIVATE = 1 shl 11
-  nk_edit_events* = enum
-    NK_EDIT_ACTIVE = 1 shl 0,
-    NK_EDIT_INACTIVE = 1 shl 1,
-    NK_EDIT_ACTIVATED = 1 shl 2,
-    NK_EDIT_DEACTIVATED = 1 shl 3,
-    NK_EDIT_COMMITED = 1 shl 4
   nk_buttons* = enum
     NK_BUTTON_LEFT, NK_BUTTON_MIDDLE, NK_BUTTON_RIGHT, NK_BUTTON_DOUBLE, NK_BUTTON_MAX
   nk_style_colors* = enum
@@ -474,15 +454,35 @@ type
     left = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_LEFT.int,
     centered = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_CENTERED.int,
     right = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_RIGHT.int
+  EditFlags* {.size: sizeof(cint).} = enum
+    ## The edit fields' flags
+    default = 0,
+    readOnly = 1 shl 0,
+    autoSelect = 1 shl 1,
+    sigEnter = 1 shl 2,
+    allowTab = 1 shl 3,
+    noCursor = 1 shl 4,
+    selectable = 1 shl 5,
+    clipboard = 1 shl 6,
+    ctrlEnterNewLine = 1 shl 7,
+    noHorizontalScroll = 1 shl 8,
+    alwaysInsertMode = 1 shl 9,
+    multiline = 1 shl 10,
+    gotoEndOnActivate = 1 shl 11
+  EditEvent* {.size: sizeof(cint).} = enum
+    ## The events which happen in a text field
+    active = 1 shl 0,
+    inactive = 1 shl 1,
+    activated = 1 shl 2,
+    deactivated = 1 shl 3,
+    commited = 1 shl 4
   EditTypes* {.size: sizeof(cint).} = enum
     ## The types of edit fields
-    simple = NK_EDIT_ALWAYS_INSERT_MODE,
-    field = simple.int or NK_EDIT_SELECTABLE.int or
-        NK_EDIT_CLIPBOARD.int,
-    editor = NK_EDIT_ALLOW_TAB.int or NK_EDIT_SELECTABLE.int or
-        NK_EDIT_CLIPBOARD.int or NK_EDIT_MULTILINE.int,
-    box = NK_EDIT_ALWAYS_INSERT_MODE.int or NK_EDIT_SELECTABLE.int or
-        NK_EDIT_MULTILINE.int or NK_EDIT_ALLOW_TAB.int or NK_EDIT_CLIPBOARD.int
+    simple = alwaysInsertMode,
+    field = simple.int or selectable.int or clipboard.int,
+    editor = allowTab.int or selectable.int or clipboard.int or multiline.int,
+    box = alwaysInsertMode.int or selectable.int or multiline.int or
+        allowTab.int or clipboard.int
   PluginFilter* = proc (box: ptr nk_text_edit;
       unicode: nk_rune): nk_bool {.cdecl.}
     ## The procedure used to filter input in edit fields
@@ -496,7 +496,7 @@ converter toBool*(x: nk_bool): bool =
 converter toNkFlags*(x: nk_text_alignment): nk_flags =
   ## Converts Nuklear nk_text_alignment enum to Nuklear nk_flags type
   x.ord.cint
-converter toNkFlags(x: EditTypes): nk_flags =
+converter toNkFlags*(x: EditTypes): nk_flags =
   ## Converts EditTypes enum to Nuklear nk_flags type
   x.ord.cint
 converter toCint*(x: bool): cint =
@@ -619,13 +619,14 @@ template popup*(pType: PopupType; title: string; flags: set[WindowFlags]; x,
     y, w, h: float; content: untyped) =
   ## Create a new Nuklear popup window with the selected content
   ##
-  ## * pType - the type of the popup
-  ## * title - the title of the popup
-  ## * flags - the flags for the popup
-  ## * x     - the X position of the top left corner of the popup
-  ## * y     - the Y position of the top left corner of the popup
-  ## * w     - the width of the popup
-  ## * h     - the height of the popup
+  ## * pType   - the type of the popup
+  ## * title   - the title of the popup
+  ## * flags   - the flags for the popup
+  ## * x       - the X position of the top left corner of the popup
+  ## * y       - the Y position of the top left corner of the popup
+  ## * w       - the width of the popup
+  ## * h       - the height of the popup
+  ## * content - the code executed when the button is pressed
   if not createPopup(pType, title.cstring, winSetToInt(flags), x.cfloat, y, w, h):
     raise newException(NuklearException,
         "Can't create the popup window with title: '" & title & "'.")
@@ -843,8 +844,8 @@ proc comboList*(items: openArray[string]; selected, itemHeight: int; x,
   var optionsList: seq[cstring]
   for i in 0 .. amount:
     optionsList.add(items[i].cstring)
-  return nk_combo(ctx, optionsList[0].unsafeAddr, amount.cint + 1, selected.cint,
-      itemHeight.cint, new_nk_vec2(x.cfloat, y.cfloat)).int
+  return nk_combo(ctx, optionsList[0].unsafeAddr, amount.cint + 1,
+      selected.cint, itemHeight.cint, new_nk_vec2(x.cfloat, y.cfloat)).int
 proc createColorCombo*(ctx; color: NimColor; x, y: cfloat): bool =
   ## Create a Nuklear combo widget which display color as the value
   ##
@@ -1002,16 +1003,18 @@ proc getMouseDelta*(ctx): NimVec2 =
 # Edit text
 # ---------
 proc editString*(text: var string; maxLen: int; editType: EditTypes = simple;
-    filter: PluginFilter = nk_filter_default): int {.discardable.} =
+    filter: PluginFilter = nk_filter_default; flags: set[EditFlags] = {}): EditEvent {.discardable.} =
   ## Draw the field of hte selected type and with the selected filter to edit a
   ## text
   ##
   ##  * text     - the text which will be edited in the field
-  ##  * maxLen   - the maximum lenght of the text to edit
+  ##  * maxLen   - the maximum length of the text to edit
   ##  * editType - the type of the edit field. By default it is a simple, one
   ##               line field
   ##  * filter   - the procedure used to filter the user's input in the edit
   ##               field. By default there is no filtering.
+  ##  * flags    - the additional flags for the edit field. By default no
+  ##               additional flags
   ##
   ## Returns the current state of the edit field and the modified text
   ## parameter.
@@ -1019,10 +1022,15 @@ proc editString*(text: var string; maxLen: int; editType: EditTypes = simple;
   proc nk_edit_string(ctx; flags: nk_flags; memory: pointer;
       len: var cint; max: cint; filter: PluginFilter): nk_flags {.importc, nodecl.}
 
-  var (cText, length) = stringToCharArray(text, maxLen)
-  result = nk_edit_string(ctx = ctx, flags = editType,
+  var
+    (cText, length) = stringToCharArray(text, maxLen)
+    cFlags: cint = editType.ord.cint
+  {.warning[HoleEnumConv]: off.}
+  for flag in flags:
+    cFlags = cFlags or flag.cint
+  result = nk_edit_string(ctx = ctx, flags = cFlags,
       memory = cText[0].unsafeAddr, len = length.cint, max = maxLen.cint,
-      filter = filter)
+      filter = filter).EditEvent
   text = charArrayToString(cText, length)
 
 # -------
