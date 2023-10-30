@@ -50,7 +50,7 @@ const
 var
   showMenu, titlebar, border, resize, movable, noScrollbar, scaleLeft, minimizable, check, mcheck, checkbox, inactive: bool = true
   windowFlags: set[WindowFlags]
-  showAppAbout: bool = false
+  showAppAbout, groupTitlebar: bool = false
   headerAlign: nk_style_header_align = NK_HEADER_RIGHT
   prog, progValue = 40
   slider, mslider, propertyInt, propertyNeg: cint = 10
@@ -92,7 +92,6 @@ var
   boxActive: EditEvent
   lineIndex, colIndex = -1
   popupColor: NimColor = NimColor(r: 255, g: 0, b: 0, a: 255)
-  groupTitlebar: cint = nk_false.cint
   groupBorder: cint = nk_true.cint
   groupNoScrollbar: cint = nk_false.cint
   groupWidth: cint = 320
@@ -644,7 +643,7 @@ proc overview*(ctx: PContext) =
           popupActive = false
       nk_layout_row_static(ctx, 30, 150, 1)
       bounds = getWidgetBounds(ctx)
-      nk_label(ctx, "Hover me for tooltip", NK_TEXT_LEFT)
+      label("Hover me for tooltip")
       if isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h):
         nk_tooltip(ctx, "This is a tooltip")
       nk_tree_pop(ctx)
@@ -652,79 +651,97 @@ proc overview*(ctx: PContext) =
         "overview651", 12, 651):
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Widget", NK_MINIMIZED,
           "overview653", 12, 653):
-        nk_layout_row_dynamic(ctx, 30, 1)
-        nk_label(ctx, "Dynamic fixed column layout with generated position and size:",
-            NK_TEXT_LEFT)
-        nk_layout_row_dynamic(ctx, 30, 3)
-        discard nk_button_label(ctx, "button")
-        discard nk_button_label(ctx, "button")
-        discard nk_button_label(ctx, "button")
-        nk_layout_row_dynamic(ctx, 30, 1)
-        nk_label(ctx, "static fixed column layout with generated position and size:",
-            NK_TEXT_LEFT)
+        setLayoutRowDynamic(30, 1)
+        label("Dynamic fixed column layout with generated position and size:")
+        setLayoutRowDynamic(30, 3)
+        labelButton("button"):
+          discard
+        labelButton("button"):
+          discard
+        labelButton("button"):
+          discard
+        setLayoutRowDynamic(30, 1)
+        label("Static fixed column layout with generated position and size:")
         nk_layout_row_static(ctx, 30, 100, 3)
-        discard nk_button_label(ctx, "button")
-        discard nk_button_label(ctx, "button")
-        discard nk_button_label(ctx, "button")
-        nk_layout_row_dynamic(ctx, 30, 1)
-        nk_label(ctx, "Dynamic array-based custom column layout with generated position and custom size:",
-            NK_TEXT_LEFT)
+        labelButton("button"):
+          discard
+        labelButton("button"):
+          discard
+        labelButton("button"):
+          discard
+        setLayoutRowDynamic(30, 1)
+        label("Dynamic array-based custom column layout with generated position and custom size:")
         nk_layout_row(ctx, NK_DYNAMIC, 30, 3, ratioTwo.unsafeAddr)
-        discard nk_button_label(ctx, "button")
-        discard nk_button_label(ctx, "button")
-        discard nk_button_label(ctx, "button")
-        nk_layout_row_dynamic(ctx, 30, 1)
-        nk_label(ctx, "Static array-based custom column layout with generated position and custom size:",
-            NK_TEXT_LEFT)
+        labelButton("button"):
+          discard
+        labelButton("button"):
+          discard
+        labelButton("button"):
+          discard
+        setLayoutRowDynamic(30, 1)
+        label("Static array-based custom column layout with generated position and custom size:")
         nk_layout_row(ctx, NK_STATIC, 30, 3, widthTwo.unsafeAddr)
-        discard nk_button_label(ctx, "button")
-        discard nk_button_label(ctx, "button")
-        discard nk_button_label(ctx, "button")
-        nk_layout_row_dynamic(ctx, 30, 1)
-        nk_label(ctx, "Dynamic immediate mode custom column layout with generated position and custom size:",
-            NK_TEXT_LEFT)
+        labelButton("button"):
+          discard
+        labelButton("button"):
+          discard
+        labelButton("button"):
+          discard
+        setLayoutRowDynamic(30, 1)
+        label("Dynamic immediate mode custom column layout with generated position and custom size:")
         nk_layout_row_begin(ctx, NK_DYNAMIC, 30, 3)
         nk_layout_row_push(ctx, 0.2)
-        discard nk_button_label(ctx, "button")
+        labelButton("button"):
+          discard
         nk_layout_row_push(ctx, 0.6)
-        discard nk_button_label(ctx, "button")
+        labelButton("button"):
+          discard
         nk_layout_row_push(ctx, 0.2)
-        discard nk_button_label(ctx, "button")
+        labelButton("button"):
+          discard
         nk_layout_row_end(ctx)
-        nk_layout_row_dynamic(ctx, 30, 1)
-        nk_label(ctx, "Static immediate mode custom column layout with generated position and custom size:",
-            NK_TEXT_LEFT)
+        setLayoutRowDynamic(30, 1)
+        label("Static immediate mode custom column layout with generated position and custom size:")
         nk_layout_row_begin(ctx, NK_STATIC, 30, 3)
         nk_layout_row_push(ctx, 100)
-        discard nk_button_label(ctx, "button")
+        labelButton("button"):
+          discard
         nk_layout_row_push(ctx, 200)
-        discard nk_button_label(ctx, "button")
+        labelButton("button"):
+          discard
         nk_layout_row_push(ctx, 50)
-        discard nk_button_label(ctx, "button")
+        labelButton("button"):
+          discard
         nk_layout_row_end(ctx)
-        nk_layout_row_dynamic(ctx, 30, 1)
-        nk_label(ctx, "Static free space with custom position and custom size:",
-            NK_TEXT_LEFT)
+        setLayoutRowDynamic(30, 1)
+        label("Static free space with custom position and custom size:")
         nk_layout_space_begin(ctx, NK_STATIC, 60, 4)
         layoutSpacePush(ctx, 100, 0, 100, 30)
-        discard nk_button_label(ctx, "button")
+        labelButton("button"):
+          discard
         layoutSpacePush(ctx, 0, 15, 100, 30)
-        discard nk_button_label(ctx, "button")
+        labelButton("button"):
+          discard
         layoutSpacePush(ctx, 200, 15, 100, 30)
-        discard nk_button_label(ctx, "button")
+        labelButton("button"):
+          discard
         layoutSpacePush(ctx, 100, 30, 100, 30)
-        discard nk_button_label(ctx, "button")
+        labelButton("button"):
+          discard
         nk_layout_space_end(ctx)
-        nk_layout_row_dynamic(ctx, 30, 1)
-        nk_label(ctx, "Row template:", NK_TEXT_LEFT)
+        setLayoutRowDynamic(30, 1)
+        label("Row template:")
         nk_layout_row_template_begin(ctx, 30)
         nk_layout_row_template_push_dynamic(ctx)
         nk_layout_row_template_push_variable(ctx, 80)
         nk_layout_row_template_push_static(ctx, 80)
         nk_layout_row_template_end(ctx)
-        discard nk_button_label(ctx, "button")
-        discard nk_button_label(ctx, "button")
-        discard nk_button_label(ctx, "button")
+        labelButton("button"):
+          discard
+        labelButton("button"):
+          discard
+        labelButton("button"):
+          discard
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Group", NK_MINIMIZED,
           "overview731", 12, 731):
@@ -735,8 +752,8 @@ proc overview*(ctx: PContext) =
           groupFlags = groupFlags or nkWindowNoScrollbar
         if groupTitlebar == nk_true.cint:
           groupFlags = groupFlags or nkWindowTitle
-        nk_layout_row_dynamic(ctx, 30, 3)
-        discard nk_checkbox_label(ctx, "Titlebar", groupTitlebar)
+        setLayoutRowDynamic(30, 3)
+        checkbox("Titlebar", groupTitlebar)
         discard nk_checkbox_label(ctx, "Border", groupBorder)
         discard nk_checkbox_label(ctx, "No Scrollbar", groupNoScrollbar)
         nk_layout_row_begin(ctx, NK_STATIC, 22, 3)
