@@ -25,7 +25,7 @@
 
 # Nuklear Xlib demo translated to Nim
 
-import std/[bitops, os, times]
+import std/[os, times]
 when defined(xlib):
   import nuklear_xlib
   const windowName = "X11"
@@ -58,18 +58,18 @@ proc main() =
       break
 
     # GUI
-    window(name = "Demo", x = 50, y = 50, w = 200, h = 200, {nkWindowBorder,
-        nkWindowMoveable, nkWindowScalable, nkWindowCloseable,
-        nkWindowMinimizable, nkWindowTitle}):
+    window(name = "Demo", x = 50, y = 50, w = 200, h = 200, {windowBorder,
+        windowMoveable, windowScalable, windowCloseable,
+        windowMinimizable, windowTitle}):
       nk_layout_row_static(ctx, 30.0, 80, 1)
-      if nk_button_label(ctx, "button"):
+      labelButton("button"):
         echo "button pressed"
-      nk_layout_row_dynamic(ctx, 30.0, 2)
+      setLayoutRowDynamic(30.0, 2)
       if nk_option_label(ctx, "easy", (if op == easy: 1 else: 0)):
         op = easy
       if nk_option_label(ctx, "hard", (if op == hard: 1 else: 0)):
         op = hard
-      nk_layout_row_dynamic(ctx, 25.0, 1)
+      setLayoutRowDynamic(25.0, 1)
       nk_property_int(ctx, "Compression:", 0, property, 100, 10, 1.0)
     if nk_window_is_hidden(ctx, "Demo") > 0:
       break
