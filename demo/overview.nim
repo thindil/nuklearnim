@@ -46,11 +46,11 @@ const
   chartStep = ((2.0 * 3.141592654) / 32.0).float
   ratioTwo = [0.2.cfloat, 0.6, 0.2]
   widthTwo = [100.cfloat, 200, 50]
-  names = ["Lines".cstring, "Columns", "Mixed"]
+  names = ["Lines", "Columns", "Mixed"]
 var
-  showMenu, titlebar, border, resize, movable, noScrollbar, scaleLeft, minimizable, check, mcheck, checkbox, inactive: bool = true
+  showMenu, titlebar, border, resize, movable, noScrollbar, scaleLeft, minimizable, check, mcheck, checkbox, inactive, groupBorder: bool = true
   windowFlags: set[WindowFlags]
-  showAppAbout, groupTitlebar: bool = false
+  showAppAbout, groupTitlebar, groupNoScrollbar: bool = false
   headerAlign: nk_style_header_align = NK_HEADER_RIGHT
   prog, progValue = 40
   slider, mslider, propertyInt, propertyNeg: cint = 10
@@ -92,8 +92,6 @@ var
   boxActive: EditEvent
   lineIndex, colIndex = -1
   popupColor: NimColor = NimColor(r: 255, g: 0, b: 0, a: 255)
-  groupBorder: cint = nk_true.cint
-  groupNoScrollbar: cint = nk_false.cint
   groupWidth: cint = 320
   groupHeight: cint = 200
   rootSelected: nk_bool
@@ -754,11 +752,11 @@ proc overview*(ctx: PContext) =
           groupFlags = groupFlags or nkWindowTitle
         setLayoutRowDynamic(30, 3)
         checkbox("Titlebar", groupTitlebar)
-        discard nk_checkbox_label(ctx, "Border", groupBorder)
-        discard nk_checkbox_label(ctx, "No Scrollbar", groupNoScrollbar)
+        checkbox("Border", groupBorder)
+        checkbox("No Scrollbar", groupNoScrollbar)
         nk_layout_row_begin(ctx, NK_STATIC, 22, 3)
         nk_layout_row_push(ctx, 50)
-        nk_label(ctx, "size:", NK_TEXT_LEFT)
+        label("size:")
         nk_layout_row_push(ctx, 130)
         nk_property_int(ctx, "#Width:", 100, groupWidth, 500, 10, 1)
         nk_layout_row_push(ctx, 130)
@@ -811,27 +809,29 @@ proc overview*(ctx: PContext) =
         nk_layout_row_begin(ctx, NK_STATIC, 20, 3);
         for i in 0 .. 2:
           let
-            textWidth = getTextWidth(ctx, names[i])
+            textWidth = getTextWidth(names[i])
             widgetWidth = textWidth + 3 * getButtonStyle(ctx, padding).x;
           nk_layout_row_push(ctx, widgetWidth)
           if currentTab == i:
             saveButtonStyle(ctx)
             setButtonStyle2(ctx, active, normal)
-            currentTab = (if nk_button_label(ctx, names[i]) ==
-                nk_true: i.cint else: current_tab)
+            currentTab = current_tab
+            labelButton(names[i]):
+              currentTab = i.cint
             restoreButtonStyle(ctx)
           else:
-            currentTab = (if nk_button_label(ctx, names[i]) ==
-                nk_true: i.cint else: current_tab)
+            currentTab = current_tab
+            labelButton(names[i]):
+              currentTab = i.cint
         nk_style_pop_float(ctx)
         nk_style_pop_vec2(ctx)
-        nk_layout_row_dynamic(ctx, 140, 1)
+        setLayoutRowDynamic(140, 1)
         if nk_group_begin(ctx, "Notebook", nkWindowBorder):
           var id: cfloat
           let step: cfloat = (2 * 3.141592654f) / 32
           case currentTab
           of 0:
-            nk_layout_row_dynamic(ctx, 100, 1)
+            setLayoutRowDynamic(100, 1)
             if createColorChart(ctx, NK_CHART_LINES, NimColor(r: 255, g: 0,
                 b: 0, a: 255), NimColor(r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
               addColorChartSlot(ctx, NK_CHART_LINES, NimColor(r: 0, g: 0,
@@ -844,7 +844,7 @@ proc overview*(ctx: PContext) =
                 id = id + step
               nk_chart_end(ctx)
           of 1:
-            nk_layout_row_dynamic(ctx, 100, 1)
+            setLayoutRowDynamic(100, 1)
             if createColorChart(ctx, NK_CHART_COLUMN, NimColor(r: 255, g: 0,
                 b: 0, a: 255), NimColor(r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
               id = 0.0
@@ -853,7 +853,7 @@ proc overview*(ctx: PContext) =
                 id = id + step
               nk_chart_end(ctx)
           of 2:
-            nk_layout_row_dynamic(ctx, 100, 1)
+            setLayoutRowDynamic(100, 1)
             if createColorChart(ctx, NK_CHART_LINES, NimColor(r: 255, g: 0,
                 b: 0, a: 255), NimColor(r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
               addColorChartSlot(ctx, NK_CHART_LINES, NimColor(r: 0, g: 0,
@@ -874,7 +874,7 @@ proc overview*(ctx: PContext) =
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Simple", NK_MINIMIZED,
           "overview868", 12, 868):
-        nk_layout_row_dynamic(ctx, 300, 2)
+        setLayoutRowDynamic(300, 2)
         if nk_group_begin(ctx, "Group_Without_Border", 0):
           nk_layout_row_static(ctx, 18, 150, 1)
           for i in 0 .. 63:
@@ -882,10 +882,11 @@ proc overview*(ctx: PContext) =
                 fmt"{i:#X}".cstring)
           nk_group_end(ctx)
         if nk_group_begin(ctx, "Group_With_Border", nkWindowBorder):
-          nk_layout_row_dynamic(ctx, 25, 2)
+          setLayoutRowDynamic(25, 2)
           for i in 0 .. 63:
             let number = (((i mod 7) * 10)) + (64 + (i mod 2) * 2)
-            discard nk_button_label(ctx, fmt"{number:08}".cstring)
+            labelButton(fmt"{number:08}"):
+              discard
           nk_group_end(ctx)
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Complex", NK_MINIMIZED,
@@ -901,23 +902,35 @@ proc overview*(ctx: PContext) =
           nk_group_end(ctx);
         layoutSpacePush(ctx, 160, 0, 150, 240)
         if nk_group_begin(ctx, "Group_top", nkWindowBorder):
-          nk_layout_row_dynamic(ctx, 25, 1)
-          discard nk_button_label(ctx, "#FFAA")
-          discard nk_button_label(ctx, "#FFBB")
-          discard nk_button_label(ctx, "#FFCC")
-          discard nk_button_label(ctx, "#FFDD")
-          discard nk_button_label(ctx, "#FFEE")
-          discard nk_button_label(ctx, "#FFFF")
+          setLayoutRowDynamic(25, 1)
+          labelButton("#FFAA"):
+            discard
+          labelButton("#FFBB"):
+            discard
+          labelButton("#FFCC"):
+            discard
+          labelButton("#FFDD"):
+            discard
+          labelButton("#FFEE"):
+            discard
+          labelButton("#FFFF"):
+            discard
           nk_group_end(ctx)
         layoutSpacePush(ctx, 160, 250, 150, 250)
         if nk_group_begin(ctx, "Group_buttom", nkWindowBorder):
-          nk_layout_row_dynamic(ctx, 25, 1)
-          discard nk_button_label(ctx, "#FFAA")
-          discard nk_button_label(ctx, "#FFBB")
-          discard nk_button_label(ctx, "#FFCC")
-          discard nk_button_label(ctx, "#FFDD")
-          discard nk_button_label(ctx, "#FFEE")
-          discard nk_button_label(ctx, "#FFFF")
+          setLayoutRowDynamic(25, 1)
+          labelButton("#FFAA"):
+            discard
+          labelButton("#FFBB"):
+            discard
+          labelButton("#FFCC"):
+            discard
+          labelButton("#FFDD"):
+            discard
+          labelButton("#FFEE"):
+            discard
+          labelButton("#FFFF"):
+            discard
           nk_group_end(ctx);
         layoutSpacePush(ctx, 320, 0, 150, 150)
         if nk_group_begin(ctx, "Group_right_top", nkWindowBorder):
@@ -948,30 +961,34 @@ proc overview*(ctx: PContext) =
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Splitter", NK_MINIMIZED,
           "overview942", 12, 942):
         nk_layout_row_static(ctx, 20, 320, 1)
-        nk_label(ctx, "Use slider and spinner to change tile size",
-            NK_TEXT_LEFT)
-        nk_label(ctx, "Drag the space between tiles to change tile ratio",
-            NK_TEXT_LEFT)
+        label("Use slider and spinner to change tile size")
+        label("Drag the space between tiles to change tile ratio")
         if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Vertical", NK_MINIMIZED,
             "overview948", 12, 948):
           var rowLayout: array[5, cfloat] = [a, 8, b, 8, c]
           nk_layout_row_static(ctx, 30, 100, 2)
-          nk_label(ctx, "left:", NK_TEXT_LEFT)
+          label("left:")
           discard nk_slider_float(ctx, 10.0, a, 200.0, 10.0)
-          nk_label(ctx, "middle:", NK_TEXT_LEFT)
+          label("middle:")
           discard nk_slider_float(ctx, 10.0, b, 200.0, 10.0)
-          nk_label(ctx, "right:", NK_TEXT_LEFT)
+          label("right:")
           discard nk_slider_float(ctx, 10.0, c, 200.0, 10.0)
           nk_layout_row(ctx, NK_STATIC, 200, 5, rowLayout.unsafeAddr)
           if nk_group_begin(ctx, "left", nkWindowNoScrollbar or
               nkWindowBorder or nkWindowNoScrollbar):
-            nk_layout_row_dynamic(ctx, 25, 1)
-            discard nk_button_label(ctx, "#FFAA")
-            discard nk_button_label(ctx, "#FFBB")
-            discard nk_button_label(ctx, "#FFCC")
-            discard nk_button_label(ctx, "#FFDD")
-            discard nk_button_label(ctx, "#FFEE")
-            discard nk_button_label(ctx, "#FFFF")
+            setLayoutRowDynamic(25, 1)
+            labelButton("#FFAA"):
+              discard
+            labelButton("#FFBB"):
+              discard
+            labelButton("#FFCC"):
+              discard
+            labelButton("#FFDD"):
+              discard
+            labelButton("#FFEE"):
+              discard
+            labelButton("#FFFF"):
+              discard
             nk_group_end(ctx)
           var bounds = getWidgetBounds(ctx)
           nk_spacing(ctx, 1)
@@ -982,13 +999,19 @@ proc overview*(ctx: PContext) =
             b = rowLayout[2] - getMouseDelta(ctx).x
           if nk_group_begin(ctx, "center", nkWindowBorder or
               nkWindowNoScrollbar):
-            nk_layout_row_dynamic(ctx, 25, 1)
-            discard nk_button_label(ctx, "#FFAA")
-            discard nk_button_label(ctx, "#FFBB")
-            discard nk_button_label(ctx, "#FFCC")
-            discard nk_button_label(ctx, "#FFDD")
-            discard nk_button_label(ctx, "#FFEE")
-            discard nk_button_label(ctx, "#FFFF")
+            setLayoutRowDynamic(25, 1)
+            labelButton("#FFAA"):
+              discard
+            labelButton("#FFBB"):
+              discard
+            labelButton("#FFCC"):
+              discard
+            labelButton("#FFDD"):
+              discard
+            labelButton("#FFEE"):
+              discard
+            labelButton("#FFFF"):
+              discard
             nk_group_end(ctx)
           bounds = getWidgetBounds(ctx)
           nk_spacing(ctx, 1)
@@ -999,36 +1022,48 @@ proc overview*(ctx: PContext) =
             c = rowLayout[4] - getMouseDelta(ctx).x
           if nk_group_begin(ctx, "right", nkWindowBorder or
               nkWindowNoScrollbar):
-            nk_layout_row_dynamic(ctx, 25, 1)
-            discard nk_button_label(ctx, "#FFAA")
-            discard nk_button_label(ctx, "#FFBB")
-            discard nk_button_label(ctx, "#FFCC")
-            discard nk_button_label(ctx, "#FFDD")
-            discard nk_button_label(ctx, "#FFEE")
-            discard nk_button_label(ctx, "#FFFF")
+            setLayoutRowDynamic(25, 1)
+            labelButton("#FFAA"):
+              discard
+            labelButton("#FFBB"):
+              discard
+            labelButton("#FFCC"):
+              discard
+            labelButton("#FFDD"):
+              discard
+            labelButton("#FFEE"):
+              discard
+            labelButton("#FFFF"):
+              discard
             nk_group_end(ctx)
           nk_tree_pop(ctx)
         if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Horizontal", NK_MINIMIZED,
             "overview1006", 13, 106):
           nk_layout_row_static(ctx, 30, 100, 2)
-          nk_label(ctx, "top:", NK_TEXT_LEFT)
+          label("top:")
           discard nk_slider_float(ctx, 10.0, a, 200.0, 10.0)
-          nk_label(ctx, "middle:", NK_TEXT_LEFT)
+          label("middle:")
           discard nk_slider_float(ctx, 10.0, b, 200.0, 10.0)
-          nk_label(ctx, "bottom:", NK_TEXT_LEFT)
+          label("bottom:")
           discard nk_slider_float(ctx, 10.0, c, 200.0, 10.0)
-          nk_layout_row_dynamic(ctx, a, 1)
+          setLayoutRowDynamic(a, 1)
           if nk_group_begin(ctx, "top", nkWindowBorder or
               nkWindowNoScrollbar):
-            nk_layout_row_dynamic(ctx, 25, 3)
-            discard nk_button_label(ctx, "#FFAA")
-            discard nk_button_label(ctx, "#FFBB")
-            discard nk_button_label(ctx, "#FFCC")
-            discard nk_button_label(ctx, "#FFDD")
-            discard nk_button_label(ctx, "#FFEE")
-            discard nk_button_label(ctx, "#FFFF")
+            setLayoutRowDynamic(25, 3)
+            labelButton("#FFAA"):
+              discard
+            labelButton("#FFBB"):
+              discard
+            labelButton("#FFCC"):
+              discard
+            labelButton("#FFDD"):
+              discard
+            labelButton("#FFEE"):
+              discard
+            labelButton("#FFFF"):
+              discard
             nk_group_end(ctx)
-          nk_layout_row_dynamic(ctx, 8, 1)
+          setLayoutRowDynamic(8, 1)
           var bounds = getWidgetBounds(ctx)
           nk_spacing(ctx, 1)
           if (isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h) or
@@ -1036,36 +1071,47 @@ proc overview*(ctx: PContext) =
               bounds.h)) and isMouseDown(ctx, NK_BUTTON_LEFT):
             a = a + getMouseDelta(ctx).y
             b = b - getMouseDelta(ctx).y
-          nk_layout_row_dynamic(ctx, b, 1)
+          setLayoutRowDynamic(b, 1)
           if nk_group_begin(ctx, "middle", nkWindowBorder or
               nkWindowNoScrollbar):
-            nk_layout_row_dynamic(ctx, 25, 3)
-            discard nk_button_label(ctx, "#FFAA")
-            discard nk_button_label(ctx, "#FFBB")
-            discard nk_button_label(ctx, "#FFCC")
-            discard nk_button_label(ctx, "#FFDD")
-            discard nk_button_label(ctx, "#FFEE")
-            discard nk_button_label(ctx, "#FFFF")
+            setLayoutRowDynamic(25, 3)
+            labelButton("#FFAA"):
+              discard
+            labelButton("#FFBB"):
+              discard
+            labelButton("#FFCC"):
+              discard
+            labelButton("#FFDD"):
+              discard
+            labelButton("#FFEE"):
+              discard
+            labelButton("#FFFF"):
+              discard
             nk_group_end(ctx)
-          nk_layout_row_dynamic(ctx, 8, 1)
+          setLayoutRowDynamic(8, 1)
           bounds = getWidgetBounds(ctx)
           if (isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h) or
               isMousePrevHovering(ctx, bounds.x, bounds.y, bounds.w,
               bounds.h)) and isMouseDown(ctx, NK_BUTTON_LEFT):
             b = b + getMouseDelta(ctx).y
             c = c - getMouseDelta(ctx).y
-          nk_layout_row_dynamic(ctx, c, 1)
+          setLayoutRowDynamic(c, 1)
           if nk_group_begin(ctx, "bottom", nkWindowBorder or
               nkWindowNoScrollbar):
-            nk_layout_row_dynamic(ctx, 25, 3)
-            discard nk_button_label(ctx, "#FFAA")
-            discard nk_button_label(ctx, "#FFBB")
-            discard nk_button_label(ctx, "#FFCC")
-            discard nk_button_label(ctx, "#FFDD")
-            discard nk_button_label(ctx, "#FFEE")
-            discard nk_button_label(ctx, "#FFFF")
+            setLayoutRowDynamic(25, 3)
+            labelButton("#FFAA"):
+              discard
+            labelButton("#FFBB"):
+              discard
+            labelButton("#FFCC"):
+              discard
+            labelButton("#FFDD"):
+              discard
+            labelButton("#FFEE"):
+              discard
+            labelButton("#FFFF"):
+              discard
             nk_group_end(ctx)
           nk_tree_pop(ctx)
         nk_tree_pop(ctx)
       nk_tree_pop(ctx)
-  nk_end(ctx)
