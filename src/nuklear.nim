@@ -471,6 +471,7 @@ type
     gotoEndOnActivate = 1 shl 11
   EditEvent* {.size: sizeof(cint).} = enum
     ## The events which happen in a text field
+    none = 0,
     active = 1 shl 0,
     inactive = 1 shl 1,
     activated = 1 shl 2,
@@ -575,10 +576,8 @@ template window*(name: string; x, y, w, h: float; flags: set[WindowFlags];
   ## * w     - the width of the window
   ## * h     - the height of the window
   ## * flags - the flags for the window
-  if not createWin(name.cstring, x, y, w, h, winSetToInt(flags)):
-    raise newException(NuklearException,
-        "Can't create the window with title: '" & name & "'.")
-  content
+  if createWin(name.cstring, x, y, w, h, winSetToInt(flags)):
+    content
   ctx.nk_end
 
 proc getWidgetBounds*(ctx): NimRect =
