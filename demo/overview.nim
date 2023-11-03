@@ -499,18 +499,16 @@ proc overview*(ctx: PContext) =
         nk_layout_row(ctx, NK_STATIC, 25, 2, ratio.unsafeAddr)
         boxActive = editString(text[7], 64, field, nk_filter_ascii, {sigEnter})
         labelButton("Submit"):
-          text[7][text_len[7]] = '\n'
           text_len[7].inc
-          for i in 0 .. text_len[7]:
-            boxBuffer[i + boxLen] = text[7][i]
-          boxLen = boxLen + textLen[7]
+          boxBuffer.add(text[7] & "\n")
+          boxLen = boxLen + textLen[7] + 1
+          text[7] = ""
           textLen[7] = 0
         if boxActive == commited:
-          text[7][text_len[7]] = '\n'
           text_len[7].inc
-          for i in 0 .. text_len[7]:
-            boxBuffer[i + boxLen] = text[7][i]
-          boxLen = boxLen + textLen[7]
+          boxBuffer.add(text[7] & "\n")
+          boxLen = boxLen + textLen[7] + 1
+          text[7] = ""
           textLen[7] = 0
         nk_tree_pop(ctx)
       nk_tree_pop(ctx)
