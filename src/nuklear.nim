@@ -177,8 +177,6 @@ proc new_nk_font_config*(pixel_height: cfloat): nk_font_config {.importc: "nk_fo
 # -----
 proc nk_input_begin*(ctx) {.importc, nodecl.}
 proc nk_input_end*(ctx) {.importc, nodecl.}
-proc nk_input_is_mouse_hovering_rect*(i: ptr nk_input;
-    rect: nk_rect): nk_bool {.importc, nodecl.}
 proc nk_input_is_mouse_prev_hovering_rect*(i: ptr nk_input;
     rect: nk_rect): nk_bool {.importc, nodecl.}
 proc nk_input_is_mouse_down*(i: ptr nk_input;
@@ -190,13 +188,10 @@ proc nk_input_is_mouse_down*(i: ptr nk_input;
 proc nk_end(ctx) {.importc, cdecl.}
 proc nk_window_is_hidden*(ctx; name: cstring): cint {.importc, cdecl.}
 proc nk_spacing*(ctx; cols: cint) {.importc, cdecl.}
-proc nk_widget_bounds*(ctx): nk_rect {.importc, nodecl.}
 
 # ----
 # Text
 # ----
-proc nk_label_colored*(ctx; str: cstring; align: nk_flags;
-    color: nk_color) {.importc, nodecl.}
 proc nk_text*(ctx; str: cstring; len: cint;
     alignment: nk_flags) {.importc, cdecl.}
 proc nk_label_wrap*(ctx; str: cstring) {.importc, cdecl.}
@@ -217,7 +212,6 @@ proc nk_layout_row*(ctx; fmt: nk_layout_format; height: cfloat;
 proc nk_layout_space_begin*(ctx; fmt: nk_layout_format;
     height: cfloat; widget_count: cint) {.importc, cdecl.}
 proc nk_layout_space_end*(ctx) {.importc, cdecl.}
-proc nk_layout_space_push*(ctx; rect: nk_rect) {.importc, nodecl.}
 proc nk_layout_row_template_begin*(ctx; height: cfloat) {.importc, cdecl.}
 proc nk_layout_row_template_push_dynamic*(ctx) {.importc, cdecl.}
 proc nk_layout_row_template_push_variable*(ctx;
@@ -231,8 +225,6 @@ proc nk_layout_row_template_end*(ctx) {.importc, cdecl.}
 # -----
 proc nk_menubar_begin*(ctx) {.importc, cdecl.}
 proc nk_menubar_end*(ctx) {.importc, cdecl.}
-proc nk_menu_begin_label*(ctx; text: cstring; align: nk_flags;
-     size: nk_vec2): nk_bool {.importc, nodecl.}
 proc nk_menu_end*(ctx) {.importc, cdecl.}
 proc nk_menu_item_label*(ctx; text: cstring;
     aligmnent: nk_flags): nk_bool {.importc, cdecl.}
@@ -248,11 +240,6 @@ proc nk_chart_add_slot*(ctx; ctype: nk_chart_type; count: cint;
     min_value, max_value: cfloat) {.importc, cdecl.}
 proc nk_chart_push_slot*(ctx; value: cfloat;
     slot: cint): nk_flags {.importc, cdecl.}
-proc nk_chart_begin_colored*(ctx; ctype: nk_chart_type; color,
-    higlight: nk_color; count: cint; min_value,
-    max_value: cfloat): nk_bool {.importc, nodecl.}
-proc nk_chart_add_slot_colored*(ctx; ctype: nk_chart_type; color,
-    higlight: nk_color; count: cint; min_value, max_value: cfloat) {.importc, nodecl.}
 
 # ------
 # Popups
@@ -279,7 +266,6 @@ proc nk_tree_element_pop*(ctx) {.importc, cdecl.}
 proc nk_button_label(ctx; title: cstring): nk_bool {.importc, cdecl.}
 proc nk_button_set_behavior*(ctx;
     behavior: nk_button_behavior) {.importc, cdecl.}
-proc nk_button_color*(ctx; color: nk_color): nk_bool {.importc, nodecl.}
 proc nk_button_symbol*(ctx; symbol: nk_symbol_type): nk_bool {.importc, cdecl.}
 proc nk_button_symbol_label*(ctx; symbol: nk_symbol_type;
     label: cstring; align: nk_flags): nk_bool {.importc, cdecl.}
@@ -309,31 +295,22 @@ proc nk_propertyi*(ctx; name: cstring; min, val, max, step: cint;
 # Style
 # -----
 proc nk_style_item_color*(col: nk_color): nk_style_item {.importc, cdecl.}
-proc nk_style_push_vec2*(ctx; dest: var nk_vec2;
-    source: nk_vec2): nk_bool {.importc, nodecl.}
-proc nk_style_push_float*(ctx; dest: var cfloat;
-    source: cfloat): nk_bool {.importc, nodecl.}
 proc nk_style_pop_float*(ctx) {.importc, cdecl.}
 proc nk_style_pop_vec2*(ctx) {.importc, cdecl.}
-proc nk_style_from_table*(ctx; table: pointer) {.importc, nodecl.}
 proc nk_style_default*(ctx) {.importc, cdecl.}
 proc nk_style_set_font*(ctx; font: ptr nk_user_font) {.importc, nodecl.}
 
 # ------
 # Combos
 # ------
-proc nk_combo_begin_color*(ctx; color: nk_color;
+proc nk_combo_begin_color(ctx; color: nk_color;
     size: nk_vec2): nk_bool {.importc, nodecl.}
 proc nk_combo_end*(ctx) {.importc, cdecl.}
-proc nk_combo_begin_label*(ctx; selected: cstring;
-    size: nk_vec2): nk_bool {.importc, nodecl.}
 proc nk_combo_close*(ctx) {.importc, cdecl.}
 
 # ------
 # Colors
 # ------
-proc nk_colorf_hsva_fv*(hsva: pointer; color: nk_colorf) {.importc, nodecl.}
-proc nk_hsva_colorf*(h, s, v, a: cfloat): nk_colorf {.importc, nodecl.}
 proc nk_rgb*(r, g, b: cint): nk_color {.importc, nodecl.}
 proc nk_rgb_cf*(c: nk_colorf): nk_color {.importc, nodecl.}
 proc nk_rgba*(r, g, b, a: cint): nk_color {.importc, nodecl.}
@@ -359,8 +336,6 @@ proc nk_filter_ascii*(box: ptr nk_text_edit;
 # ----------
 # Contextual
 # ----------
-proc nk_contextual_begin*(ctx; flags: nk_flags; size: nk_vec2;
-    trigger_bounds: nk_rect): nk_bool {.importc, nodecl.}
 proc nk_contextual_end*(ctx) {.importc, cdecl.}
 proc nk_contextual_item_label*(ctx; label: cstring;
     align: nk_flags): nk_bool {.importc, cdecl.}
@@ -393,8 +368,6 @@ proc nk_option_label*(ctx; name: cstring;
     active: cint): nk_bool {.importc, cdecl.}
 proc nk_progress*(ctx; cur: var nk_size; max: nk_size;
     modifyable: nk_bool): nk_bool {.importc, cdecl.}
-proc nk_color_picker*(ctx; color: nk_colorf;
-    fmt: nk_color_format): nk_colorf {.importc, nodecl.}
 
 # -----
 # Fonts
@@ -587,6 +560,7 @@ proc getWidgetBounds*(ctx): NimRect =
   ##
   ## Returns a rectangle with the current Nuklear widget coordinates
   ## converted to NimRect
+  proc nk_widget_bounds(ctx): nk_rect {.importc, nodecl.}
   let rect = nk_widget_bounds(ctx)
   return NimRect(x: rect.x, y: rect.y, w: rect.w, h: rect.h)
 
@@ -649,6 +623,8 @@ proc colorLabel*(ctx; str: cstring; align: nk_flags; r, g, b: cint) =
   ## * r     - the red value for the text color in RGB
   ## * g     - the green value for the text color in RGB
   ## * b     - the blue value for the text color in RGB
+  proc nk_label_colored(ctx; str: cstring; align: nk_flags;
+      color: nk_color) {.importc, nodecl.}
   nk_label_colored(ctx, str, align, nk_rgb(r, g, b))
 proc label*(str: string; alignment: TextAlignment = left) =
   ## Draw the text with the selected alignment
@@ -670,6 +646,7 @@ proc colorButton*(ctx; r, g, b: cint): bool =
   ## * b   - the blue value for the button color in RGB
   ##
   ## Returns true if button was pressed
+  proc nk_button_color(ctx; color: nk_color): nk_bool {.importc, nodecl.}
   return nk_button_color(ctx, nk_rgb(r, g, b))
 template labelButton*(title: string; onPressCode: untyped) =
   ## Draw the button with the selected text on it. Execute the selected code
@@ -691,6 +668,7 @@ proc layoutSpacePush*(ctx; x, y, w, h: cfloat) =
   ## * y   - the amount of pixels or ratio to push the position in Y axis
   ## * w   - the amount of pixels or ratio to push the width
   ## * h   - the amount of pixels or ratio to push the height
+  proc nk_layout_space_push(ctx; rect: nk_rect) {.importc, nodecl.}
   nk_layout_space_push(ctx, new_nk_rect(x, y, w, h))
 
 proc setLayoutRowDynamic*(height: float; cols: int) =
@@ -716,6 +694,8 @@ proc createMenu*(ctx; text: cstring; align: nk_flags; x,
   ## * y     - the Y position of the top left corner of the menu
   ##
   ## Returns true if menu were created, otherwise false
+  proc nk_menu_begin_label(ctx; text: cstring; align: nk_flags;
+       size: nk_vec2): nk_bool {.importc, nodecl.}
   return nk_menu_begin_label(ctx, text, align, new_nk_vec2(x, y))
 
 # -----
@@ -794,6 +774,8 @@ proc stylePushVec2*(ctx; field: WindowStyleTypes; x,
   ## * y     - the Y value of the vector to push
   ##
   ## Returns true if value was succesfully pushed, otherwise false
+  proc nk_style_push_vec2(ctx; dest: var nk_vec2;
+      source: nk_vec2): nk_bool {.importc, nodecl.}
   if field == spacing:
     return nk_style_push_vec2(ctx, ctx.style.window.spacing, new_nk_vec2(x,
         y))
@@ -807,6 +789,8 @@ proc stylePushFloat*(ctx; field: ButtonStyleTypes;
   ## * value - the float value to push
   ##
   ## Returns true if value was succesfully pushed, otherwise false
+  proc nk_style_push_float(ctx; dest: var cfloat;
+      source: cfloat): nk_bool {.importc, nodecl.}
   case field
   of rounding:
     return nk_style_push_float(ctx, ctx.style.button.rounding, value)
@@ -817,6 +801,7 @@ proc styleFromTable*(ctx; table: openArray[NimColor]) =
   ##
   ## * ctx   - the Nuklear context
   ## * table - the colors table which will be set
+  proc nk_style_from_table(ctx; table: pointer) {.importc, nodecl.}
   var newTable: array[NK_COLOR_COUNT.ord, nk_color]
   for index, color in table.pairs:
     newTable[index] = nk_rgba(color.r, color.g, color.b, color.a)
@@ -877,6 +862,8 @@ proc createLabelCombo*(ctx; selected: cstring; x, y: cfloat): bool =
   ## * y        - the height of the combo's values list
   ##
   ## Returns true if combo was successfully created, otherwise false
+  proc nk_combo_begin_label(ctx; selected: cstring;
+      size: nk_vec2): nk_bool {.importc, nodecl.}
   return nk_combo_begin_label(ctx, selected, new_nk_vec2(x, y))
 
 # ------
@@ -889,6 +876,7 @@ proc colorfToHsva*(hsva: var array[4, cfloat]; color: NimColorF) =
   ## * color - the Nim color to convert
   ##
   ## Returns converted color as hsva argument
+  proc nk_colorf_hsva_fv(hsva: pointer; color: nk_colorf) {.importc, nodecl.}
   nk_colorf_hsva_fv(hsva.unsafeAddr, nk_colorf(r: color.r, g: color.g,
       b: color.b, a: color.a))
 proc hsvaToColorf*(hsva: array[4, cfloat]): NimColorF =
@@ -897,6 +885,7 @@ proc hsvaToColorf*(hsva: array[4, cfloat]): NimColorF =
   ## * hsva - the array with HSVA values to convert
   ##
   ## Returns converted hsva parameter to Nim color with float values
+  proc nk_hsva_colorf(h, s, v, a: cfloat): nk_colorf {.importc, nodecl.}
   let newColor = nk_hsva_colorf(hsva[0], hsva[1], hsva[2], hsva[3])
   result = NimColorF(r: newColor.r, g: newColor.g, b: newColor.b, a: newColor.a)
 
@@ -917,6 +906,9 @@ proc createColorChart*(ctx; ctype: nk_chart_type; color,
   ## * max_value - the maximum value of the chart
   ##
   ## Returns true if the chart was succesfully created otherwise false
+  proc nk_chart_begin_colored(ctx; ctype: nk_chart_type; color,
+      higlight: nk_color; count: cint; min_value,
+      max_value: cfloat): nk_bool {.importc, nodecl.}
   return nk_chart_begin_colored(ctx, ctype, nk_rgb(color.r, color.g, color.b),
       nk_rgb(higlight.r, higlight.g, higlight.b), count, min_value,
     max_value)
@@ -932,6 +924,8 @@ proc addColorChartSlot*(ctx; ctype: nk_chart_type; color,
   ## * count     - the amount of values on the chart
   ## * min_value - the minimal value of the chart
   ## * max_value - the maximum value of the chart
+  proc nk_chart_add_slot_colored(ctx; ctype: nk_chart_type; color,
+      higlight: nk_color; count: cint; min_value, max_value: cfloat) {.importc, nodecl.}
   nk_chart_add_slot_colored(ctx, ctype, nk_rgb(color.r, color.g, color.b),
       nk_rgb(higlight.r, higlight.g, higlight.b), count, min_value, max_value)
 
@@ -951,6 +945,8 @@ proc createContextual*(ctx; flags: nk_flags; x, y: cfloat;
   ##
   ## Return true if the contextual menu was created successfully, otherwise
   ## false
+  proc nk_contextual_begin(ctx; flags: nk_flags; size: nk_vec2;
+      trigger_bounds: nk_rect): nk_bool {.importc, nodecl.}
   return nk_contextual_begin(ctx, flags, new_nk_vec2(x, y), new_nk_rect(
       trigger_bounds.x, trigger_bounds.y, trigger_bounds.w,
       trigger_bounds.h))
@@ -968,6 +964,8 @@ proc isMouseHovering*(ctx; x, y, w, h: cfloat): bool =
   ## * h   - the height of the rectangle in pixels
   ##
   ## Returns true if the mouse is hovering over the rectangle, otherwise false
+  proc nk_input_is_mouse_hovering_rect(i: ptr nk_input;
+      rect: nk_rect): nk_bool {.importc, nodecl.}
   return nk_input_is_mouse_hovering_rect(ctx.input.unsafeAddr, new_nk_rect(x, y,
       w, h))
 proc isMousePrevHovering*(ctx; x, y, w, h: cfloat): bool =
@@ -1044,6 +1042,8 @@ proc colorPicker*(ctx; color: NimColorF;
   ## * format - the color format for the widget
   ##
   ## Returns Nim color selected by the user in the widget
+  proc nk_color_picker(ctx; color: nk_colorf;
+      fmt: nk_color_format): nk_colorf {.importc, nodecl.}
   let newColor = nk_color_picker(ctx, nk_colorf(r: color.r, g: color.g,
       b: color.b, a: color.a), format)
   result = NimColorF(r: newColor.r, g: newColor.g, b: newColor.b, a: newColor.a)
