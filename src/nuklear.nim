@@ -177,10 +177,6 @@ proc new_nk_font_config*(pixel_height: cfloat): nk_font_config {.importc: "nk_fo
 # -----
 proc nk_input_begin*(ctx) {.importc, nodecl.}
 proc nk_input_end*(ctx) {.importc, nodecl.}
-proc nk_input_is_mouse_prev_hovering_rect*(i: ptr nk_input;
-    rect: nk_rect): nk_bool {.importc, nodecl.}
-proc nk_input_is_mouse_down*(i: ptr nk_input;
-    id: nk_buttons): nk_bool {.importc, nodecl.}
 
 # -------
 # General
@@ -978,6 +974,8 @@ proc isMousePrevHovering*(ctx; x, y, w, h: cfloat): bool =
   ## * h   - the height of the rectangle in pixels
   ##
   ## Returns true if the mouse was hovering over the rectangle, otherwise false
+  proc nk_input_is_mouse_prev_hovering_rect(i: ptr nk_input;
+      rect: nk_rect): nk_bool {.importc, nodecl.}
   return nk_input_is_mouse_prev_hovering_rect(ctx.input.unsafeAddr, new_nk_rect(
       x, y, w, h))
 proc isMouseDown*(ctx; id: nk_buttons): bool =
@@ -987,6 +985,8 @@ proc isMouseDown*(ctx; id: nk_buttons): bool =
   ## * id  - the mouse button which is pressed
   ##
   ## Returns true if the selected mouse button is pressed, otherwise false
+  proc nk_input_is_mouse_down(i: ptr nk_input;
+      id: nk_buttons): nk_bool {.importc, nodecl.}
   return nk_input_is_mouse_down(ctx.input.unsafeAddr, id)
 proc getMouseDelta*(ctx): NimVec2 =
   ## Get the mouse vector between last check and current position of the mouse
