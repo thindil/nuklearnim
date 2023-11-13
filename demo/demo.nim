@@ -49,7 +49,7 @@ proc main() =
 
   var
     op: difficulty = easy
-    property: cint = 20
+    property: int = 20
 
   while true:
     let started = cpuTime()
@@ -61,17 +61,17 @@ proc main() =
     window(name = "Demo", x = 50, y = 50, w = 200, h = 200, {windowBorder,
         windowMoveable, windowScalable, windowCloseable,
         windowMinimizable, windowTitle}):
-      nk_layout_row_static(ctx, 30.0, 80, 1)
+      setLayoutRowStatic(30.0, 80, 1)
       labelButton("button"):
         echo "button pressed"
       setLayoutRowDynamic(30.0, 2)
-      if nk_option_label(ctx, "easy", (if op == easy: 1 else: 0)):
+      if option("easy", op == easy):
         op = easy
-      if nk_option_label(ctx, "hard", (if op == hard: 1 else: 0)):
+      if option("hard", op == hard):
         op = hard
       setLayoutRowDynamic(25.0, 1)
-      nk_property_int(ctx, "Compression:", 0, property, 100, 10, 1.0)
-    if nk_window_is_hidden(ctx, "Demo") > 0:
+      propertyInt("Compression:", 0, property, 100, 10, 1.0)
+    if windowIsHidden("Demo"):
       break
     overview(ctx)
     setStyle(ctx, themeDark)

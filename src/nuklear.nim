@@ -182,7 +182,6 @@ proc nk_input_end*(ctx) {.importc, nodecl.}
 # General
 # -------
 proc nk_end(ctx) {.importc, cdecl.}
-proc nk_window_is_hidden*(ctx; name: cstring): cint {.importc, cdecl.}
 proc nk_spacing*(ctx; cols: cint) {.importc, cdecl.}
 
 # ----
@@ -197,8 +196,6 @@ proc nk_labelf*(ctx; flags: nk_flags; fmt: cstring) {.importc,
 # -------
 # Layouts
 # -------
-proc nk_layout_row_static*(ctx; height: cfloat; item_width,
-    cols: cint) {.importc, cdecl.}
 proc nk_layout_row_end*(ctx) {.importc, cdecl.}
 proc nk_layout_row_begin*(ctx; fmt: nk_layout_format;
     row_height: cfloat; cols: cint) {.importc, cdecl.}
@@ -278,8 +275,6 @@ proc nk_slide_int*(ctx; min, val, max, step: cint): cint {.importc, cdecl.}
 # ----------
 # Properties
 # ----------
-proc nk_property_int*(ctx; name: cstring; min: cint;
-    val: var cint; max, step: cint; inc_per_pixel: cfloat) {.importc, cdecl.}
 proc nk_property_float*(ctx; name: cstring; min: cfloat;
     val: var cfloat; max, step, inc_per_pixel: cfloat) {.importc, cdecl.}
 proc nk_propertyf*(ctx; name: cstring; min, val, max, step,
@@ -360,8 +355,6 @@ proc nk_selectable_symbol_label*(ctx; sym: nk_symbol_type;
 # -------
 # Widgets
 # -------
-proc nk_option_label*(ctx; name: cstring;
-    active: cint): nk_bool {.importc, cdecl.}
 proc nk_progress*(ctx; cur: var nk_size; max: nk_size;
     modifyable: nk_bool): nk_bool {.importc, cdecl.}
 
@@ -569,6 +562,15 @@ proc getTextWidth*(text: string): float =
   return ctx.style.font.width(ctx.style.font.userdata, ctx.style.font.height,
       text, text.len.cint)
 
+proc windowIsHidden*(name: string): bool =
+  ## Check if the window with the selected name is hidden
+  ##
+  ## * name - the name of the window to check
+  ##
+  ## Returns true if the window is hidden, otherwise false
+  proc nk_window_is_hidden(ctx; name: cstring): cint {.importc, nodecl.}
+  return nk_window_is_hidden(ctx, name.cstring) > 0
+
 # ------
 # Popups
 # ------
@@ -669,12 +671,25 @@ proc layoutSpacePush*(ctx; x, y, w, h: cfloat) =
 
 proc setLayoutRowDynamic*(height: float; cols: int) =
   ## Set the current widgets layout to divide it into selected amount of
-  ## columns with the selected height in rows
+  ## columns with the selected height in rows and grows in width when the
+  ## parent window resizes
   ##
   ## * height - the height in pixels of each row
   ## * cols   - the amount of columns in each row
   proc nk_layout_row_dynamic(ctx; height: cfloat; cols: cint) {.importc, cdecl.}
   nk_layout_row_dynamic(ctx, height.cfloat, cols.cint)
+
+proc setLayoutRowStatic*(height: float; width, cols: int) =
+  ## Set the current widgets layout to divide it into selected amount of
+  ## columns with the selected height in rows but it will not grow in width
+  ## when the parent window resizes
+  ##
+  ## * height    - the height in pixels of each row
+  ## * width     - the width in pixels of each column
+  ## * cols      - the amount of columns in each row
+  proc nk_layout_row_static(ctx; height: cfloat; item_width,
+      cols: cint) {.importc, cdecl.}
+  nk_layout_row_static(ctx, height.cfloat, width.cint, cols.cint)
 
 # ----
 # Menu
@@ -693,6 +708,33 @@ proc createMenu*(ctx; text: cstring; align: nk_flags; x,
   proc nk_menu_begin_label(ctx; text: cstring; align: nk_flags;
        size: nk_vec2): nk_bool {.importc, nodecl.}
   return nk_menu_begin_label(ctx, text, align, new_nk_vec2(x, y))
+
+# ----------
+# Properties
+# ----------
+
+proc propertyInt*(name: string; min: int; val: var int; max, step: int;
+    incPerPixel: float) =
+  ## Create a Nuklear property widget with integer values
+  ##
+  ## * name        - the name of the property and its label to show on it.
+  ##                 Using symbol # will generate random string in its place,
+  ##                 but it will not show in the property's text
+  ## * min         - the minimal value of the property
+  ## * val         - the current value of the property
+  ## * max         - the maximum value of the property
+  ## * step        - the amount which increase or decrease the property value
+  ##                 when the user press arrows buttons
+  ## * incPerPixel - the amount which increase or decrease the property value
+  ##                 when the user drag in it
+  ##
+  ## Returns the modified parameter val
+  proc nk_property_int(ctx; name: cstring; min: cint; val: var cint; max,
+      step: cint; inc_per_pixel: cfloat) {.importc, nodecl.}
+  var newVal = val.cint
+  nk_property_int(ctx, name.cstring, min.cint, newVal, max.cint, step.cint,
+      incPerPixel.cfloat)
+  val = newVal.int
 
 # -----
 # Style
@@ -1061,3 +1103,14 @@ proc checkBox*(label: string; checked: var bool): bool {.discardable.} =
   result = nk_checkbox_label(ctx = ctx, text = label.cstring,
       active = active) == nk_true
   checked = active == 1
+
+proc option*(label: string; selected: bool): bool =
+  ## Create a Nuklear option (radio) widget
+  ##
+  ## * label    - the text show with the option
+  ## * selected - the state of the option, if true the option is selected
+  ##
+  ## Returns true if the option is selected, otherwise false
+  proc nk_option_label(ctx; name: cstring; active: cint): nk_bool {.importc, nodecl.}
+  var active: cint = (if selected: 1 else: 0)
+  return nk_option_label(ctx = ctx, name = label.cstring, active = active) == nk_true
