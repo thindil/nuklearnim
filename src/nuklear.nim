@@ -288,7 +288,6 @@ proc nk_propertyi*(ctx; name: cstring; min, val, max, step: cint;
 proc nk_style_item_color*(col: nk_color): nk_style_item {.importc, cdecl.}
 proc nk_style_pop_float*(ctx) {.importc, cdecl.}
 proc nk_style_pop_vec2*(ctx) {.importc, cdecl.}
-proc nk_style_default*(ctx) {.importc, cdecl.}
 proc nk_style_set_font*(ctx; font: ptr nk_user_font) {.importc, nodecl.}
 
 # ------
@@ -449,6 +448,17 @@ type
   PluginFilter* = proc (box: ptr nk_text_edit;
       unicode: nk_rune): nk_bool {.cdecl.}
     ## The procedure used to filter input in edit fields
+  StyleColors* = enum
+    ## Names of the colors for UI's elements which can be set. The last value
+    ## is special, it defines the amount of available colors' settings.
+    textColor, windowColor, headerColor, borderColor, buttonColor,
+      buttonHoverColor, buttonActiveColor, toggleColor, toggleHoverColor,
+      toggleCursorColor, selectColor, selectActiveColor, sliderColor,
+      sliderCursorColor, sliderCursorHoverColor, sliderCursorActiveColor,
+      propertyColor, editColor, editCursorColor, comboColor, chartColor,
+      colorChartColor, colorChartHighlightColor, scrollbarColor,
+      scrollbarCursorColor, scrollbarCursorHoverColor,
+      scrollbarCursorActiveColor, tabHeaderColor, countColors
 
 # ----------
 # Converters
@@ -834,16 +844,19 @@ proc stylePushFloat*(ctx; field: ButtonStyleTypes;
     return nk_style_push_float(ctx, ctx.style.button.rounding, value)
   else:
     return false
-proc styleFromTable*(ctx; table: openArray[NimColor]) =
+proc styleFromTable*(table: openArray[NimColor]) =
   ## Set the Nuklear style colors from the table
   ##
-  ## * ctx   - the Nuklear context
   ## * table - the colors table which will be set
   proc nk_style_from_table(ctx; table: pointer) {.importc, nodecl.}
-  var newTable: array[NK_COLOR_COUNT.ord, nk_color]
+  var newTable: array[countColors.ord, nk_color]
   for index, color in table.pairs:
     newTable[index] = nk_rgba(color.r, color.g, color.b, color.a)
   nk_style_from_table(ctx, newTable.unsafeAddr)
+proc defaultStyle*() =
+  ## reset the UI colors to the default Nuklear setting
+  proc nk_style_default(ctx) {.importc, nodecl.}
+  nk_style_default(ctx)
 
 # ------
 # Combos
