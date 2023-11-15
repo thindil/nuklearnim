@@ -74,7 +74,7 @@ proc main() =
     if windowIsHidden("Demo"):
       break
     overview(ctx)
-    setStyle(ctx, themeDark)
+    setStyle(themeDark)
 
     # Draw
     nuklearDraw()
