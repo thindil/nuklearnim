@@ -216,8 +216,8 @@ proc nk_layout_row_template_end*(ctx) {.importc, cdecl.}
 # -----
 # Menus
 # -----
-proc nk_menubar_begin*(ctx) {.importc, cdecl.}
-proc nk_menubar_end*(ctx) {.importc, cdecl.}
+proc nk_menubar_begin(ctx) {.importc, cdecl.}
+proc nk_menubar_end(ctx) {.importc, cdecl.}
 proc nk_menu_end*(ctx) {.importc, cdecl.}
 proc nk_menu_item_label*(ctx; text: cstring;
     aligmnent: nk_flags): nk_bool {.importc, cdecl.}
@@ -542,15 +542,16 @@ template window*(name: string; x, y, w, h: float; flags: set[WindowFlags];
     content: untyped) =
   ## Create a new Nuklear window/widget with the content
   ##
-  ## * name  - the window title
-  ## * x     - the X position of the top left corner of the window
-  ## * y     - the Y position of the top left corner of the window
-  ## * w     - the width of the window
-  ## * h     - the height of the window
-  ## * flags - the flags for the window
+  ## * name    - the window title
+  ## * x       - the X position of the top left corner of the window
+  ## * y       - the Y position of the top left corner of the window
+  ## * w       - the width of the window
+  ## * h       - the height of the window
+  ## * flags   - the flags for the window
+  ## * content - the content of the window
   if createWin(name.cstring, x, y, w, h, winSetToInt(flags)):
     content
-  ctx.nk_end
+  nk_end(ctx)
 
 proc getWidgetBounds*(ctx): NimRect =
   ## Get the rectable with the current Nuklear widget coordinates
@@ -704,9 +705,18 @@ proc setLayoutRowStatic*(height: float; width, cols: int) =
 # ----
 # Menu
 # ----
-proc createMenu*(ctx; text: cstring; align: nk_flags; x,
-    y: cfloat): bool =
-  ## Create a Nuklear menu
+template menuBar*(content: untyped) =
+  # Create a menu bar with the selected content
+  #
+  # * content - the content of the menu bar
+  nk_menubar_begin(ctx)
+  content
+  nk_menubar_end(ctx)
+
+proc createMenu(ctx; text: cstring; align: nk_flags; x, y: cfloat): bool =
+  ## Create a Nuklear menu, internal use only, temporary code
+  ##
+  ## Returns true if the popup was successfully created, otherwise false.
   ##
   ## * ctx   - the Nuklear context
   ## * text  - the label for the menu
@@ -718,6 +728,18 @@ proc createMenu*(ctx; text: cstring; align: nk_flags; x,
   proc nk_menu_begin_label(ctx; text: cstring; align: nk_flags;
        size: nk_vec2): nk_bool {.importc, nodecl.}
   return nk_menu_begin_label(ctx, text, align, new_nk_vec2(x, y))
+
+template menu*(text: string; align: TextAlignment; x, y: float;
+    content: untyped) =
+  ## Create a Nuklear menu
+  ## * text    - the label for the menu
+  ## * align   - the menu alignment
+  ## * x       - the X position of the top left corner of the menu
+  ## * y       - the Y position of the top left corner of the menu
+  ## * content - the content of the menu
+  if createMenu(ctx, text.cstring, align.nk_flags, x, y):
+    content
+    nk_menu_end(ctx)
 
 # ----------
 # Properties
@@ -749,10 +771,9 @@ proc propertyInt*(name: string; min: int; val: var int; max, step: int;
 # -----
 # Style
 # -----
-proc headerAlign*(ctx; value: nk_style_header_align) =
+proc headerAlign*(value: nk_style_header_align) =
   ## Set the Nuklear windows header alignment
   ##
-  ## * ctx   - the Nuklear context
   ## * value - the new value for the alignment
   ctx.style.window.header.align = value
 var buttonStyle: nk_style_button ## Used to store the Nuklear buttons style

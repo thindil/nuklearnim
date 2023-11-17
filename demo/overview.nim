@@ -104,7 +104,7 @@ var
 
 proc overview*(ctx: PContext) =
   windowFlags = {}
-  headerAlign(ctx, header_align)
+  headerAlign(header_align)
   if border:
     windowFlags.incl(windowBorder)
   if resize:
@@ -120,71 +120,68 @@ proc overview*(ctx: PContext) =
   window("Overview", 275, 10, 400, 600, windowFlags):
     if showMenu:
       # menubar
-      nk_menubar_begin(ctx)
-      # menu #1
-      nk_layout_row_begin(ctx, NK_STATIC, 25, 5)
-      nk_layout_row_push(ctx, 45)
-      if createMenu(ctx, "MENU", NK_TEXT_LEFT, 120, 200):
-        setLayoutRowDynamic(25, 1)
-        if nk_menu_item_label(ctx, "Hide", NK_TEXT_LEFT):
-          showMenu = true
-        if nk_menu_item_label(ctx, "About", NK_TEXT_LEFT):
-          showAppAbout = true
-        discard nk_progress(ctx, prog, 100, nk_true)
-        discard nk_slider_int(ctx, 0, slider, 16, 1)
-        checkbox("check", check)
-        nk_menu_end(ctx)
-      # menu 2
-      nk_layout_row_push(ctx, 60)
-      if createMenu(ctx, "ADVANCED", NK_TEXT_LEFT, 200, 600):
-        state = (if menuState == MENU_FILE: NK_MAXIMIZED else: NK_MINIMIZED)
-        if nk_tree_state_push(ctx, NK_TREE_TAB, "FILE", state):
-          menuState = MENU_FILE
-          discard nk_menu_item_label(ctx, "New", NK_TEXT_LEFT)
-          discard nk_menu_item_label(ctx, "Open", NK_TEXT_LEFT)
-          discard nk_menu_item_label(ctx, "Save", NK_TEXT_LEFT)
-          discard nk_menu_item_label(ctx, "Close", NK_TEXT_LEFT)
-          discard nk_menu_item_label(ctx, "Exit", NK_TEXT_LEFT)
-          nk_tree_pop(ctx)
-        else:
-          menuState = (if menuState == MENU_FILE: MENU_NONE else: menuState)
-        state = (if menuState == MENU_EDIT: NK_MAXIMIZED else: NK_MINIMIZED)
-        if nk_tree_state_push(ctx, NK_TREE_TAB, "EDIT", state):
-          menuState = MENU_EDIT
-          discard nk_menu_item_label(ctx, "Copy", NK_TEXT_LEFT)
-          discard nk_menu_item_label(ctx, "Delete", NK_TEXT_LEFT)
-          discard nk_menu_item_label(ctx, "Cut", NK_TEXT_LEFT)
-          discard nk_menu_item_label(ctx, "Paste", NK_TEXT_LEFT)
-          nk_tree_pop(ctx)
-        else:
-          menuState = (if menuState == MENU_EDIT: MENU_NONE else: menuState)
-        state = (if menu_state == MENU_VIEW: NK_MAXIMIZED else: NK_MINIMIZED)
-        if nk_tree_state_push(ctx, NK_TREE_TAB, "VIEW", state):
-          menuState = MENU_VIEW
-          discard nk_menu_item_label(ctx, "About", NK_TEXT_LEFT)
-          discard nk_menu_item_label(ctx, "Options", NK_TEXT_LEFT)
-          discard nk_menu_item_label(ctx, "Customize", NK_TEXT_LEFT)
-          nk_tree_pop(ctx)
-        else:
-          menuState = (if menuState == MENU_VIEW: MENU_NONE else: menuState)
-        state = (if menuState == MENU_CHART: NK_MAXIMIZED else: NK_MINIMIZED)
-        if nk_tree_state_push(ctx, NK_TREE_TAB, "CHART", state):
-          menuState = MENU_CHART
-          setLayoutRowDynamic(150, 1)
-          discard nk_chart_begin(ctx, NK_CHART_COLUMN, values.len, 0, 50)
-          for value in values:
-            discard nk_chart_push(ctx, value)
-          nk_chart_end(ctx)
-          nk_tree_pop(ctx)
-        else:
-          menuState = (if menuState == MENU_CHART: MENU_NONE else: menuState)
-        nk_menu_end(ctx)
-      # menu widgets
-      nk_layout_row_push(ctx, 70)
-      discard nk_progress(ctx, mprog, 100, nk_true)
-      discard nk_slider_int(ctx, 0, mslider, 16, 1);
-      checkbox("check", mcheck)
-      nk_menubar_end(ctx)
+      menuBar:
+        # menu #1
+        nk_layout_row_begin(ctx, NK_STATIC, 25, 5)
+        nk_layout_row_push(ctx, 45)
+        menu("MENU", left, 120, 200):
+          setLayoutRowDynamic(25, 1)
+          if nk_menu_item_label(ctx, "Hide", NK_TEXT_LEFT):
+            showMenu = true
+          if nk_menu_item_label(ctx, "About", NK_TEXT_LEFT):
+            showAppAbout = true
+          discard nk_progress(ctx, prog, 100, nk_true)
+          discard nk_slider_int(ctx, 0, slider, 16, 1)
+          checkbox("check", check)
+        # menu 2
+        nk_layout_row_push(ctx, 60)
+        menu("ADVANCED", left, 200, 600):
+          state = (if menuState == MENU_FILE: NK_MAXIMIZED else: NK_MINIMIZED)
+          if nk_tree_state_push(ctx, NK_TREE_TAB, "FILE", state):
+            menuState = MENU_FILE
+            discard nk_menu_item_label(ctx, "New", NK_TEXT_LEFT)
+            discard nk_menu_item_label(ctx, "Open", NK_TEXT_LEFT)
+            discard nk_menu_item_label(ctx, "Save", NK_TEXT_LEFT)
+            discard nk_menu_item_label(ctx, "Close", NK_TEXT_LEFT)
+            discard nk_menu_item_label(ctx, "Exit", NK_TEXT_LEFT)
+            nk_tree_pop(ctx)
+          else:
+            menuState = (if menuState == MENU_FILE: MENU_NONE else: menuState)
+          state = (if menuState == MENU_EDIT: NK_MAXIMIZED else: NK_MINIMIZED)
+          if nk_tree_state_push(ctx, NK_TREE_TAB, "EDIT", state):
+            menuState = MENU_EDIT
+            discard nk_menu_item_label(ctx, "Copy", NK_TEXT_LEFT)
+            discard nk_menu_item_label(ctx, "Delete", NK_TEXT_LEFT)
+            discard nk_menu_item_label(ctx, "Cut", NK_TEXT_LEFT)
+            discard nk_menu_item_label(ctx, "Paste", NK_TEXT_LEFT)
+            nk_tree_pop(ctx)
+          else:
+            menuState = (if menuState == MENU_EDIT: MENU_NONE else: menuState)
+          state = (if menu_state == MENU_VIEW: NK_MAXIMIZED else: NK_MINIMIZED)
+          if nk_tree_state_push(ctx, NK_TREE_TAB, "VIEW", state):
+            menuState = MENU_VIEW
+            discard nk_menu_item_label(ctx, "About", NK_TEXT_LEFT)
+            discard nk_menu_item_label(ctx, "Options", NK_TEXT_LEFT)
+            discard nk_menu_item_label(ctx, "Customize", NK_TEXT_LEFT)
+            nk_tree_pop(ctx)
+          else:
+            menuState = (if menuState == MENU_VIEW: MENU_NONE else: menuState)
+          state = (if menuState == MENU_CHART: NK_MAXIMIZED else: NK_MINIMIZED)
+          if nk_tree_state_push(ctx, NK_TREE_TAB, "CHART", state):
+            menuState = MENU_CHART
+            setLayoutRowDynamic(150, 1)
+            discard nk_chart_begin(ctx, NK_CHART_COLUMN, values.len, 0, 50)
+            for value in values:
+              discard nk_chart_push(ctx, value)
+            nk_chart_end(ctx)
+            nk_tree_pop(ctx)
+          else:
+            menuState = (if menuState == MENU_CHART: MENU_NONE else: menuState)
+        # menu widgets
+        nk_layout_row_push(ctx, 70)
+        discard nk_progress(ctx, mprog, 100, nk_true)
+        discard nk_slider_int(ctx, 0, mslider, 16, 1);
+        checkbox("check", mcheck)
     if showAppAbout:
       try:
         popup(staticPopup, "About", {windowCloseable}, 20, 100,
