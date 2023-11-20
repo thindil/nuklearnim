@@ -51,7 +51,7 @@ type
 # Enumerations
 # ------------
 type
-  nk_style_header_align* = enum
+  nk_style_header_align = enum
     NK_HEADER_LEFT, NK_HEADER_RIGHT
   nk_layout_format* = enum
     NK_DYNAMIC, NK_STATIC
@@ -75,7 +75,7 @@ type
   nk_modify* = enum
     NK_FIXED, NK_MODIFIABLE
   nk_collapse_states* = enum
-    NK_MINIMIZED, NK_MAXIMIZED
+    minimized, maximized
   nk_button_behavior* = enum
     NK_BUTTON_DEFAULT, NK_BUTTON_REPEATER
   nk_symbol_type* = enum
@@ -219,7 +219,7 @@ proc nk_layout_row_template_end*(ctx) {.importc, cdecl.}
 proc nk_menubar_begin(ctx) {.importc, cdecl.}
 proc nk_menubar_end(ctx) {.importc, cdecl.}
 proc nk_menu_end*(ctx) {.importc, cdecl.}
-proc nk_menu_item_label*(ctx; text: cstring;
+proc nk_menu_item_label(ctx; text: cstring;
     aligmnent: nk_flags): nk_bool {.importc, cdecl.}
 
 # ------
@@ -459,6 +459,9 @@ type
       colorChartColor, colorChartHighlightColor, scrollbarColor,
       scrollbarCursorColor, scrollbarCursorHoverColor,
       scrollbarCursorActiveColor, tabHeaderColor, countColors
+  StyleHeaderAlign* = enum
+    ## The styles of the window's header
+    headerLeft, headerRight
 
 # ----------
 # Converters
@@ -702,9 +705,9 @@ proc setLayoutRowStatic*(height: float; width, cols: int) =
       cols: cint) {.importc, cdecl.}
   nk_layout_row_static(ctx, height.cfloat, width.cint, cols.cint)
 
-# ----
-# Menu
-# ----
+# -----
+# Menus
+# -----
 template menuBar*(content: untyped) =
   # Create a menu bar with the selected content
   #
@@ -732,6 +735,7 @@ proc createMenu(ctx; text: cstring; align: nk_flags; x, y: cfloat): bool =
 template menu*(text: string; align: TextAlignment; x, y: float;
     content: untyped) =
   ## Create a Nuklear menu
+  ##
   ## * text    - the label for the menu
   ## * align   - the menu alignment
   ## * x       - the X position of the top left corner of the menu
@@ -740,6 +744,16 @@ template menu*(text: string; align: TextAlignment; x, y: float;
   if createMenu(ctx, text.cstring, align.nk_flags, x, y):
     content
     nk_menu_end(ctx)
+
+template menuItem*(label: string; align: TextAlignment; onPressCode: untyped) =
+  ## Create a Nuklear menu's item. Execute the selected code when the user
+  ## select the item from a menu.
+  ##
+  ## * label       - the label of the item
+  ## * align       - the alignment of the item's label
+  ## * onPressCode - the code executed when the menu was selected by the user
+  if nk_menu_item_label(ctx, label.cstring, align.nk_flags):
+    onPressCode
 
 # ----------
 # Properties
@@ -771,11 +785,11 @@ proc propertyInt*(name: string; min: int; val: var int; max, step: int;
 # -----
 # Style
 # -----
-proc headerAlign*(value: nk_style_header_align) =
+proc headerAlign*(value: StyleHeaderAlign) =
   ## Set the Nuklear windows header alignment
   ##
   ## * value - the new value for the alignment
-  ctx.style.window.header.align = value
+  ctx.style.window.header.align = value.ord.nk_style_header_align
 var buttonStyle: nk_style_button ## Used to store the Nuklear buttons style
 proc saveButtonStyle*(ctx) =
   ## Save the Nuklear buttons style to variable, so it can be restored later
