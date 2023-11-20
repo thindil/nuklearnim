@@ -33,7 +33,7 @@ else:
 
 type
   MenuState = enum
-    MENU_NONE, MENU_FILE, MENU_EDIT, MENU_VIEW, MENU_CHART
+    menuNone, menuFile, menuEdit, menuView, menuChart
   Options = enum
     A, B, C
   ColorMode = enum
@@ -52,13 +52,12 @@ var
     minimizable, check, mcheck, checkbox, inactive, groupBorder: bool = true
   windowFlags: set[WindowFlags]
   showAppAbout, groupTitlebar, groupNoScrollbar: bool = false
-  headerAlign: nk_style_header_align = NK_HEADER_RIGHT
   prog, progValue = 40
   slider, mslider: cint = 10
   propertyInt, propertyNeg: int = 10
   mprog = 60
-  menuState = MENU_NONE
-  state = NK_MINIMIZED
+  menuState = menuNone
+  state = minimized
   option = A
   intSlider: cint = 5
   floatSlider: cfloat = 2.5
@@ -104,7 +103,7 @@ var
 
 proc overview*(ctx: PContext) =
   windowFlags = {}
-  headerAlign(header_align)
+  headerAlign(headerRight)
   if border:
     windowFlags.incl(windowBorder)
   if resize:
@@ -126,9 +125,9 @@ proc overview*(ctx: PContext) =
         nk_layout_row_push(ctx, 45)
         menu("MENU", left, 120, 200):
           setLayoutRowDynamic(25, 1)
-          if nk_menu_item_label(ctx, "Hide", NK_TEXT_LEFT):
-            showMenu = true
-          if nk_menu_item_label(ctx, "About", NK_TEXT_LEFT):
+          menuItem("Hide", left):
+            showMenu = false
+          menuItem("About", left):
             showAppAbout = true
           discard nk_progress(ctx, prog, 100, nk_true)
           discard nk_slider_int(ctx, 0, slider, 16, 1)
@@ -136,39 +135,51 @@ proc overview*(ctx: PContext) =
         # menu 2
         nk_layout_row_push(ctx, 60)
         menu("ADVANCED", left, 200, 600):
-          state = (if menuState == MENU_FILE: NK_MAXIMIZED else: NK_MINIMIZED)
+          state = (if menuState == menuFile: maximized else: minimized)
           if nk_tree_state_push(ctx, NK_TREE_TAB, "FILE", state):
-            menuState = MENU_FILE
-            discard nk_menu_item_label(ctx, "New", NK_TEXT_LEFT)
-            discard nk_menu_item_label(ctx, "Open", NK_TEXT_LEFT)
-            discard nk_menu_item_label(ctx, "Save", NK_TEXT_LEFT)
-            discard nk_menu_item_label(ctx, "Close", NK_TEXT_LEFT)
-            discard nk_menu_item_label(ctx, "Exit", NK_TEXT_LEFT)
+            menuState = menuFile
+            menuItem("New", left):
+              discard
+            menuItem("Open", left):
+              discard
+            menuItem("Save", left):
+              discard
+            menuItem("Close", left):
+              discard
+            menuItem("Exit", left):
+              discard
             nk_tree_pop(ctx)
           else:
-            menuState = (if menuState == MENU_FILE: MENU_NONE else: menuState)
-          state = (if menuState == MENU_EDIT: NK_MAXIMIZED else: NK_MINIMIZED)
+            menuState = (if menuState == menuFile: menuNone else: menuState)
+          state = (if menuState == menuEdit: maximized else: minimized)
           if nk_tree_state_push(ctx, NK_TREE_TAB, "EDIT", state):
-            menuState = MENU_EDIT
-            discard nk_menu_item_label(ctx, "Copy", NK_TEXT_LEFT)
-            discard nk_menu_item_label(ctx, "Delete", NK_TEXT_LEFT)
-            discard nk_menu_item_label(ctx, "Cut", NK_TEXT_LEFT)
-            discard nk_menu_item_label(ctx, "Paste", NK_TEXT_LEFT)
+            menuState = menuEdit
+            menuItem("Copy", left):
+              discard
+            menuItem("Delete", left):
+              discard
+            menuItem("Cut", left):
+              discard
+            menuItem("Paste", left):
+              discard
             nk_tree_pop(ctx)
           else:
-            menuState = (if menuState == MENU_EDIT: MENU_NONE else: menuState)
-          state = (if menu_state == MENU_VIEW: NK_MAXIMIZED else: NK_MINIMIZED)
+            menuState = (if menuState == menuEdit: menuNone else: menuState)
+          state = (if menu_state == menuView: maximized else: minimized)
           if nk_tree_state_push(ctx, NK_TREE_TAB, "VIEW", state):
-            menuState = MENU_VIEW
-            discard nk_menu_item_label(ctx, "About", NK_TEXT_LEFT)
-            discard nk_menu_item_label(ctx, "Options", NK_TEXT_LEFT)
-            discard nk_menu_item_label(ctx, "Customize", NK_TEXT_LEFT)
+            menuState = menuView
+            menuItem("About", left):
+              discard
+            menuItem("Options", left):
+              discard
+            menuItem("Customize", left):
+              discard
             nk_tree_pop(ctx)
           else:
-            menuState = (if menuState == MENU_VIEW: MENU_NONE else: menuState)
-          state = (if menuState == MENU_CHART: NK_MAXIMIZED else: NK_MINIMIZED)
+            menuState = (if menuState == menuView: menuNone else: menuState)
+          state = (if menuState == menuChart: maximized else: minimized)
           if nk_tree_state_push(ctx, NK_TREE_TAB, "CHART", state):
-            menuState = MENU_CHART
+            menuState = menuChart
             setLayoutRowDynamic(150, 1)
             discard nk_chart_begin(ctx, NK_CHART_COLUMN, values.len, 0, 50)
             for value in values:
@@ -176,7 +187,7 @@ proc overview*(ctx: PContext) =
             nk_chart_end(ctx)
             nk_tree_pop(ctx)
           else:
-            menuState = (if menuState == MENU_CHART: MENU_NONE else: menuState)
+            menuState = (if menuState == menuChart: menuNone else: menuState)
         # menu widgets
         nk_layout_row_push(ctx, 70)
         discard nk_progress(ctx, mprog, 100, nk_true)
@@ -192,7 +203,7 @@ proc overview*(ctx: PContext) =
           label("nuklear is licensed under the public domain License.")
       except:
         showAppAbout = false
-    if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Window", NK_MINIMIZED,
+    if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Window", minimized,
         "overview151", 12, 151):
       setLayoutRowDynamic(30, 2)
       checkbox("Titlebar", titlebar)
@@ -204,9 +215,9 @@ proc overview*(ctx: PContext) =
       checkbox("Minimizable", minimizable)
       checkbox("Scale Left", scaleLeft)
       nk_tree_pop(ctx)
-    if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Widgets", NK_MINIMIZED,
+    if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Widgets", minimized,
         "overview163", 12, 163):
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Text", NK_MINIMIZED,
+      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Text", minimized,
           "overview165", 12, 165):
         setLayoutRowDynamic(20, 1)
         label("Label aligned left")
@@ -220,7 +231,7 @@ proc overview*(ctx: PContext) =
         setLayoutRowDynamic(100, 1)
         nk_label_wrap(ctx, "This is another long text to show dynamic window changes on multiline text")
         nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Button", NK_MINIMIZED,
+      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Button", minimized,
           "overview180", 12, 180):
         setLayoutRowStatic(30, 100, 3)
         labelButton("Button"):
@@ -245,7 +256,7 @@ proc overview*(ctx: PContext) =
         discard nk_button_symbol_label(ctx, NK_SYMBOL_TRIANGLE_RIGHT, "next",
             NK_TEXT_LEFT)
         nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Basic", NK_MINIMIZED,
+      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Basic", minimized,
           "overview204", 12, 204):
         setLayoutRowStatic(30, 100, 1)
         checkbox("Checkbox", checkbox)
@@ -282,7 +293,7 @@ proc overview*(ctx: PContext) =
             1, 10)
         propertyInt("#max:", rangeIntMin, rangeIntMax, cint.high, 1, 10)
         nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Inactive", NK_MINIMIZED,
+      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Inactive", minimized,
           "overview257", 12, 257):
         setLayoutRowDynamic(30, 1)
         checkbox("Inactive", inactive)
@@ -304,9 +315,9 @@ proc overview*(ctx: PContext) =
           labelButton("button"):
             echo "button pressed"
         nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Selectable", NK_MINIMIZED,
+      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Selectable", minimized,
           "overview275", 12, 275):
-        if nk_tree_push_hashed(ctx, NK_TREE_NODE, "List", NK_MINIMIZED,
+        if nk_tree_push_hashed(ctx, NK_TREE_NODE, "List", minimized,
             "overview277", 12, 277):
           setLayoutRowStatic(18, 100, 1)
           discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT,
@@ -319,7 +330,7 @@ proc overview*(ctx: PContext) =
           discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT,
               selected[3])
           nk_tree_pop(ctx);
-        if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Grid", NK_MINIMIZED,
+        if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Grid", minimized,
             "overview287", 12, 287):
           setLayoutRowStatic(50, 50, 4)
           for index, value in selected2.mpairs:
@@ -337,7 +348,7 @@ proc overview*(ctx: PContext) =
                   4].cint xor 1).nk_bool
           nk_tree_pop(ctx)
         nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Combo", NK_MINIMIZED,
+      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Combo", minimized,
           "overview312", 12, 312):
         setLayoutRowStatic(25, 200, 1);
         currentWeapon = comboList(weapons, currentWeapon, 25, 200, 200)
@@ -470,7 +481,7 @@ proc overview*(ctx: PContext) =
           {.warning[Deprecated]: on.}
           nk_combo_end(ctx)
         nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Input", NK_MINIMIZED,
+      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Input", minimized,
           "overview461", 12, 461):
         nk_layout_row(ctx, NK_STATIC, 25, 2, ratio.unsafeAddr)
         label("Default:")
@@ -512,7 +523,7 @@ proc overview*(ctx: PContext) =
           textLen[7] = 0
         nk_tree_pop(ctx)
       nk_tree_pop(ctx)
-    if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Charts", NK_MINIMIZED,
+    if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Charts", minimized,
         "overview517", 12, 517):
       var
         chartId: cfloat = 0
@@ -577,7 +588,7 @@ proc overview*(ctx: PContext) =
           chartId = chartId + chartStep
         nk_chart_end(ctx)
       nk_tree_pop(ctx)
-    if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Popup", NK_MINIMIZED,
+    if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Popup", minimized,
         "overview584", 12, 584):
       setLayoutRowStatic(30, 160, 1)
       var bounds = getWidgetBounds(ctx)
@@ -643,9 +654,9 @@ proc overview*(ctx: PContext) =
       if isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h):
         nk_tooltip(ctx, "This is a tooltip")
       nk_tree_pop(ctx)
-    if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Layout", NK_MINIMIZED,
+    if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Layout", minimized,
         "overview651", 12, 651):
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Widget", NK_MINIMIZED,
+      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Widget", minimized,
           "overview653", 12, 653):
         setLayoutRowDynamic(30, 1)
         label("Dynamic fixed column layout with generated position and size:")
@@ -739,7 +750,7 @@ proc overview*(ctx: PContext) =
         labelButton("button"):
           discard
         nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Group", NK_MINIMIZED,
+      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Group", minimized,
           "overview731", 12, 731):
         var groupFlags: nk_flags = 0
         if groupBorder == nk_true.cint:
@@ -769,10 +780,10 @@ proc overview*(ctx: PContext) =
                 NK_TEXT_CENTERED, selected2[i])
           nk_group_end(ctx)
         nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Tree", NK_MINIMIZED,
+      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Tree", minimized,
           "overview766", 12, 766):
         var sel = rootSelected
-        if nk_tree_element_push_hashed(ctx, NK_TREE_NODE, "Root", NK_MINIMIZED,
+        if nk_tree_element_push_hashed(ctx, NK_TREE_NODE, "Root", minimized,
             sel, "overview771", 12, 771):
           var nodeSelect = selected3[0]
           if sel != rootSelected:
@@ -780,7 +791,7 @@ proc overview*(ctx: PContext) =
             for i in 0 .. 7:
               selected3[i] = sel
           if nk_tree_element_push_hashed(ctx, NK_TREE_NODE, "Node",
-              NK_MINIMIZED, node_select, "overview778", 12, 778):
+              minimized, node_select, "overview778", 12, 778):
             if nodeSelect != selected3[0]:
               selected3[0] = nodeSelect
               for i in 0 .. 3:
@@ -800,7 +811,7 @@ proc overview*(ctx: PContext) =
                 NK_TEXT_RIGHT, selected3[i])
           nk_tree_element_pop(ctx)
         nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Notebook", NK_MINIMIZED,
+      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Notebook", minimized,
           "overview799", 12, 799):
         discard stylePushVec2(ctx, spacing, 0, 0)
         discard stylePushFloat(ctx, rounding, 0)
@@ -870,7 +881,7 @@ proc overview*(ctx: PContext) =
             discard
           nk_group_end(ctx)
         nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Simple", NK_MINIMIZED,
+      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Simple", minimized,
           "overview868", 12, 868):
         setLayoutRowDynamic(300, 2)
         if nk_group_begin(ctx, "Group_Without_Border", 0):
@@ -887,7 +898,7 @@ proc overview*(ctx: PContext) =
               discard
           nk_group_end(ctx)
         nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Complex", NK_MINIMIZED,
+      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Complex", minimized,
           "overview884", 12, 884):
         nk_layout_space_begin(ctx, NK_STATIC, 500, 64)
         layoutSpacePush(ctx, 0, 0, 150, 500)
@@ -956,12 +967,12 @@ proc overview*(ctx: PContext) =
           nk_group_end(ctx);
         nk_layout_space_end(ctx)
         nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Splitter", NK_MINIMIZED,
+      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Splitter", minimized,
           "overview942", 12, 942):
         setLayoutRowStatic(20, 320, 1)
         label("Use slider and spinner to change tile size")
         label("Drag the space between tiles to change tile ratio")
-        if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Vertical", NK_MINIMIZED,
+        if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Vertical", minimized,
             "overview948", 12, 948):
           var rowLayout: array[5, cfloat] = [a, 8, b, 8, c]
           setLayoutRowStatic(30, 100, 2)
@@ -1035,7 +1046,7 @@ proc overview*(ctx: PContext) =
               discard
             nk_group_end(ctx)
           nk_tree_pop(ctx)
-        if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Horizontal", NK_MINIMIZED,
+        if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Horizontal", minimized,
             "overview1006", 13, 106):
           setLayoutRowStatic(30, 100, 2)
           label("top:")
