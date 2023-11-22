@@ -70,7 +70,7 @@ proc main() =
       if option("hard", op == hard):
         op = hard
       setLayoutRowDynamic(25.0, 1)
-      propertyInt("Compression:", 0, property, 100, 10, 1.0)
+      property("Compression:", 0, property, 100, 10, 1.0)
     if windowIsHidden("Demo"):
       break
     overview(ctx)
