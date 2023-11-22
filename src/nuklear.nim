@@ -197,7 +197,7 @@ proc nk_labelf*(ctx; flags: nk_flags; fmt: cstring) {.importc,
 # Layouts
 # -------
 proc nk_layout_row_end*(ctx) {.importc, cdecl.}
-proc nk_layout_row_begin*(ctx; fmt: nk_layout_format;
+proc nk_layout_row_begin(ctx; fmt: nk_layout_format;
     row_height: cfloat; cols: cint) {.importc, cdecl.}
 proc nk_layout_row_push*(ctx; width: cfloat) {.importc, cdecl.}
 proc nk_layout_row*(ctx; fmt: nk_layout_format; height: cfloat;
@@ -266,8 +266,6 @@ proc nk_button_symbol_label*(ctx; symbol: nk_symbol_type;
 # -------
 # Sliders
 # -------
-proc nk_slider_int*(ctx; min: cint; val: var cint; max,
-    step: cint): nk_bool {.importc, cdecl.}
 proc nk_slider_float*(ctx; min: cfloat; val: var cfloat; max,
     value_step: cfloat): nk_bool {.importc, cdecl.}
 proc nk_slide_int*(ctx; min, val, max, step: cint): cint {.importc, cdecl.}
@@ -350,12 +348,6 @@ proc nk_selectable_label*(ctx; str: cstring; align: nk_flags;
     value: var nk_bool): nk_bool {.importc, cdecl.}
 proc nk_selectable_symbol_label*(ctx; sym: nk_symbol_type;
     title: cstring; align: nk_flags; value: var nk_bool): nk_bool {.importc, cdecl.}
-
-# -------
-# Widgets
-# -------
-proc nk_progress*(ctx; cur: var nk_size; max: nk_size;
-    modifyable: nk_bool): nk_bool {.importc, cdecl.}
 
 # -----
 # Fonts
@@ -698,20 +690,40 @@ proc setLayoutRowStatic*(height: float; width, cols: int) =
   ## columns with the selected height in rows but it will not grow in width
   ## when the parent window resizes
   ##
-  ## * height    - the height in pixels of each row
-  ## * width     - the width in pixels of each column
-  ## * cols      - the amount of columns in each row
+  ## * height - the height in pixels of each row
+  ## * width  - the width in pixels of each column
+  ## * cols   - the amount of columns in each row
   proc nk_layout_row_static(ctx; height: cfloat; item_width,
       cols: cint) {.importc, cdecl.}
   nk_layout_row_static(ctx, height.cfloat, width.cint, cols.cint)
+
+template layoutStatic*(height: float; cols: int; content: untyped) =
+  ## Start setting manualy each row of the current widgets layout. The layout
+  ## will not resize when the parent window change its size
+  ##
+  ## * width   - the width in pixels of each column
+  ## * cols    - the amount of columns in each row
+  ## * content - the content of the layout
+  nk_layout_row_begin(ctx, NK_STATIC, height.cfloat, cols.cint)
+  content
+
+template layoutDynamic*(height: float; cols: int; content: untyped) =
+  ## Start setting manualy each row of the current widgets layout. The layout
+  ## will resize when the parent window change its size
+  ##
+  ## * width   - the width in pixels of each column
+  ## * cols    - the amount of columns in each row
+  ## * content - the content of the layout
+  nk_layout_row_begin(ctx, NK_DYNAMIC, height.cfloat, cols.cint)
+  content
 
 # -----
 # Menus
 # -----
 template menuBar*(content: untyped) =
-  # Create a menu bar with the selected content
-  #
-  # * content - the content of the menu bar
+  ## Create a menu bar with the selected content
+  ##
+  ## * content - the content of the menu bar
   nk_menubar_begin(ctx)
   content
   nk_menubar_end(ctx)
@@ -755,11 +767,33 @@ template menuItem*(label: string; align: TextAlignment; onPressCode: untyped) =
   if nk_menu_item_label(ctx, label.cstring, align.nk_flags):
     onPressCode
 
+# -------
+# Sliders
+# -------
+
+proc slider*(min: int; val: var int; max, step: int): bool {.discardable.} =
+  ## Create a Nuklear slider with integer values
+  ##
+  ## * min  - the minimal value on the slider
+  ## * val  - the current value on the slider
+  ## * max  - the maximum value on the slider
+  ## * step - the amount which increase or decrease the slider's value when
+  ##          the user drag its button
+  ##
+  ## Returns true if the current value was modified, otherwise false. Also
+  ## the modified parameter val
+  proc nk_slider_int(ctx; min: cint; val: var cint; max,
+      step: cint): nk_bool {.importc, nodecl.}
+  var newVal = val.cint
+  result = nk_slider_int(ctx = ctx, min = min.cint, val = newVal,
+      max = max.cint, step = step.cint) == nk_true
+  val = newVal
+
 # ----------
 # Properties
 # ----------
 
-proc propertyInt*(name: string; min: int; val: var int; max, step: int;
+proc property*(name: string; min: int; val: var int; max, step: int;
     incPerPixel: float) =
   ## Create a Nuklear property widget with integer values
   ##
@@ -1162,3 +1196,18 @@ proc option*(label: string; selected: bool): bool =
   proc nk_option_label(ctx; name: cstring; active: cint): nk_bool {.importc, nodecl.}
   var active: cint = (if selected: 1 else: 0)
   return nk_option_label(ctx = ctx, name = label.cstring, active = active) == nk_true
+
+proc progressBar*(value: var int; maxValue: int;
+    modifyable: bool = true): bool {.discardable.} =
+  ## Create a Nuklear progress bar widget
+  ##
+  ## * value      - the current value of the progress bar
+  ## * maxValue   - the maximum value of the progress bar
+  ## * modifyable - if true, the user can modify the value of the progress bar
+  ##
+  ## Returns true if the value parameter was changed, otherwise false
+  proc nk_progress(ctx; cur: var nk_size; max: nk_size;
+      modifyable: nk_bool): nk_bool {.importc, nodecl.}
+  return nk_progress(ctx = ctx, cur = value, max = maxValue,
+      modifyable = modifyable.nk_bool) == nk_true
+

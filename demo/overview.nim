@@ -53,13 +53,13 @@ var
   windowFlags: set[WindowFlags]
   showAppAbout, groupTitlebar, groupNoScrollbar: bool = false
   prog, progValue = 40
-  slider, mslider: cint = 10
+  slider, mslider: int = 10
   propertyInt, propertyNeg: int = 10
   mprog = 60
   menuState = menuNone
   state = minimized
   option = A
-  intSlider: cint = 5
+  intSlider: int = 5
   floatSlider: cfloat = 2.5
   propertyFloat: cfloat = 2.0
   rangeFloatMin: cfloat = 0
@@ -120,79 +120,79 @@ proc overview*(ctx: PContext) =
     if showMenu:
       # menubar
       menuBar:
-        # menu #1
-        nk_layout_row_begin(ctx, NK_STATIC, 25, 5)
-        nk_layout_row_push(ctx, 45)
-        menu("MENU", left, 120, 200):
-          setLayoutRowDynamic(25, 1)
-          menuItem("Hide", left):
-            showMenu = false
-          menuItem("About", left):
-            showAppAbout = true
-          discard nk_progress(ctx, prog, 100, nk_true)
-          discard nk_slider_int(ctx, 0, slider, 16, 1)
-          checkbox("check", check)
-        # menu 2
-        nk_layout_row_push(ctx, 60)
-        menu("ADVANCED", left, 200, 600):
-          state = (if menuState == menuFile: maximized else: minimized)
-          if nk_tree_state_push(ctx, NK_TREE_TAB, "FILE", state):
-            menuState = menuFile
-            menuItem("New", left):
-              discard
-            menuItem("Open", left):
-              discard
-            menuItem("Save", left):
-              discard
-            menuItem("Close", left):
-              discard
-            menuItem("Exit", left):
-              discard
-            nk_tree_pop(ctx)
-          else:
-            menuState = (if menuState == menuFile: menuNone else: menuState)
-          state = (if menuState == menuEdit: maximized else: minimized)
-          if nk_tree_state_push(ctx, NK_TREE_TAB, "EDIT", state):
-            menuState = menuEdit
-            menuItem("Copy", left):
-              discard
-            menuItem("Delete", left):
-              discard
-            menuItem("Cut", left):
-              discard
-            menuItem("Paste", left):
-              discard
-            nk_tree_pop(ctx)
-          else:
-            menuState = (if menuState == menuEdit: menuNone else: menuState)
-          state = (if menu_state == menuView: maximized else: minimized)
-          if nk_tree_state_push(ctx, NK_TREE_TAB, "VIEW", state):
-            menuState = menuView
+        layoutStatic(25, 5):
+          # menu #1
+          nk_layout_row_push(ctx, 45)
+          menu("MENU", left, 120, 200):
+            setLayoutRowDynamic(25, 1)
+            menuItem("Hide", left):
+              showMenu = false
             menuItem("About", left):
-              discard
-            menuItem("Options", left):
-              discard
-            menuItem("Customize", left):
-              discard
-            nk_tree_pop(ctx)
-          else:
-            menuState = (if menuState == menuView: menuNone else: menuState)
-          state = (if menuState == menuChart: maximized else: minimized)
-          if nk_tree_state_push(ctx, NK_TREE_TAB, "CHART", state):
-            menuState = menuChart
-            setLayoutRowDynamic(150, 1)
-            discard nk_chart_begin(ctx, NK_CHART_COLUMN, values.len, 0, 50)
-            for value in values:
-              discard nk_chart_push(ctx, value)
-            nk_chart_end(ctx)
-            nk_tree_pop(ctx)
-          else:
-            menuState = (if menuState == menuChart: menuNone else: menuState)
-        # menu widgets
-        nk_layout_row_push(ctx, 70)
-        discard nk_progress(ctx, mprog, 100, nk_true)
-        discard nk_slider_int(ctx, 0, mslider, 16, 1);
-        checkbox("check", mcheck)
+              showAppAbout = true
+            progressBar(prog, 100)
+            slider(0, slider, 16, 1)
+            checkbox("check", check)
+          # menu 2
+          nk_layout_row_push(ctx, 60)
+          menu("ADVANCED", left, 200, 600):
+            state = (if menuState == menuFile: maximized else: minimized)
+            if nk_tree_state_push(ctx, NK_TREE_TAB, "FILE", state):
+              menuState = menuFile
+              menuItem("New", left):
+                discard
+              menuItem("Open", left):
+                discard
+              menuItem("Save", left):
+                discard
+              menuItem("Close", left):
+                discard
+              menuItem("Exit", left):
+                discard
+              nk_tree_pop(ctx)
+            else:
+              menuState = (if menuState == menuFile: menuNone else: menuState)
+            state = (if menuState == menuEdit: maximized else: minimized)
+            if nk_tree_state_push(ctx, NK_TREE_TAB, "EDIT", state):
+              menuState = menuEdit
+              menuItem("Copy", left):
+                discard
+              menuItem("Delete", left):
+                discard
+              menuItem("Cut", left):
+                discard
+              menuItem("Paste", left):
+                discard
+              nk_tree_pop(ctx)
+            else:
+              menuState = (if menuState == menuEdit: menuNone else: menuState)
+            state = (if menu_state == menuView: maximized else: minimized)
+            if nk_tree_state_push(ctx, NK_TREE_TAB, "VIEW", state):
+              menuState = menuView
+              menuItem("About", left):
+                discard
+              menuItem("Options", left):
+                discard
+              menuItem("Customize", left):
+                discard
+              nk_tree_pop(ctx)
+            else:
+              menuState = (if menuState == menuView: menuNone else: menuState)
+            state = (if menuState == menuChart: maximized else: minimized)
+            if nk_tree_state_push(ctx, NK_TREE_TAB, "CHART", state):
+              menuState = menuChart
+              setLayoutRowDynamic(150, 1)
+              discard nk_chart_begin(ctx, NK_CHART_COLUMN, values.len, 0, 50)
+              for value in values:
+                discard nk_chart_push(ctx, value)
+              nk_chart_end(ctx)
+              nk_tree_pop(ctx)
+            else:
+              menuState = (if menuState == menuChart: menuNone else: menuState)
+          # menu widgets
+          nk_layout_row_push(ctx, 70)
+          progressBar(mprog, 100)
+          slider(0, mslider, 16, 1)
+          checkbox("check", mcheck)
     if showAppAbout:
       try:
         popup(staticPopup, "About", {windowCloseable}, 20, 100,
@@ -269,18 +269,18 @@ proc overview*(ctx: PContext) =
           option = C
         nk_layout_row(ctx, NK_STATIC, 30, 2, ratio.unsafeAddr)
         nk_labelf(ctx, NK_TEXT_LEFT, "Slider int")
-        discard nk_slider_int(ctx, 0, intSlider, 10, 1)
+        slider(0, intSlider, 10, 1)
         label("Slider float")
         discard nk_slider_float(ctx, 0, float_slider, 5.0, 0.5f)
         nk_labelf(ctx, NK_TEXT_LEFT, "Progressbar: %u", progValue)
-        discard nk_progress(ctx, prog_value, 100, nk_true)
+        progressBar(prog_value, 100)
         nk_layout_row(ctx, NK_STATIC, 25, 2, ratio.unsafeAddr)
         label("Property float:")
         nk_property_float(ctx, "Float:", 0, propertyFloat, 64.0, 0.1, 0.2)
         label("Property int:")
-        propertyInt("Int:", 0, propertyInt, 100, 1, 1)
+        property("Int:", 0, propertyInt, 100, 1, 1)
         label("Property neg:")
-        propertyInt("Neg:", -10, propertyNeg, 10, 1, 1)
+        property("Neg:", -10, propertyNeg, 10, 1, 1)
         setLayoutRowDynamic(25, 1)
         label("Range:")
         setLayoutRowDynamic(25, 3)
@@ -288,10 +288,10 @@ proc overview*(ctx: PContext) =
         nk_property_float(ctx, "#float:", rangeFloatMin, rangeFloatValue,
             rangeFloatMax, 1.0, 0.2)
         nk_property_float(ctx, "#max:", rangeFloatMin, rangeFloatMax, 100, 1.0, 0.2)
-        propertyInt("#min:", cint.low, rangeIntMin, rangeIntMax, 1, 10)
-        propertyInt("#neg:", rangeIntMin, rangeIntValue, rangeIntMax,
+        property("#min:", cint.low, rangeIntMin, rangeIntMax, 1, 10)
+        property("#neg:", rangeIntMin, rangeIntValue, rangeIntMax,
             1, 10)
-        propertyInt("#max:", rangeIntMin, rangeIntMax, cint.high, 1, 10)
+        property("#max:", rangeIntMin, rangeIntMax, cint.high, 1, 10)
         nk_tree_pop(ctx)
       if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Inactive", minimized,
           "overview257", 12, 257):
@@ -394,10 +394,10 @@ proc overview*(ctx: PContext) =
         var sum = $(progA + progB + progC + progD)
         if createLabelCombo(ctx, sum.cstring, 200, 200):
           setLayoutRowDynamic(30, 1)
-          discard nk_progress(ctx, progA, 100, nk_true)
-          discard nk_progress(ctx, progB, 100, nk_true)
-          discard nk_progress(ctx, progC, 100, nk_true)
-          discard nk_progress(ctx, progD, 100, nk_true)
+          progressBar(progA, 100)
+          progressBar(progB, 100)
+          progressBar(progC, 100)
+          progressBar(progD, 100)
           nk_combo_end(ctx)
         sum = $(checkValues[0] + checkValues[1] + checkValues[2] + checkValues[
             3] + checkValues[4])
@@ -446,25 +446,25 @@ proc overview*(ctx: PContext) =
             $selectedDate.year
         if createLabelCombo(ctx, sum.cstring, 350, 400):
           dateSelected = true
-          nk_layout_row_begin(ctx, NK_DYNAMIC, 20, 3);
-          nk_layout_row_push(ctx, 0.05)
-          if nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_LEFT):
-            if selectedDate.month == mJan:
-              selectedDate.monthZero = 12
-              selectedDate.year = selectedDate.year - 1
-            else:
-              selectedDate.monthZero = selectedDate.month.ord - 1
-          nk_layout_row_push(ctx, 0.9)
-          sum = $selectedDate.month & " " & $selectedDate.year
-          label(sum, centered)
-          nk_layout_row_push(ctx, 0.05)
-          if nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_RIGHT):
-            if selectedDate.month == mDec:
-              selectedDate.monthZero = 1
-              selectedDate.year = selectedDate.year + 1
-            else:
-              selectedDate.monthZero = selectedDate.month.ord + 1
-          nk_layout_row_end(ctx)
+          layoutDynamic(20, 3):
+            nk_layout_row_push(ctx, 0.05)
+            if nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_LEFT):
+              if selectedDate.month == mJan:
+                selectedDate.monthZero = 12
+                selectedDate.year = selectedDate.year - 1
+              else:
+                selectedDate.monthZero = selectedDate.month.ord - 1
+            nk_layout_row_push(ctx, 0.9)
+            sum = $selectedDate.month & " " & $selectedDate.year
+            label(sum, centered)
+            nk_layout_row_push(ctx, 0.05)
+            if nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_RIGHT):
+              if selectedDate.month == mDec:
+                selectedDate.monthZero = 1
+                selectedDate.year = selectedDate.year + 1
+              else:
+                selectedDate.monthZero = selectedDate.month.ord + 1
+            nk_layout_row_end(ctx)
           setLayoutRowDynamic(35, 7)
           for day in WeekDay:
             sum = $day
@@ -596,8 +596,8 @@ proc overview*(ctx: PContext) =
       if createContextual(ctx, 0, 100, 300, bounds):
         setLayoutRowDynamic(25, 1);
         checkbox("Menu", showMenu)
-        discard nk_progress(ctx, prog, 100, nk_true)
-        discard nk_slider_int(ctx, 0, slider, 16, 1)
+        progressBar(prog, 100)
+        slider(0, slider, 16, 1)
         if nk_contextual_item_label(ctx, "About", NK_TEXT_CENTERED):
           showAppAbout = true
         discard nk_selectable_label(ctx, ((if selected[0] ==
@@ -613,13 +613,13 @@ proc overview*(ctx: PContext) =
             nk_true: "Uns" else: "S") & "elect").cstring, NK_TEXT_LEFT,
             selected[3])
         nk_contextual_end(ctx)
-      nk_layout_row_begin(ctx, NK_STATIC, 30, 2)
-      nk_layout_row_push(ctx, 120)
-      label("Right Click here:")
-      nk_layout_row_push(ctx, 50)
-      bounds = getWidgetBounds(ctx)
-      discard colorButton(ctx, popupColor.r, popupColor.g, popupColor.b)
-      nk_layout_row_end(ctx)
+      layoutStatic(30, 2):
+        nk_layout_row_push(ctx, 120)
+        label("Right Click here:")
+        nk_layout_row_push(ctx, 50)
+        bounds = getWidgetBounds(ctx)
+        discard colorButton(ctx, popupColor.r, popupColor.g, popupColor.b)
+        nk_layout_row_end(ctx)
       if createContextual(ctx, 0, 350, 60, bounds):
         setLayoutRowDynamic(30, 4);
         popupColor.r = nk_propertyi(ctx, "#r", 0, popupColor.r, 255, 1, 1)
@@ -627,13 +627,13 @@ proc overview*(ctx: PContext) =
         popupColor.b = nk_propertyi(ctx, "#b", 0, popupColor.b, 255, 1, 1)
         popupColor.a = nk_propertyi(ctx, "#a", 0, popupColor.a, 255, 1, 1)
         nk_contextual_end(ctx)
-      nk_layout_row_begin(ctx, NK_STATIC, 30, 2)
-      nk_layout_row_push(ctx, 120)
-      label("Popup:")
-      nk_layout_row_push(ctx, 50)
-      labelButton("Popup"):
-        popup_active = true
-      nk_layout_row_end(ctx)
+      layoutStatic(30, 2):
+        nk_layout_row_push(ctx, 120)
+        label("Popup:")
+        nk_layout_row_push(ctx, 50)
+        labelButton("Popup"):
+          popup_active = true
+        nk_layout_row_end(ctx)
       if popupActive:
         try:
           popup(staticPopup, "Error", {windowNoFlags}, 20, 100, 220, 90):
@@ -696,30 +696,30 @@ proc overview*(ctx: PContext) =
           discard
         setLayoutRowDynamic(30, 1)
         label("Dynamic immediate mode custom column layout with generated position and custom size:")
-        nk_layout_row_begin(ctx, NK_DYNAMIC, 30, 3)
-        nk_layout_row_push(ctx, 0.2)
-        labelButton("button"):
-          discard
-        nk_layout_row_push(ctx, 0.6)
-        labelButton("button"):
-          discard
-        nk_layout_row_push(ctx, 0.2)
-        labelButton("button"):
-          discard
-        nk_layout_row_end(ctx)
+        layoutDynamic(30, 3):
+          nk_layout_row_push(ctx, 0.2)
+          labelButton("button"):
+            discard
+          nk_layout_row_push(ctx, 0.6)
+          labelButton("button"):
+            discard
+          nk_layout_row_push(ctx, 0.2)
+          labelButton("button"):
+            discard
+          nk_layout_row_end(ctx)
         setLayoutRowDynamic(30, 1)
         label("Static immediate mode custom column layout with generated position and custom size:")
-        nk_layout_row_begin(ctx, NK_STATIC, 30, 3)
-        nk_layout_row_push(ctx, 100)
-        labelButton("button"):
-          discard
-        nk_layout_row_push(ctx, 200)
-        labelButton("button"):
-          discard
-        nk_layout_row_push(ctx, 50)
-        labelButton("button"):
-          discard
-        nk_layout_row_end(ctx)
+        layoutStatic(30, 3):
+          nk_layout_row_push(ctx, 100)
+          labelButton("button"):
+            discard
+          nk_layout_row_push(ctx, 200)
+          labelButton("button"):
+            discard
+          nk_layout_row_push(ctx, 50)
+          labelButton("button"):
+            discard
+          nk_layout_row_end(ctx)
         setLayoutRowDynamic(30, 1)
         label("Static free space with custom position and custom size:")
         nk_layout_space_begin(ctx, NK_STATIC, 60, 4)
@@ -763,14 +763,14 @@ proc overview*(ctx: PContext) =
         checkbox("Titlebar", groupTitlebar)
         checkbox("Border", groupBorder)
         checkbox("No Scrollbar", groupNoScrollbar)
-        nk_layout_row_begin(ctx, NK_STATIC, 22, 3)
-        nk_layout_row_push(ctx, 50)
-        label("size:")
-        nk_layout_row_push(ctx, 130)
-        propertyInt("#Width:", 100, groupWidth, 500, 10, 1)
-        nk_layout_row_push(ctx, 130)
-        propertyInt("#Height:", 100, groupHeight, 500, 10, 1)
-        nk_layout_row_end(ctx)
+        layoutStatic(22, 3):
+          nk_layout_row_push(ctx, 50)
+          label("size:")
+          nk_layout_row_push(ctx, 130)
+          property("#Width:", 100, groupWidth, 500, 10, 1)
+          nk_layout_row_push(ctx, 130)
+          property("#Height:", 100, groupHeight, 500, 10, 1)
+          nk_layout_row_end(ctx)
         setLayoutRowStatic(groupHeight.cfloat, groupWidth, 2)
         if nk_group_begin(ctx, "Group", groupFlags):
           setLayoutRowStatic(18, 100, 1)
@@ -815,23 +815,23 @@ proc overview*(ctx: PContext) =
           "overview799", 12, 799):
         discard stylePushVec2(ctx, spacing, 0, 0)
         discard stylePushFloat(ctx, rounding, 0)
-        nk_layout_row_begin(ctx, NK_STATIC, 20, 3);
-        for i in 0 .. 2:
-          let
-            textWidth = getTextWidth(names[i])
-            widgetWidth = textWidth + 3 * getButtonStyle(ctx, padding).x;
-          nk_layout_row_push(ctx, widgetWidth)
-          if currentTab == i:
-            saveButtonStyle(ctx)
-            setButtonStyle2(ctx, active, normal)
-            currentTab = current_tab
-            labelButton(names[i]):
-              currentTab = i.cint
-            restoreButtonStyle(ctx)
-          else:
-            currentTab = current_tab
-            labelButton(names[i]):
-              currentTab = i.cint
+        layoutStatic(20, 3):
+          for i in 0 .. 2:
+            let
+              textWidth = getTextWidth(names[i])
+              widgetWidth = textWidth + 3 * getButtonStyle(ctx, padding).x;
+            nk_layout_row_push(ctx, widgetWidth)
+            if currentTab == i:
+              saveButtonStyle(ctx)
+              setButtonStyle2(ctx, active, normal)
+              currentTab = current_tab
+              labelButton(names[i]):
+                currentTab = i.cint
+              restoreButtonStyle(ctx)
+            else:
+              currentTab = current_tab
+              labelButton(names[i]):
+                currentTab = i.cint
         nk_style_pop_float(ctx)
         nk_style_pop_vec2(ctx)
         setLayoutRowDynamic(140, 1)
