@@ -373,7 +373,7 @@ extern "C" {
     #elif (defined(_WIN32) || defined(WIN32)) && defined(_MSC_VER)
       #define NK_SIZE_TYPE unsigned __int32
     #elif defined(__GNUC__) || defined(__clang__)
-      #if defined(__x86_64__) || defined(__ppc64__) || defined(__aarch64__)
+      #if defined(__x86_64__) || defined(__ppc64__) || defined(__PPC64__) || defined(__aarch64__)
         #define NK_SIZE_TYPE unsigned long
       #else
         #define NK_SIZE_TYPE unsigned int
@@ -388,7 +388,7 @@ extern "C" {
     #elif (defined(_WIN32) || defined(WIN32)) && defined(_MSC_VER)
       #define NK_POINTER_TYPE unsigned __int32
     #elif defined(__GNUC__) || defined(__clang__)
-      #if defined(__x86_64__) || defined(__ppc64__) || defined(__aarch64__)
+      #if defined(__x86_64__) || defined(__ppc64__) || defined(__PPC64__) || defined(__aarch64__)
         #define NK_POINTER_TYPE unsigned long
       #else
         #define NK_POINTER_TYPE unsigned int
@@ -2004,6 +2004,19 @@ NK_API void nk_window_show(struct nk_context*, const char *name, enum nk_show_st
 /// __cond__    | condition that has to be met to actually commit the visbility state change
 */
 NK_API void nk_window_show_if(struct nk_context*, const char *name, enum nk_show_states, int cond);
+/*/// #### nk_window_show_if
+/// Line for visual seperation. Draws a line with thickness determined by the current row height.
+/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
+/// void nk_rule_horizontal(struct nk_context *ctx, struct nk_color color, NK_BOOL rounding)
+/// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+///
+/// Parameter       | Description
+/// ----------------|-------------------------------------------------------
+/// __ctx__         | Must point to an previously initialized `nk_context` struct
+/// __color__       | Color of the horizontal line
+/// __rounding__    | Whether or not to make the line round
+*/
+NK_API void nk_rule_horizontal(struct nk_context *ctx, struct nk_color color, nk_bool rounding);
 /* =============================================================================
  *
  *                                  LAYOUT
@@ -2154,7 +2167,7 @@ NK_API void nk_window_show_if(struct nk_context*, const char *name, enum nk_show
 ///     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~c
 ///     if (nk_begin_xxx(...) {
 ///         // two rows with height: 30 composed of two widgets with width 60 and 40
-///         const float size[] = {60,40};
+///         const float ratio[] = {60,40};
 ///         nk_layout_row(ctx, NK_STATIC, 30, 2, ratio);
 ///         nk_widget(...);
 ///         nk_widget(...);
@@ -6090,8 +6103,23 @@ NK_LIB void nk_property(struct nk_context *ctx, const char *name, struct nk_prop
 
 #ifdef NK_INCLUDE_FONT_BAKING
 
+/**
+ * @def NK_NO_STB_RECT_PACK_IMPLEMENTATION
+ *
+ * When defined, will avoid enabling STB_RECT_PACK_IMPLEMENTATION for when stb_rect_pack.h is already implemented elsewhere.
+ */
+#ifndef NK_NO_STB_RECT_PACK_IMPLEMENTATION
 #define STB_RECT_PACK_IMPLEMENTATION
+#endif /* NK_NO_STB_RECT_PACK_IMPLEMENTATION */
+
+/**
+ * @def NK_NO_STB_TRUETYPE_IMPLEMENTATION
+ *
+ * When defined, will avoid enabling STB_TRUETYPE_IMPLEMENTATION for when stb_truetype.h is already implemented elsewhere.
+ */
+#ifndef NK_NO_STB_TRUETYPE_IMPLEMENTATION
 #define STB_TRUETYPE_IMPLEMENTATION
+#endif /* NK_NO_STB_TRUETYPE_IMPLEMENTATION */
 
 /* Allow consumer to define own STBTT_malloc/STBTT_free, and use the font atlas' allocator otherwise */
 #ifndef STBTT_malloc
@@ -17897,6 +17925,10 @@ nk_input_button(struct nk_context *ctx, enum nk_buttons id, int x, int y, nk_boo
     btn->clicked_pos.y = (float)y;
     btn->down = down;
     btn->clicked++;
+
+    /* Fix Click-Drag for touch events. */
+    in->mouse.delta.x = 0;
+    in->mouse.delta.y = 0;
 #ifdef NK_BUTTON_TRIGGER_ON_RELEASE
     if (down == 1 && id == NK_BUTTON_LEFT)
     {
@@ -20725,6 +20757,15 @@ nk_window_set_focus(struct nk_context *ctx, const char *name)
         nk_insert_window(ctx, win, NK_INSERT_BACK);
     }
     ctx->active = win;
+}
+NK_API void
+nk_rule_horizontal(struct nk_context *ctx, struct nk_color color, nk_bool rounding)
+{
+    struct nk_rect space;
+    enum nk_widget_layout_states state = nk_widget(&space, ctx);
+    struct nk_command_buffer *canvas = nk_window_get_canvas(ctx);
+    if (!state) return;
+    nk_fill_rect(canvas, space, rounding && space.h > 1.5f ? space.h / 2.0f : 0, color);
 }
 
 
@@ -23851,8 +23892,8 @@ nk_do_button(nk_flags *state, struct nk_command_buffer *out, struct nk_rect r,
     /* calculate button content space */
     content->x = r.x + style->padding.x + style->border + style->rounding;
     content->y = r.y + style->padding.y + style->border + style->rounding;
-    content->w = r.w - (2 * style->padding.x + style->border + style->rounding*2);
-    content->h = r.h - (2 * style->padding.y + style->border + style->rounding*2);
+    content->w = r.w - (2 * (style->padding.x + style->border + style->rounding));
+    content->h = r.h - (2 * (style->padding.y + style->border + style->rounding));
 
     /* execute button behavior */
     bounds.x = r.x - style->touch_padding.x;
@@ -29676,6 +29717,7 @@ nk_tooltipfv(struct nk_context *ctx, const char *fmt, va_list args)
 /// - 2022/08/01 (4.10.1) - Fix cursor jumping back to beginning of text when typing more than
 ///                         nk_edit_xxx limit
 /// - 2022/05/27 (4.10.0) - Add nk_input_has_mouse_click_in_button_rect() to fix window move bug
+/// - 2022/04/19 (4.9.8)  - Added nk_rule_horizontal() widget
 /// - 2022/04/18 (4.9.7)  - Change button behavior when NK_BUTTON_TRIGGER_ON_RELEASE is defined to
 ///                         only trigger when the mouse position was inside the same button on down
 /// - 2022/02/03 (4.9.6)  - Allow overriding the NK_INV_SQRT function, similar to NK_SIN and NK_COS
