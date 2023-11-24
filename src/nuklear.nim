@@ -68,13 +68,15 @@ type
     NK_TEXT_RIGHT = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_RIGHT.int
   nk_tree_type* = enum
     NK_TREE_NODE, NK_TREE_TAB
-  nk_chart_type* = enum
-    NK_CHART_LINES, NK_CHART_COLUMN, NK_CHART_MAX
+  ChartType* = enum
+    ## The types of charts
+    lines, column, chartMax
   nk_bool* = enum
     nk_false, nk_true
   nk_modify* = enum
     NK_FIXED, NK_MODIFIABLE
-  nk_collapse_states* = enum
+  CollapseStates* = enum
+    ## The states of a tree's content
     minimized, maximized
   nk_button_behavior* = enum
     NK_BUTTON_DEFAULT, NK_BUTTON_REPEATER
@@ -196,10 +198,10 @@ proc nk_labelf*(ctx; flags: nk_flags; fmt: cstring) {.importc,
 # -------
 # Layouts
 # -------
-proc nk_layout_row_end*(ctx) {.importc, cdecl.}
+proc nk_layout_row_end(ctx) {.importc, cdecl.}
 proc nk_layout_row_begin(ctx; fmt: nk_layout_format;
     row_height: cfloat; cols: cint) {.importc, cdecl.}
-proc nk_layout_row_push*(ctx; width: cfloat) {.importc, cdecl.}
+proc nk_layout_row_push(ctx; width: cfloat) {.importc, cdecl.}
 proc nk_layout_row*(ctx; fmt: nk_layout_format; height: cfloat;
     cols: cint; ratio: pointer) {.importc, cdecl.}
 proc nk_layout_space_begin*(ctx; fmt: nk_layout_format;
@@ -225,11 +227,11 @@ proc nk_menu_item_label(ctx; text: cstring;
 # ------
 # Charts
 # ------
-proc nk_chart_begin*(ctx; ctype: nk_chart_type; num: cint; min,
+proc nk_chart_begin(ctx; ctype: ChartType; num: cint; min,
     max: cfloat): nk_bool {.importc, cdecl.}
 proc nk_chart_push*(ctx; value: cfloat): nk_flags {.importc, cdecl.}
 proc nk_chart_end*(ctx) {.importc, cdecl.}
-proc nk_chart_add_slot*(ctx; ctype: nk_chart_type; count: cint;
+proc nk_chart_add_slot*(ctx; ctype: ChartType; count: cint;
     min_value, max_value: cfloat) {.importc, cdecl.}
 proc nk_chart_push_slot*(ctx; value: cfloat;
     slot: cint): nk_flags {.importc, cdecl.}
@@ -242,14 +244,14 @@ proc nk_popup_end(ctx) {.importc, nodecl.}
 # -----
 # Trees
 # -----
-proc nk_tree_state_push*(ctx; ttype: nk_tree_type;
-    title: cstring; state: var nk_collapse_states): nk_bool {.importc, cdecl.}
+proc nk_tree_state_push(ctx; ttype: nk_tree_type;
+    title: cstring; state: var CollapseStates): nk_bool {.importc, cdecl.}
 proc nk_tree_pop*(ctx) {.importc, cdecl.}
 proc nk_tree_push_hashed*(ctx; ttype: nk_tree_type;
-    title: cstring; state: nk_collapse_states; hash: cstring; len,
+    title: cstring; state: CollapseStates; hash: cstring; len,
     id: cint): nk_bool {.importc, cdecl.}
 proc nk_tree_element_push_hashed*(ctx; ttype: nk_tree_type;
-    title: cstring; state: nk_collapse_states; selected: var nk_bool;
+    title: cstring; state: CollapseStates; selected: var nk_bool;
     hash: cstring; len, sed: cint): nk_bool {.importc, cdecl.}
 proc nk_tree_element_pop*(ctx) {.importc, cdecl.}
 
@@ -585,11 +587,9 @@ proc createPopup(pType: PopupType; title: cstring;
   ## Create a new Nuklear popup window, internal use only, temporary code
   ##
   ## Returns true if the popup was successfully created, otherwise false.
-  type nk_popup_type = enum
-    NK_POPUP_STATIC, NK_POPUP_DYNAMIC
-  proc nk_popup_begin(ctx; pType: nk_popup_type; title: cstring;
+  proc nk_popup_begin(ctx; pType: PopupType; title: cstring;
       flags: nk_flags; rect: nk_rect): nk_bool {.importc, nodecl.}
-  return nk_popup_begin(ctx, pType.ord.nk_popup_type, title, flags, new_nk_rect(
+  return nk_popup_begin(ctx, pType, title, flags, new_nk_rect(
       x, y, w, h))
 
 template popup*(pType: PopupType; title: string; flags: set[WindowFlags]; x,
@@ -614,6 +614,50 @@ proc closePopup*() =
   ## Close the last popup window
   proc nk_popup_close(ctx) {.importc, nodecl.}
   ctx.nk_popup_close()
+
+# -----
+# Trees
+# -----
+template treeNode*(title: string; state: var CollapseStates;
+    current: var Natural; index: Natural; content: untyped) =
+  ## Create a new Nuklear tree container with highlighted header and with the
+  ## selected content
+  ##
+  ## * title   - the title of the tree
+  ## * state   - the current state of the tree
+  ## * current - the current index of the selected tree in the parent.
+  ## * index   - the index of the tree in the parent. The tree will be maximized
+  ##             when the current parameter is equal to the index parameter
+  ## * content - the content of the tree
+  ##
+  ## Returns modified parameters state and current
+  state = (if current == index: maximized else: minimized)
+  if ctx.nk_tree_state_push(NK_TREE_NODE, title.cstring, state):
+    current = index
+    content
+    ctx.nk_tree_pop
+  else:
+    current = (if current == index: 0 else: current)
+
+template treeTab*(title: string; state: var CollapseStates;
+    current: var Natural; index: Natural; content: untyped) =
+  ## Create a new Nuklear tree container with the selected content
+  ##
+  ## * title   - the title of the tree
+  ## * state   - the current state of the tree
+  ## * current - the current index of the selected tree in the parent.
+  ## * index   - the index of the tree in the parent. The tree will be maximized
+  ##             when the current parameter is equal to the index parameter
+  ## * content - the content of the tree
+  ##
+  ## Returns modified parameters state and current
+  state = (if current == index: maximized else: minimized)
+  if ctx.nk_tree_state_push(NK_TREE_TAB, title.cstring, state):
+    current = index
+    content
+    ctx.nk_tree_pop
+  else:
+    current = (if current == index: 0 else: current)
 
 # ------
 # Labels
@@ -701,20 +745,30 @@ template layoutStatic*(height: float; cols: int; content: untyped) =
   ## Start setting manualy each row of the current widgets layout. The layout
   ## will not resize when the parent window change its size
   ##
-  ## * width   - the width in pixels of each column
+  ## * height  - the width in pixels or window's ratio of each row
   ## * cols    - the amount of columns in each row
   ## * content - the content of the layout
   nk_layout_row_begin(ctx, NK_STATIC, height.cfloat, cols.cint)
   content
+  nk_layout_row_end(ctx)
 
 template layoutDynamic*(height: float; cols: int; content: untyped) =
   ## Start setting manualy each row of the current widgets layout. The layout
   ## will resize when the parent window change its size
   ##
-  ## * width   - the width in pixels of each column
+  ## * height   - the width in pixels or window's ratio of each row
   ## * cols    - the amount of columns in each row
   ## * content - the content of the layout
   nk_layout_row_begin(ctx, NK_DYNAMIC, height.cfloat, cols.cint)
+  content
+  nk_layout_row_end(ctx)
+
+template row*(width: float; content: untyped) =
+  ## Set the content of the row in the current widgets layout
+  ##
+  ## * width   - the width in the pixels or window's ratio of each column
+  ## * content - the content of the row
+  nk_layout_row_push(ctx, width.cfloat)
   content
 
 # -----
@@ -1012,7 +1066,7 @@ proc hsvaToColorf*(hsva: array[4, cfloat]): NimColorF =
 # ------
 # Charts
 # ------
-proc createColorChart*(ctx; ctype: nk_chart_type; color,
+proc createColorChart*(ctx; ctype: ChartType; color,
     higlight: NimColor; count: cint; min_value, max_value: cfloat): bool =
   ## Create a colored chart
   ##
@@ -1026,13 +1080,14 @@ proc createColorChart*(ctx; ctype: nk_chart_type; color,
   ## * max_value - the maximum value of the chart
   ##
   ## Returns true if the chart was succesfully created otherwise false
-  proc nk_chart_begin_colored(ctx; ctype: nk_chart_type; color,
+  proc nk_chart_begin_colored(ctx; ctype: ChartType; color,
       higlight: nk_color; count: cint; min_value,
       max_value: cfloat): nk_bool {.importc, nodecl.}
   return nk_chart_begin_colored(ctx, ctype, nk_rgb(color.r, color.g, color.b),
       nk_rgb(higlight.r, higlight.g, higlight.b), count, min_value,
     max_value)
-proc addColorChartSlot*(ctx; ctype: nk_chart_type; color,
+
+proc addColorChartSlot*(ctx; ctype: ChartType; color,
     higlight: NimColor; count: cint; min_value, max_value: cfloat) =
   ## Add another chart to the existing one
   ##
@@ -1044,10 +1099,22 @@ proc addColorChartSlot*(ctx; ctype: nk_chart_type; color,
   ## * count     - the amount of values on the chart
   ## * min_value - the minimal value of the chart
   ## * max_value - the maximum value of the chart
-  proc nk_chart_add_slot_colored(ctx; ctype: nk_chart_type; color,
+  proc nk_chart_add_slot_colored(ctx; ctype: ChartType; color,
       higlight: nk_color; count: cint; min_value, max_value: cfloat) {.importc, nodecl.}
   nk_chart_add_slot_colored(ctx, ctype, nk_rgb(color.r, color.g, color.b),
       nk_rgb(higlight.r, higlight.g, higlight.b), count, min_value, max_value)
+
+template chart*(cType: ChartType; num: int; min, max: float; content: untyped) =
+  ## Create a chart of the selected type
+  ##
+  ## * cType   - the type of the chart
+  ## * num     - the amount of values in the chart
+  ## * min     - the minimum value on the chart
+  ## * max     - the maximum value on the chart
+  ## * content - the content of the chart, usually coe related to adding values
+  if nk_chart_begin(ctx, cType, num.cint, min.cfloat, max.cfloat):
+    content
+    ctx.nk_chart_end
 
 # ----------
 # Contextual
