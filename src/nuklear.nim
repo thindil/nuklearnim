@@ -23,6 +23,8 @@
 # OR TORT *(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+import std/hashes
+
 ## Provides code for Nuklear binding
 
 # ---------
@@ -89,9 +91,10 @@ type
     NK_STYLE_ITEM_COLOR, NK_STYLE_ITEM_IMAGE
   nk_color_format* = enum
     NK_RGB, NK_RGBA
-  nk_chart_event* = enum
-    NK_CHART_HOVERING = 0x01,
-    NK_CHART_CLICKED = 0x02
+  ChartEvent* = enum
+    hovering = 0x01,
+    clicked = 0x02,
+    none
   nk_buttons* = enum
     NK_BUTTON_LEFT, NK_BUTTON_MIDDLE, NK_BUTTON_RIGHT, NK_BUTTON_DOUBLE, NK_BUTTON_MAX
   nk_style_colors* = enum
@@ -229,7 +232,6 @@ proc nk_menu_item_label(ctx; text: cstring;
 # ------
 proc nk_chart_begin(ctx; ctype: ChartType; num: cint; min,
     max: cfloat): nk_bool {.importc, cdecl.}
-proc nk_chart_push*(ctx; value: cfloat): nk_flags {.importc, cdecl.}
 proc nk_chart_end*(ctx) {.importc, cdecl.}
 proc nk_chart_add_slot*(ctx; ctype: ChartType; count: cint;
     min_value, max_value: cfloat) {.importc, cdecl.}
@@ -246,8 +248,8 @@ proc nk_popup_end(ctx) {.importc, nodecl.}
 # -----
 proc nk_tree_state_push(ctx; ttype: nk_tree_type;
     title: cstring; state: var CollapseStates): nk_bool {.importc, cdecl.}
-proc nk_tree_pop*(ctx) {.importc, cdecl.}
-proc nk_tree_push_hashed*(ctx; ttype: nk_tree_type;
+proc nk_tree_pop(ctx) {.importc, cdecl.}
+proc nk_tree_push_hashed(ctx; ttype: nk_tree_type;
     title: cstring; state: CollapseStates; hash: cstring; len,
     id: cint): nk_bool {.importc, cdecl.}
 proc nk_tree_element_push_hashed*(ctx; ttype: nk_tree_type;
@@ -659,21 +661,48 @@ template treeTab*(title: string; state: var CollapseStates;
   else:
     current = (if current == index: 0 else: current)
 
+template treeNode*(title: string; state: CollapseStates; index: Positive;
+    content: untyped) =
+  ## Create a new Nuklear tree container with highlighted header and with the
+  ## selected content
+  ##
+  ## * title   - the title of the tree
+  ## * state   - the current state of the tree
+  ## * index   - the index of the tree. Must be unique
+  ## * content - the content of the tree
+  if nk_tree_push_hashed(ctx, NK_TREE_NODE, title.cstring, state, ($hash(
+      index)).cstring, 12, index.cint):
+    content
+    ctx.nk_tree_pop
+
+template treeTab*(title: string; state: CollapseStates; index: Positive;
+    content: untyped) =
+  ## Create a new Nuklear tree container with the selected content
+  ##
+  ## * title   - the title of the tree
+  ## * state   - the current state of the tree
+  ## * index   - the index of the tree. Must be unique
+  ## * content - the content of the tree
+  if nk_tree_push_hashed(ctx, NK_TREE_TAB, title.cstring, state, ($hash(
+      index)).cstring, 12, index.cint):
+    content
+    ctx.nk_tree_pop
+
 # ------
 # Labels
 # ------
-proc colorLabel*(ctx; str: cstring; align: nk_flags; r, g, b: cint) =
+proc colorLabel*(str: string; r, g, b: int; align: TextAlignment = left) =
   ## Draw a text with the selected color
   ##
-  ## * ctx   - the Nuklear context
   ## * str   - the text to display
-  ## * align - the text aligmnent flags
   ## * r     - the red value for the text color in RGB
   ## * g     - the green value for the text color in RGB
   ## * b     - the blue value for the text color in RGB
+  ## * align - the text aligmnent flags
   proc nk_label_colored(ctx; str: cstring; align: nk_flags;
       color: nk_color) {.importc, nodecl.}
-  nk_label_colored(ctx, str, align, nk_rgb(r, g, b))
+  nk_label_colored(ctx, str.cstring, align.nk_flags, nk_rgb(r.cint, g.cint, b.cint))
+
 proc label*(str: string; alignment: TextAlignment = left) =
   ## Draw the text with the selected alignment
   ##
@@ -696,6 +725,7 @@ proc colorButton*(ctx; r, g, b: cint): bool =
   ## Returns true if button was pressed
   proc nk_button_color(ctx; color: nk_color): nk_bool {.importc, nodecl.}
   return nk_button_color(ctx, nk_rgb(r, g, b))
+
 template labelButton*(title: string; onPressCode: untyped) =
   ## Draw the button with the selected text on it. Execute the selected code
   ## on pressing it.
@@ -1115,6 +1145,21 @@ template chart*(cType: ChartType; num: int; min, max: float; content: untyped) =
   if nk_chart_begin(ctx, cType, num.cint, min.cfloat, max.cfloat):
     content
     ctx.nk_chart_end
+
+proc chartPush*(value: float): ChartEvent {.discardable.} =
+  ## Push, add the value to the current chart
+  ##
+  ## * value - the value to add
+  ##
+  ## Returns the mouse event if any happened over the value in the chart
+  proc nk_chart_push(ctx; value: cfloat): nk_flags {.importc, nodecl.}
+
+  let res = nk_chart_push(ctx, value.cfloat)
+  if (res and clicked.nk_flags) == clicked.nk_flags:
+    return clicked
+  if (res and hovering.nk_flags) == hovering.nk_flags:
+    return hovering
+  return none
 
 # ----------
 # Contextual

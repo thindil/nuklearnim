@@ -166,7 +166,7 @@ proc overview*(ctx: PContext) =
                 setLayoutRowDynamic(150, 1)
                 chart(column, values.len, 0, 50):
                   for value in values:
-                    discard nk_chart_push(ctx, value)
+                    chartPush(value)
           # menu widgets
           row(70):
             progressBar(mprog, 100)
@@ -182,8 +182,7 @@ proc overview*(ctx: PContext) =
           label("nuklear is licensed under the public domain License.")
       except:
         showAppAbout = false
-    if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Window", minimized,
-        "overview151", 12, 151):
+    treeTab("Window", minimized, 1):
       setLayoutRowDynamic(30, 2)
       checkbox("Titlebar", titlebar)
       checkbox("Menu", showMenu)
@@ -193,25 +192,20 @@ proc overview*(ctx: PContext) =
       checkbox("No Scrollbar", noScrollbar)
       checkbox("Minimizable", minimizable)
       checkbox("Scale Left", scaleLeft)
-      nk_tree_pop(ctx)
-    if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Widgets", minimized,
-        "overview163", 12, 163):
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Text", minimized,
-          "overview165", 12, 165):
+    treeTab("Widgets", minimized, 2):
+      treeNode("Text", minimized, 3):
         setLayoutRowDynamic(20, 1)
         label("Label aligned left")
         label("Label aligned centered", centered)
         label("Label aligned right", right)
-        colorLabel(ctx, "Blue text", NK_TEXT_LEFT, 0, 0, 255)
-        colorLabel(ctx, "Yellow text", NK_TEXT_LEFT, 255, 255, 0)
+        colorLabel("Blue text", 0, 0, 255)
+        colorLabel("Yellow text", 255, 255, 0)
         nk_text(ctx, "Text without /0", 15, NK_TEXT_RIGHT)
         setLayoutRowStatic(100, 200, 1)
         nk_label_wrap(ctx, "This is a very long line to hopefully get this text to be wrapped into multiple lines to show line wrapping")
         setLayoutRowDynamic(100, 1)
         nk_label_wrap(ctx, "This is another long text to show dynamic window changes on multiline text")
-        nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Button", minimized,
-          "overview180", 12, 180):
+      treeNode("Button", minimized, 4):
         setLayoutRowStatic(30, 100, 3)
         labelButton("Button"):
           echo "Button pressed!"
@@ -234,9 +228,7 @@ proc overview*(ctx: PContext) =
             NK_TEXT_RIGHT)
         discard nk_button_symbol_label(ctx, NK_SYMBOL_TRIANGLE_RIGHT, "next",
             NK_TEXT_LEFT)
-        nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Basic", minimized,
-          "overview204", 12, 204):
+      treeNode("Basic", minimized, 5):
         setLayoutRowStatic(30, 100, 1)
         checkbox("Checkbox", checkbox)
         setLayoutRowStatic(30, 80, 3)
@@ -271,9 +263,7 @@ proc overview*(ctx: PContext) =
         property("#neg:", rangeIntMin, rangeIntValue, rangeIntMax,
             1, 10)
         property("#max:", rangeIntMin, rangeIntMax, cint.high, 1, 10)
-        nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Inactive", minimized,
-          "overview257", 12, 257):
+      treeNode("Inactive", minimized, 6):
         setLayoutRowDynamic(30, 1)
         checkbox("Inactive", inactive)
         setLayoutRowStatic(30, 80, 1)
@@ -293,11 +283,8 @@ proc overview*(ctx: PContext) =
         else:
           labelButton("button"):
             echo "button pressed"
-        nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Selectable", minimized,
-          "overview275", 12, 275):
-        if nk_tree_push_hashed(ctx, NK_TREE_NODE, "List", minimized,
-            "overview277", 12, 277):
+      treeNode("Selectable", minimized, 7):
+        treeNode("List", minimized, 8):
           setLayoutRowStatic(18, 100, 1)
           discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT,
               selected[0])
@@ -308,9 +295,7 @@ proc overview*(ctx: PContext) =
               selected[2])
           discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT,
               selected[3])
-          nk_tree_pop(ctx);
-        if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Grid", minimized,
-            "overview287", 12, 287):
+        treeNode("Grid", minimized, 9):
           setLayoutRowStatic(50, 50, 4)
           for index, value in selected2.mpairs:
             if nk_selectable_label(ctx, "Z", NK_TEXT_CENTERED, value):
@@ -325,10 +310,7 @@ proc overview*(ctx: PContext) =
                   4].cint xor 1).nk_bool
               if y < 3: selected2[index + 4] = (selected2[index +
                   4].cint xor 1).nk_bool
-          nk_tree_pop(ctx)
-        nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Combo", minimized,
-          "overview312", 12, 312):
+      treeNode("Combo", minimized, 10):
         setLayoutRowStatic(25, 200, 1);
         currentWeapon = comboList(weapons, currentWeapon, 25, 200, 200)
         if createColorCombo(ctx, comboColor, 200, 200):
@@ -400,8 +382,7 @@ proc overview*(ctx: PContext) =
           setLayoutRowDynamic(150, 1)
           chart(column, values.len, 0, 50):
             for value in values:
-              var res = nk_chart_push(ctx, value)
-              if (res and NK_CHART_CLICKED.nk_flags) == NK_CHART_CLICKED.nk_flags:
+              if chartPush(value) == clicked:
                 chartSelection = value
                 nk_combo_close(ctx)
           nk_combo_end(ctx)
@@ -457,9 +438,7 @@ proc overview*(ctx: PContext) =
               nk_combo_close(ctx)
           {.warning[Deprecated]: on.}
           nk_combo_end(ctx)
-        nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Input", minimized,
-          "overview461", 12, 461):
+      treeNode("Input", minimized, 11):
         nk_layout_row(ctx, NK_STATIC, 25, 2, ratio.unsafeAddr)
         label("Default:")
         editString(text[0], 64)
@@ -498,20 +477,17 @@ proc overview*(ctx: PContext) =
           boxLen = boxLen + textLen[7] + 1
           text[7] = ""
           textLen[7] = 0
-        nk_tree_pop(ctx)
-      nk_tree_pop(ctx)
-    if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Charts", minimized,
-        "overview517", 12, 517):
+    treeTab("Charts", minimized, 12):
       var
         chartId: cfloat = 0
         chartIndex = -1
       setLayoutRowDynamic(100, 1)
       chart(lines, 32, -1.0, 1.0):
         for i in 0 .. 31:
-          var res = nk_chart_push(ctx, cos(chartId).cfloat)
-          if (res and NK_CHART_HOVERING.cint) == NK_CHART_HOVERING.cint:
+          let res = chartPush(cos(chartId))
+          if res == hovering:
             chartIndex = i
-          if (res and NK_CHART_CLICKED.cint) == NK_CHART_CLICKED.cint:
+          if res == clicked:
             lineIndex = i
           chartId = chartId + chartStep
       if chartIndex != -1:
@@ -524,10 +500,10 @@ proc overview*(ctx: PContext) =
       setLayoutRowDynamic(100, 1)
       chart(column, 32, 0.0, 1.0):
         for i in 0 .. 31:
-          var res = nk_chart_push(ctx, abs(sin(chartId)))
-          if (res and NK_CHART_HOVERING.cint) == NK_CHART_HOVERING.cint:
+          let res = chartPush(abs(sin(chartId)))
+          if res == hovering:
             chartIndex = i
-          if (res and NK_CHART_CLICKED.cint) == NK_CHART_CLICKED.cint:
+          if res == clicked:
             colIndex = i
           chartId = chartId + chartStep
       if chartIndex != -1:
@@ -561,9 +537,7 @@ proc overview*(ctx: PContext) =
           discard nk_chart_push_slot(ctx, sin(chartId), 2)
           chartId = chartId + chartStep
         nk_chart_end(ctx)
-      nk_tree_pop(ctx)
-    if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Popup", minimized,
-        "overview584", 12, 584):
+    treeTab("Popup", minimized, 13):
       setLayoutRowStatic(30, 160, 1)
       var bounds = getWidgetBounds(ctx)
       label("Right click me for menu")
@@ -625,11 +599,8 @@ proc overview*(ctx: PContext) =
       label("Hover me for tooltip")
       if isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h):
         nk_tooltip(ctx, "This is a tooltip")
-      nk_tree_pop(ctx)
-    if nk_tree_push_hashed(ctx, NK_TREE_TAB, "Layout", minimized,
-        "overview651", 12, 651):
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Widget", minimized,
-          "overview653", 12, 653):
+    treeTab("Layout", minimized, 14):
+      treeNode("Widget", minimized, 15):
         setLayoutRowDynamic(30, 1)
         label("Dynamic fixed column layout with generated position and size:")
         setLayoutRowDynamic(30, 3)
@@ -719,9 +690,7 @@ proc overview*(ctx: PContext) =
           discard
         labelButton("button"):
           discard
-        nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Group", minimized,
-          "overview731", 12, 731):
+      treeNode("Group", minimized, 16):
         var groupFlags: nk_flags = 0
         if groupBorder == nk_true.cint:
           groupFlags = groupFlags or nkWindowBorder
@@ -748,9 +717,7 @@ proc overview*(ctx: PContext) =
                 nk_true: "Selected" else: "Unselected").cstring,
                 NK_TEXT_CENTERED, selected2[i])
           nk_group_end(ctx)
-        nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Tree", minimized,
-          "overview766", 12, 766):
+      treeNode("Tree", minimized, 17):
         var sel = rootSelected
         if nk_tree_element_push_hashed(ctx, NK_TREE_NODE, "Root", minimized,
             sel, "overview771", 12, 771):
@@ -779,9 +746,7 @@ proc overview*(ctx: PContext) =
                 nk_true: "Selected" else: "Unselected").cstring,
                 NK_TEXT_RIGHT, selected3[i])
           nk_tree_element_pop(ctx)
-        nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Notebook", minimized,
-          "overview799", 12, 799):
+      treeNode("Notebook", minimized, 18):
         discard stylePushVec2(ctx, spacing, 0, 0)
         discard stylePushFloat(ctx, rounding, 0)
         layoutStatic(20, 3):
@@ -849,9 +814,7 @@ proc overview*(ctx: PContext) =
           else:
             discard
           nk_group_end(ctx)
-        nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Simple", minimized,
-          "overview868", 12, 868):
+      treeNode("Simple", minimized, 19):
         setLayoutRowDynamic(300, 2)
         if nk_group_begin(ctx, "Group_Without_Border", 0):
           setLayoutRowStatic(18, 150, 1)
@@ -866,9 +829,7 @@ proc overview*(ctx: PContext) =
             labelButton(fmt"{number:08}"):
               discard
           nk_group_end(ctx)
-        nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Complex", minimized,
-          "overview884", 12, 884):
+      treeNode("Complex", minimized, 20):
         nk_layout_space_begin(ctx, NK_STATIC, 500, 64)
         layoutSpacePush(ctx, 0, 0, 150, 500)
         if nk_group_begin(ctx, "Group_left", nkWindowBorder):
@@ -935,14 +896,11 @@ proc overview*(ctx: PContext) =
                 NK_TEXT_CENTERED, selected[i])
           nk_group_end(ctx);
         nk_layout_space_end(ctx)
-        nk_tree_pop(ctx)
-      if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Splitter", minimized,
-          "overview942", 12, 942):
+      treeNode("Splitter", minimized, 21):
         setLayoutRowStatic(20, 320, 1)
         label("Use slider and spinner to change tile size")
         label("Drag the space between tiles to change tile ratio")
-        if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Vertical", minimized,
-            "overview948", 12, 948):
+        treeNode("Vertical", minimized, 21):
           var rowLayout: array[5, cfloat] = [a, 8, b, 8, c]
           setLayoutRowStatic(30, 100, 2)
           label("left:")
@@ -1014,9 +972,7 @@ proc overview*(ctx: PContext) =
             labelButton("#FFFF"):
               discard
             nk_group_end(ctx)
-          nk_tree_pop(ctx)
-        if nk_tree_push_hashed(ctx, NK_TREE_NODE, "Horizontal", minimized,
-            "overview1006", 13, 106):
+        treeNode("Horizontal", minimized, 22):
           setLayoutRowStatic(30, 100, 2)
           label("top:")
           discard nk_slider_float(ctx, 10.0, a, 200.0, 10.0)
@@ -1090,6 +1046,3 @@ proc overview*(ctx: PContext) =
             labelButton("#FFFF"):
               discard
             nk_group_end(ctx)
-          nk_tree_pop(ctx)
-        nk_tree_pop(ctx)
-      nk_tree_pop(ctx)
