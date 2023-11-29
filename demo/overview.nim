@@ -200,34 +200,43 @@ proc overview*(ctx: PContext) =
         label("Label aligned right", right)
         colorLabel("Blue text", 0, 0, 255)
         colorLabel("Yellow text", 255, 255, 0)
-        nk_text(ctx, "Text without /0", 15, NK_TEXT_RIGHT)
+        text("Text without /0", alignment = right)
         setLayoutRowStatic(100, 200, 1)
-        nk_label_wrap(ctx, "This is a very long line to hopefully get this text to be wrapped into multiple lines to show line wrapping")
+        wrapLabel("This is a very long line to hopefully get this text to be wrapped into multiple lines to show line wrapping")
         setLayoutRowDynamic(100, 1)
-        nk_label_wrap(ctx, "This is another long text to show dynamic window changes on multiline text")
+        wrapLabel("This is another long text to show dynamic window changes on multiline text")
       treeNode("Button", minimized, 4):
         setLayoutRowStatic(30, 100, 3)
         labelButton("Button"):
           echo "Button pressed!"
-        nk_button_set_behavior(ctx, NK_BUTTON_REPEATER)
+        setButtonBehavior(repeater)
         labelButton("Repeater"):
           echo "Repeater is being pressed!"
-        nk_button_set_behavior(ctx, NK_BUTTON_DEFAULT)
-        discard colorButton(ctx, 0, 0, 255)
+        setButtonBehavior(default)
+        colorButton(0, 0, 255):
+          discard
         setLayoutRowStatic(25, 25, 8)
-        discard nk_button_symbol(ctx, NK_SYMBOL_CIRCLE_SOLID)
-        discard nk_button_symbol(ctx, NK_SYMBOL_CIRCLE_OUTLINE)
-        discard nk_button_symbol(ctx, NK_SYMBOL_RECT_SOLID)
-        discard nk_button_symbol(ctx, NK_SYMBOL_RECT_OUTLINE)
-        discard nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_UP)
-        discard nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_DOWN)
-        discard nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_LEFT)
-        discard nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_RIGHT)
+        symbolButton(circleSolid):
+          discard
+        symbolButton(circleOutline):
+          discard
+        symbolButton(rectSolid):
+          discard
+        symbolButton(rectOutline):
+          discard
+        symbolButton(triangleUp):
+          discard
+        symbolButton(triangleDown):
+          discard
+        symbolButton(triangleLeft):
+          discard
+        symbolButton(triangleRight):
+          discard
         setLayoutRowStatic(30, 100, 2)
-        discard nk_button_symbol_label(ctx, NK_SYMBOL_TRIANGLE_LEFT, "prev",
-            NK_TEXT_RIGHT)
-        discard nk_button_symbol_label(ctx, NK_SYMBOL_TRIANGLE_RIGHT, "next",
-            NK_TEXT_LEFT)
+        symbolLabelButton(triangleLeft, "prev", right):
+          discard
+        symbolLabelButton(triangleRight, "next", left):
+          discard
       treeNode("Basic", minimized, 5):
         setLayoutRowStatic(30, 100, 1)
         checkbox("Checkbox", checkbox)
@@ -407,7 +416,7 @@ proc overview*(ctx: PContext) =
           dateSelected = true
           layoutDynamic(20, 3):
             row(0.05):
-              if nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_LEFT):
+              symbolButton(triangleLeft):
                 if selectedDate.month == mJan:
                   selectedDate.monthZero = 12
                   selectedDate.year = selectedDate.year - 1
@@ -417,7 +426,7 @@ proc overview*(ctx: PContext) =
               sum = $selectedDate.month & " " & $selectedDate.year
               label(sum, centered)
             row(0.05):
-              if nk_button_symbol(ctx, NK_SYMBOL_TRIANGLE_RIGHT):
+              symbolButton(triangleRight):
                 if selectedDate.month == mDec:
                   selectedDate.monthZero = 1
                   selectedDate.year = selectedDate.year + 1
@@ -566,7 +575,8 @@ proc overview*(ctx: PContext) =
           label("Right Click here:")
         row(50):
           bounds = getWidgetBounds(ctx)
-          discard colorButton(ctx, popupColor.r, popupColor.g, popupColor.b)
+          colorButton(popupColor.r, popupColor.g, popupColor.b):
+            discard
       if createContextual(ctx, 0, 350, 60, bounds):
         setLayoutRowDynamic(30, 4);
         popupColor.r = nk_propertyi(ctx, "#r", 0, popupColor.r, 255, 1, 1)
@@ -734,14 +744,14 @@ proc overview*(ctx: PContext) =
                 selected[i] = nodeSelect
             setLayoutRowStatic(18, 100, 1)
             for j in 0 .. 3:
-              discard nk_selectable_symbol_label(ctx, NK_SYMBOL_CIRCLE_SOLID, (
+              discard nk_selectable_symbol_label(ctx, circleSolid, (
                   if selected[j] ==
                   nk_true: "Selected" else: "Unselected").cstring,
                   NK_TEXT_RIGHT, selected[j])
             nk_tree_element_pop(ctx)
           setLayoutRowStatic(18, 100, 1)
           for i in 0 .. 7:
-            discard nk_selectable_symbol_label(ctx, NK_SYMBOL_CIRCLE_SOLID, (
+            discard nk_selectable_symbol_label(ctx, circleSolid, (
                 if selected3[i] ==
                 nk_true: "Selected" else: "Unselected").cstring,
                 NK_TEXT_RIGHT, selected3[i])

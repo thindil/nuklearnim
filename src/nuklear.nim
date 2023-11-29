@@ -80,13 +80,9 @@ type
   CollapseStates* = enum
     ## The states of a tree's content
     minimized, maximized
-  nk_button_behavior* = enum
-    NK_BUTTON_DEFAULT, NK_BUTTON_REPEATER
-  nk_symbol_type* = enum
-    NK_SYMBOL_NONE, NK_SYMBOL_X, NK_SYMBOL_UNDERSCORE, NK_SYMBOL_CIRCLE_SOLID,
-        NK_SYMBOL_CIRCLE_OUTLINE, NK_SYMBOL_RECT_SOLID, NK_SYMBOL_RECT_OUTLINE,
-        NK_SYMBOL_TRIANGLE_UP, NK_SYMBOL_TRIANGLE_DOWN, NK_SYMBOL_TRIANGLE_LEFT,
-        NK_SYMBOL_TRIANGLE_RIGHT, NK_SYMBOL_PLUS, NK_SYMBOL_MINUS, NK_SYMBOL_MAX
+  SymbolType* = enum
+    none, x, underscore, circleSolid, circleOutline, rectSolid, rectOutline,
+      triangleUp, triangleDown, triangleLeft, triangleRight, plus, minus, max
   nk_style_item_type* = enum
     NK_STYLE_ITEM_COLOR, NK_STYLE_ITEM_IMAGE
   nk_color_format* = enum
@@ -192,9 +188,6 @@ proc nk_spacing*(ctx; cols: cint) {.importc, cdecl.}
 # ----
 # Text
 # ----
-proc nk_text*(ctx; str: cstring; len: cint;
-    alignment: nk_flags) {.importc, cdecl.}
-proc nk_label_wrap*(ctx; str: cstring) {.importc, cdecl.}
 proc nk_labelf*(ctx; flags: nk_flags; fmt: cstring) {.importc,
     varargs, cdecl.}
 
@@ -261,10 +254,8 @@ proc nk_tree_element_pop*(ctx) {.importc, cdecl.}
 # Buttons
 # -------
 proc nk_button_label(ctx; title: cstring): nk_bool {.importc, cdecl.}
-proc nk_button_set_behavior*(ctx;
-    behavior: nk_button_behavior) {.importc, cdecl.}
-proc nk_button_symbol*(ctx; symbol: nk_symbol_type): nk_bool {.importc, cdecl.}
-proc nk_button_symbol_label*(ctx; symbol: nk_symbol_type;
+proc nk_button_symbol(ctx; symbol: SymbolType): nk_bool {.importc, cdecl.}
+proc nk_button_symbol_label(ctx; symbol: SymbolType;
     label: cstring; align: nk_flags): nk_bool {.importc, cdecl.}
 
 # -------
@@ -350,7 +341,7 @@ proc nk_group_end*(ctx) {.importc, cdecl.}
 # -----------
 proc nk_selectable_label*(ctx; str: cstring; align: nk_flags;
     value: var nk_bool): nk_bool {.importc, cdecl.}
-proc nk_selectable_symbol_label*(ctx; sym: nk_symbol_type;
+proc nk_selectable_symbol_label*(ctx; sym: SymbolType;
     title: cstring; align: nk_flags; value: var nk_bool): nk_bool {.importc, cdecl.}
 
 # -----
@@ -458,6 +449,9 @@ type
   StyleHeaderAlign* = enum
     ## The styles of the window's header
     headerLeft, headerRight
+  ButtonBehavior* = enum
+    ## The types of buttons behavior
+    default, repeater
 
 # ----------
 # Converters
@@ -711,13 +705,30 @@ proc label*(str: string; alignment: TextAlignment = left) =
   proc nk_label(ctx; str: cstring; alignment: nk_flags) {.importc, nodecl.}
   nk_label(ctx, str.cstring, alignment.nk_flags)
 
+proc text*(str: string; len: int = str.len; alignment: TextAlignment = left) =
+  ## Draw the part of the text
+  ##
+  ## * str       - the text to draw
+  ## * len       - the lenght of the text to draw. By default it is equal to
+  ##               str lenght
+  ## * alignment - the alignment of the text. Default is alignment to left
+  proc nk_text(ctx; str: cstring; len: cint; alignment: nk_flags) {.importc, nodecl.}
+  nk_text(ctx, str.cstring, len.cint, alignment.nk_flags)
+
+proc wrapLabel*(str: string) =
+  ## Draw a text and wrap it if its lentgh is bigger than the width of its
+  ## container
+  ##
+  ## * str - the text to draw
+  proc nk_label_wrap(ctx; str: cstring) {.importc, nodecl.}
+  nk_label_wrap(ctx, str.cstring)
+
 # -------
 # Buttons
 # -------
-proc colorButton*(ctx; r, g, b: cint): bool =
-  ## Draw a button with the selected color background
+proc createColorButton(r, g, b: cint): bool =
+  ## Draw a button with the selected color background, internal use only, temporary code
   ##
-  ## * ctx - the Nuklear context
   ## * r   - the red value for the button color in RGB
   ## * g   - the green value for the button color in RGB
   ## * b   - the blue value for the button color in RGB
@@ -726,6 +737,10 @@ proc colorButton*(ctx; r, g, b: cint): bool =
   proc nk_button_color(ctx; color: nk_color): nk_bool {.importc, nodecl.}
   return nk_button_color(ctx, nk_rgb(r, g, b))
 
+template colorButton*(r, g, b: int; onPressCode: untyped) =
+  if createColorButton(r.cint, g.cint, b.cint):
+    onPressCode
+
 template labelButton*(title: string; onPressCode: untyped) =
   ## Draw the button with the selected text on it. Execute the selected code
   ## on pressing it.
@@ -733,6 +748,34 @@ template labelButton*(title: string; onPressCode: untyped) =
   ## * title       - the text to shown on the button
   ## * onPressCode - the Nim code to execute when the button was pressed
   if nk_button_label(ctx, title.cstring):
+    onPressCode
+
+proc setButtonBehavior*(behavior: ButtonBehavior) =
+  ## Set the behavior of the the next button, when it is clicked
+  ##
+  ## * behavior - the behavior of a button
+  proc nk_button_set_behavior(ctx; behavior: ButtonBehavior) {.importc, nodecl.}
+  nk_button_set_behavior(ctx, behavior)
+
+template symbolButton*(symbol: SymbolType; onPressCode: untyped) =
+  ## Draw the button with the selected symbol. Execute the selected code
+  ## on pressing it.
+  ##
+  ## * symbol      - the symbol to shown on the button
+  ## * onPressCode - the Nim code to execute when the button was pressed
+  if nk_button_symbol(ctx, symbol):
+    onPressCode
+
+template symbolLabelButton*(symbol: SymbolType; label: string;
+    align: TextAlignment; onPressCode: untyped) =
+  ## Draw the button with the selected symbol. Execute the selected code
+  ## on pressing it.
+  ##
+  ## * symbol      - the symbol to shown on the button
+  ## * label       - the text to display on the button
+  ## * align       - the alignment of the button's label
+  ## * onPressCode - the Nim code to execute when the button was pressed
+  if nk_button_symbol_label(ctx, symbol, label.cstring, align.nk_flags):
     onPressCode
 
 # -------
