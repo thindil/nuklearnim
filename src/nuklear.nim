@@ -198,8 +198,8 @@ proc nk_layout_row_end(ctx) {.importc, cdecl.}
 proc nk_layout_row_begin(ctx; fmt: nk_layout_format;
     row_height: cfloat; cols: cint) {.importc, cdecl.}
 proc nk_layout_row_push(ctx; width: cfloat) {.importc, cdecl.}
-proc nk_layout_row*(ctx; fmt: nk_layout_format; height: cfloat;
-    cols: cint; ratio: pointer) {.importc, cdecl.}
+proc nk_layout_row(ctx; fmt: nk_layout_format; height: cfloat;
+    cols: cint; ratio: pointer) {.importc, nodecl.}
 proc nk_layout_space_begin*(ctx; fmt: nk_layout_format;
     height: cfloat; widget_count: cint) {.importc, cdecl.}
 proc nk_layout_space_end*(ctx) {.importc, cdecl.}
@@ -843,6 +843,26 @@ template row*(width: float; content: untyped) =
   ## * content - the content of the row
   nk_layout_row_push(ctx, width.cfloat)
   content
+
+proc setLayoutRowStatic*(height: float; cols: int; ratio: pointer) =
+  ## Set the current widgets layout to divide it into selected amount of
+  ## columns with the selected height in rows but it will not grow in width
+  ## when the parent window resizes
+  ##
+  ## * height - the height in pixels of each row
+  ## * cols   - the amount of columns in each row
+  ## * ratio  - the pointer to array of cfloat with width of the colums
+  nk_layout_row(ctx, NK_STATIC, height.cfloat, cols.cint, ratio)
+
+proc setLayoutRowDynamic*(height: float; cols: int; ratio: pointer) =
+  ## Set the current widgets layout to divide it into selected amount of
+  ## columns with the selected height in rows but it will grow in width
+  ## when the parent window resizes
+  ##
+  ## * height - the height in pixels of each row
+  ## * cols   - the amount of columns in each row
+  ## * ratio  - the pointer to array of cfloat with width of the colums
+  nk_layout_row(ctx, NK_DYNAMIC, height.cfloat, cols.cint, ratio)
 
 # -----
 # Menus
