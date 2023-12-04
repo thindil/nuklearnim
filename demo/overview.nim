@@ -247,14 +247,14 @@ proc overview*(ctx: PContext) =
           option = B
         if option("optionC", option == C):
           option = C
-        setLayoutRowStatic(30, 2, ratio.addr)
+        setLayoutRowStatic(30, 2, ratio)
         nk_labelf(ctx, NK_TEXT_LEFT, "Slider int")
         slider(0, intSlider, 10, 1)
         label("Slider float")
         discard nk_slider_float(ctx, 0, float_slider, 5.0, 0.5f)
         nk_labelf(ctx, NK_TEXT_LEFT, "Progressbar: %u", progValue)
         progressBar(prog_value, 100)
-        setLayoutRowStatic(25, 2, ratio.addr)
+        setLayoutRowStatic(25, 2, ratio)
         label("Property float:")
         nk_property_float(ctx, "Float:", 0, propertyFloat, 64.0, 0.1, 0.2)
         label("Property int:")
@@ -324,7 +324,7 @@ proc overview*(ctx: PContext) =
         currentWeapon = comboList(weapons, currentWeapon, 25, 200, 200)
         if createColorCombo(ctx, comboColor, 200, 200):
           let ratios: array[2, cfloat] = [0.15.cfloat, 0.85]
-          setLayoutRowDynamic(30, 2, ratios.addr)
+          setLayoutRowDynamic(30, 2, ratios)
           label("R:")
           comboColor.r = nk_slide_int(ctx, 0, comboColor.r, 255, 5)
           label("G:")
@@ -448,7 +448,7 @@ proc overview*(ctx: PContext) =
           {.warning[Deprecated]: on.}
           nk_combo_end(ctx)
       treeNode("Input", minimized, 11):
-        setLayoutRowStatic(25, 2, ratio.addr)
+        setLayoutRowStatic(25, 2, ratio)
         label("Default:")
         editString(text[0], 64)
         label("Int:")
@@ -472,7 +472,7 @@ proc overview*(ctx: PContext) =
         label("Box:")
         setLayoutRowStatic(180, 278, 1)
         editString(boxBuffer, 512, box)
-        setLayoutRowStatic(25, 2, ratio.addr)
+        setLayoutRowStatic(25, 2, ratio)
         boxActive = editString(text[7], 64, field, nk_filter_ascii, {sigEnter})
         labelButton("Submit"):
           text_len[7].inc
@@ -631,7 +631,7 @@ proc overview*(ctx: PContext) =
           discard
         setLayoutRowDynamic(30, 1)
         label("Dynamic array-based custom column layout with generated position and custom size:")
-        setLayoutRowDynamic(30, 3, ratioTwo.addr)
+        setLayoutRowDynamic(30, 3, ratioTwo)
         labelButton("button"):
           discard
         labelButton("button"):
@@ -640,7 +640,7 @@ proc overview*(ctx: PContext) =
           discard
         setLayoutRowDynamic(30, 1)
         label("Static array-based custom column layout with generated position and custom size:")
-        setLayoutRowStatic(30, 3, widthTwo.addr)
+        setLayoutRowStatic(30, 3, widthTwo)
         labelButton("button"):
           discard
         labelButton("button"):
@@ -911,7 +911,7 @@ proc overview*(ctx: PContext) =
         label("Use slider and spinner to change tile size")
         label("Drag the space between tiles to change tile ratio")
         treeNode("Vertical", minimized, 21):
-          var rowLayout: array[5, cfloat] = [a, 8, b, 8, c]
+          let rowLayout: array[5, cfloat] = [a, 8, b, 8, c]
           setLayoutRowStatic(30, 100, 2)
           label("left:")
           discard nk_slider_float(ctx, 10.0, a, 200.0, 10.0)
@@ -919,7 +919,7 @@ proc overview*(ctx: PContext) =
           discard nk_slider_float(ctx, 10.0, b, 200.0, 10.0)
           label("right:")
           discard nk_slider_float(ctx, 10.0, c, 200.0, 10.0)
-          setLayoutRowStatic(200, 5, rowLayout.addr)
+          setLayoutRowStatic(200, 5, rowLayout)
           if nk_group_begin(ctx, "left", nkWindowNoScrollbar or
               nkWindowBorder or nkWindowNoScrollbar):
             setLayoutRowDynamic(25, 1)

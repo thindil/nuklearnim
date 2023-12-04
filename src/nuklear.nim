@@ -844,25 +844,25 @@ template row*(width: float; content: untyped) =
   nk_layout_row_push(ctx, width.cfloat)
   content
 
-proc setLayoutRowStatic*(height: float; cols: int; ratio: pointer) =
+proc setLayoutRowStatic*(height: float; cols: int; ratio: openArray[cfloat]) =
   ## Set the current widgets layout to divide it into selected amount of
   ## columns with the selected height in rows but it will not grow in width
   ## when the parent window resizes
   ##
   ## * height - the height in pixels of each row
   ## * cols   - the amount of columns in each row
-  ## * ratio  - the pointer to array of cfloat with width of the colums
-  nk_layout_row(ctx, NK_STATIC, height.cfloat, cols.cint, ratio)
+  ## * ratio  - the array or sequence of cfloat with width of the colums
+  nk_layout_row(ctx, NK_STATIC, height.cfloat, cols.cint, ratio.addr)
 
-proc setLayoutRowDynamic*(height: float; cols: int; ratio: pointer) =
+proc setLayoutRowDynamic*(height: float; cols: int; ratio: openArray[cfloat]) =
   ## Set the current widgets layout to divide it into selected amount of
   ## columns with the selected height in rows but it will grow in width
   ## when the parent window resizes
   ##
   ## * height - the height in pixels of each row
   ## * cols   - the amount of columns in each row
-  ## * ratio  - the pointer to array of cfloat with width of the colums
-  nk_layout_row(ctx, NK_DYNAMIC, height.cfloat, cols.cint, ratio)
+  ## * ratio  - the array or sequence of cfloat with width of the colums
+  nk_layout_row(ctx, NK_DYNAMIC, height.cfloat, cols.cint, ratio.addr)
 
 # -----
 # Menus
@@ -1068,7 +1068,7 @@ proc styleFromTable*(table: openArray[NimColor]) =
   var newTable: array[countColors.ord, nk_color]
   for index, color in table.pairs:
     newTable[index] = nk_rgba(color.r, color.g, color.b, color.a)
-  nk_style_from_table(ctx, newTable.unsafeAddr)
+  nk_style_from_table(ctx, newTable.addr)
 proc defaultStyle*() =
   ## reset the UI colors to the default Nuklear setting
   proc nk_style_default(ctx) {.importc, nodecl.}
@@ -1095,7 +1095,7 @@ proc comboList*(items: openArray[string]; selected, itemHeight: int; x,
   var optionsList: seq[cstring]
   for i in 0 .. amount:
     optionsList.add(items[i].cstring)
-  return nk_combo(ctx, optionsList[0].unsafeAddr, amount.cint + 1,
+  return nk_combo(ctx, optionsList[0].addr, amount.cint + 1,
       selected.cint, itemHeight.cint, new_nk_vec2(x.cfloat, y.cfloat)).int
 proc createColorCombo*(ctx; color: NimColor; x, y: cfloat): bool =
   ## Create a Nuklear combo widget which display color as the value
@@ -1144,7 +1144,7 @@ proc colorfToHsva*(hsva: var array[4, cfloat]; color: NimColorF) =
   ##
   ## Returns converted color as hsva argument
   proc nk_colorf_hsva_fv(hsva: pointer; color: nk_colorf) {.importc, nodecl.}
-  nk_colorf_hsva_fv(hsva.unsafeAddr, nk_colorf(r: color.r, g: color.g,
+  nk_colorf_hsva_fv(hsva.addr, nk_colorf(r: color.r, g: color.g,
       b: color.b, a: color.a))
 proc hsvaToColorf*(hsva: array[4, cfloat]): NimColorF =
   ## Convert HSVA values to Nim color with float values
@@ -1261,7 +1261,7 @@ proc isMouseHovering*(ctx; x, y, w, h: cfloat): bool =
   ## Returns true if the mouse is hovering over the rectangle, otherwise false
   proc nk_input_is_mouse_hovering_rect(i: ptr nk_input;
       rect: nk_rect): nk_bool {.importc, nodecl.}
-  return nk_input_is_mouse_hovering_rect(ctx.input.unsafeAddr, new_nk_rect(x, y,
+  return nk_input_is_mouse_hovering_rect(ctx.input.addr, new_nk_rect(x, y,
       w, h))
 proc isMousePrevHovering*(ctx; x, y, w, h: cfloat): bool =
   ## Check if the mouse was previously hovering over the selected rectangle
@@ -1275,7 +1275,7 @@ proc isMousePrevHovering*(ctx; x, y, w, h: cfloat): bool =
   ## Returns true if the mouse was hovering over the rectangle, otherwise false
   proc nk_input_is_mouse_prev_hovering_rect(i: ptr nk_input;
       rect: nk_rect): nk_bool {.importc, nodecl.}
-  return nk_input_is_mouse_prev_hovering_rect(ctx.input.unsafeAddr, new_nk_rect(
+  return nk_input_is_mouse_prev_hovering_rect(ctx.input.addr, new_nk_rect(
       x, y, w, h))
 proc isMouseDown*(ctx; id: nk_buttons): bool =
   ## Check if mouse is pressed
@@ -1286,7 +1286,7 @@ proc isMouseDown*(ctx; id: nk_buttons): bool =
   ## Returns true if the selected mouse button is pressed, otherwise false
   proc nk_input_is_mouse_down(i: ptr nk_input;
       id: nk_buttons): nk_bool {.importc, nodecl.}
-  return nk_input_is_mouse_down(ctx.input.unsafeAddr, id)
+  return nk_input_is_mouse_down(ctx.input.addr, id)
 proc getMouseDelta*(ctx): NimVec2 =
   ## Get the mouse vector between last check and current position of the mouse
   ##
@@ -1325,7 +1325,7 @@ proc editString*(text: var string; maxLen: int; editType: EditTypes = simple;
   for flag in flags:
     cFlags = cFlags or flag.cint
   result = nk_edit_string(ctx = ctx, flags = cFlags,
-      memory = cText[0].unsafeAddr, len = length.cint, max = maxLen.cint,
+      memory = cText[0].addr, len = length.cint, max = maxLen.cint,
       filter = filter).EditEvent
   text = charArrayToString(cText, length)
 
