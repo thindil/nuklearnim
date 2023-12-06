@@ -23,7 +23,7 @@
 # OR TORT *(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import std/hashes
+import std/[hashes, macros]
 
 ## Provides code for Nuklear binding
 
@@ -188,7 +188,7 @@ proc nk_spacing*(ctx; cols: cint) {.importc, cdecl.}
 # ----
 # Text
 # ----
-proc nk_labelf*(ctx; flags: nk_flags; fmt: cstring) {.importc,
+proc nk_labelf(ctx; flags: nk_flags; fmt: cstring) {.importc,
     varargs, cdecl.}
 
 # -------
@@ -261,15 +261,11 @@ proc nk_button_symbol_label(ctx; symbol: SymbolType;
 # -------
 # Sliders
 # -------
-proc nk_slider_float*(ctx; min: cfloat; val: var cfloat; max,
-    value_step: cfloat): nk_bool {.importc, cdecl.}
 proc nk_slide_int*(ctx; min, val, max, step: cint): cint {.importc, cdecl.}
 
 # ----------
 # Properties
 # ----------
-proc nk_property_float*(ctx; name: cstring; min: cfloat;
-    val: var cfloat; max, step, inc_per_pixel: cfloat) {.importc, cdecl.}
 proc nk_propertyf*(ctx; name: cstring; min, val, max, step,
     inc_per_pixel: cfloat): cfloat {.importc, cdecl.}
 proc nk_propertyi*(ctx; name: cstring; min, val, max, step: cint;
@@ -335,14 +331,6 @@ proc nk_tooltip*(ctx; text: cstring) {.importc, nodecl.}
 proc nk_group_begin*(ctx; title: cstring;
     flags: nk_flags): nk_bool {.importc, cdecl.}
 proc nk_group_end*(ctx) {.importc, cdecl.}
-
-# -----------
-# Selectables
-# -----------
-proc nk_selectable_label*(ctx; str: cstring; align: nk_flags;
-    value: var nk_bool): nk_bool {.importc, cdecl.}
-proc nk_selectable_symbol_label*(ctx; sym: SymbolType;
-    title: cstring; align: nk_flags; value: var nk_bool): nk_bool {.importc, cdecl.}
 
 # -----
 # Fonts
@@ -723,6 +711,14 @@ proc wrapLabel*(str: string) =
   proc nk_label_wrap(ctx; str: cstring) {.importc, nodecl.}
   nk_label_wrap(ctx, str.cstring)
 
+macro fmtLabel*(alignment: TextAlignment; args: varargs[untyped]): untyped =
+  ## Draw a text formatted in the same way like the C function printf
+  ##
+  ## * alignment - the alignment of the text
+  ## * args      - the text and its arguments to draw
+  result = quote do:
+    nk_labelf(ctx, `alignment`.nk_flags, `args`)
+
 # -------
 # Buttons
 # -------
@@ -936,6 +932,25 @@ proc slider*(min: int; val: var int; max, step: int): bool {.discardable.} =
       max = max.cint, step = step.cint) == nk_true
   val = newVal
 
+proc slider*(min: float; val: var float; max,
+    step: float): bool {.discardable.} =
+  ## Create a Nuklear slider with float values
+  ##
+  ## * min  - the minimal value on the slider
+  ## * val  - the current value on the slider
+  ## * max  - the maximum value on the slider
+  ## * step - the amount which increase or decrease the slider's value when
+  ##          the user drag its button
+  ##
+  ## Returns true if the current value was modified, otherwise false. Also
+  ## the modified parameter val
+  proc nk_slider_float(ctx; min: cfloat; val: var cfloat; max,
+    value_step: cfloat): nk_bool {.importc, nodecl.}
+  var newVal = val.cfloat
+  result = nk_slider_float(ctx = ctx, min = min.cfloat, val = newVal,
+      max = max.cfloat, value_step = step.cfloat) == nk_true
+  val = newVal
+
 # ----------
 # Properties
 # ----------
@@ -963,6 +978,29 @@ proc property*(name: string; min: int; val: var int; max, step: int;
       incPerPixel.cfloat)
   val = newVal.int
 
+proc property*(name: string; min: float; val: var float; max, step: float;
+    incPerPixel: float) =
+  ## Create a Nuklear property widget with float values
+  ##
+  ## * name        - the name of the property and its label to show on it.
+  ##                 Using symbol # will generate random string in its place,
+  ##                 but it will not show in the property's text
+  ## * min         - the minimal value of the property
+  ## * val         - the current value of the property
+  ## * max         - the maximum value of the property
+  ## * step        - the amount which increase or decrease the property value
+  ##                 when the user press arrows buttons
+  ## * incPerPixel - the amount which increase or decrease the property value
+  ##                 when the user drag in it
+  ##
+  ## Returns the modified parameter val
+  proc nk_property_float(ctx; name: cstring; min: cfloat;
+      val: var cfloat; max, step, inc_per_pixel: cfloat) {.importc, nodecl.}
+  var newVal = val.cfloat
+  nk_property_float(ctx, name.cstring, min.cfloat, newVal, max.cfloat,
+      step.cfloat, incPerPixel.cfloat)
+  val = newVal.float
+
 # -----
 # Style
 # -----
@@ -972,20 +1010,16 @@ proc headerAlign*(value: StyleHeaderAlign) =
   ## * value - the new value for the alignment
   ctx.style.window.header.align = value.ord.nk_style_header_align
 var buttonStyle: nk_style_button ## Used to store the Nuklear buttons style
-proc saveButtonStyle*(ctx) =
+proc saveButtonStyle*() =
   ## Save the Nuklear buttons style to variable, so it can be restored later
-  ##
-  ## * ctx - the Nuklear context
   buttonStyle = ctx.style.button
-proc restoreButtonStyle*(ctx) =
+proc restoreButtonStyle*() =
   ## Restore previously save to the variable Nuklear buttons style
   ##
-  ## * ctx - the Nuklear context
   ctx.style.button = buttonStyle
-proc setButtonStyle*(ctx; field: ButtonStyleTypes; r, g, b: cint) =
+proc setButtonStyle*(field: ButtonStyleTypes; r, g, b: cint) =
   ## Set the color for the selcted field of the Nuklear buttons style
   ##
-  ## * ctx   - the Nuklear context
   ## * field - the style's field which value will be changed
   ## * r     - the red value for the style color in RGB
   ## * g     - the green value for the style color in RGB
@@ -1328,6 +1362,48 @@ proc editString*(text: var string; maxLen: int; editType: EditTypes = simple;
       memory = cText[0].addr, len = length.cint, max = maxLen.cint,
       filter = filter).EditEvent
   text = charArrayToString(cText, length)
+
+# -----------
+# Selectables
+# -----------
+
+proc selectableLabel*(str: string; value: var bool;
+    align: TextAlignment = left): bool {.discardable.} =
+  ## Draw the text which can be selected with the mouse
+  ##
+  ## * str   - the text which will be draw
+  ## * value - if true, the text is currently selected
+  ## * align - the alignment of the text. Default value is left
+  ##
+  ## Returns true if the selection's state of the text was changed,
+  ## otherwise false. Also returns the value parameter with the
+  ## current state of the label
+  proc nk_selectable_label(ctx; str: cstring; align: nk_flags;
+      value: var nk_bool): nk_bool {.importc, nodecl.}
+  var newValue = value.nk_bool
+  result = nk_selectable_label(ctx, str.cstring, align.nk_flags, newValue) == nk_true
+  discard $newValue
+  value = newValue
+
+proc selectableSymbolLabel*(sym: SymbolType; title: string; value: var bool;
+    align: TextAlignment = left): bool {.discardable.} =
+  ## Draw the text with the symbol which can be selected with the mouse
+  ##
+  ## * sym   - the symbol which will be draw
+  ## * str   - the text which will be draw
+  ## * value - if true, the text is currently selected
+  ## * align - the alignment of the text. Default value is left
+  ##
+  ## Returns true if the selection's state of the text was changed,
+  ## otherwise false. Also returns the value parameter with the
+  ## current state of the label
+  proc nk_selectable_symbol_label(ctx; sym: SymbolType;
+    title: cstring; align: nk_flags; value: var nk_bool): nk_bool {.importc, nodecl.}
+  var newValue = value.nk_bool
+  result = nk_selectable_symbol_label(ctx, sym, title.cstring, align.nk_flags,
+      newValue) == nk_true
+  discard $newValue
+  value = newValue
 
 # -------
 # Widgets

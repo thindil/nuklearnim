@@ -60,18 +60,18 @@ var
   state = minimized
   option = A
   intSlider: int = 5
-  floatSlider: cfloat = 2.5
-  propertyFloat: cfloat = 2.0
-  rangeFloatMin: cfloat = 0
-  rangeFloatMax: cfloat = 100
-  rangeFloatValue: cfloat = 50
+  floatSlider: float = 2.5
+  propertyFloat: float = 2.0
+  rangeFloatMin: float = 0
+  rangeFloatMax: float = 100
+  rangeFloatValue: float = 50
   rangeIntMin: int = 0
   rangeIntMax: int = 2048
   rangeIntValue: int = 4096
-  selected: array[4, nk_bool] = [nk_false, nk_false, nk_true, nk_false]
-  selected2: array[16, nk_bool] = [nk_true, nk_false, nk_false, nk_false,
-    nk_false, nk_true, nk_false, nk_false, nk_false, nk_false, nk_true,
-    nk_false, nk_false, nk_false, nk_false, nk_true]
+  selected: array[4, bool] = [false, false, true, false]
+  selected2: array[16, bool] = [true, false, false, false,
+    false, true, false, false, false, false, true,
+    false, false, false, false, true]
   currentWeapon: int = 0
   comboColor: NimColor = NimColor(r: 130, g: 50, b: 50, a: 255)
   comboColor2: NimColorF = NimColorF(r: 0.509, g: 0.705, b: 0.2, a: 1.0)
@@ -81,7 +81,7 @@ var
   progC: nk_size = 10
   progD: nk_size = 90
   checkValues: array[5, bool]
-  position: array[3, cfloat]
+  position: array[3, float]
   chartSelection: cfloat = 8.0
   timeSelected, dateSelected, popupActive: bool = false
   selectedDate: DateTime
@@ -96,10 +96,10 @@ var
   groupWidth: int = 320
   groupHeight: int = 200
   rootSelected: nk_bool
-  selected3: array[8, nk_bool]
+  selected3: array[8, bool]
   currentTab: cint = 0
-  selected4: array[32, nk_bool]
-  a, b, c: cfloat = 100
+  selected4: array[32, bool]
+  a, b, c: float = 100
 
 proc overview*(ctx: PContext) =
   windowFlags = {}
@@ -248,15 +248,15 @@ proc overview*(ctx: PContext) =
         if option("optionC", option == C):
           option = C
         setLayoutRowStatic(30, 2, ratio)
-        nk_labelf(ctx, NK_TEXT_LEFT, "Slider int")
+        fmtLabel(left, "Slider int")
         slider(0, intSlider, 10, 1)
         label("Slider float")
-        discard nk_slider_float(ctx, 0, float_slider, 5.0, 0.5f)
-        nk_labelf(ctx, NK_TEXT_LEFT, "Progressbar: %u", progValue)
+        slider(0, float_slider, 5.0, 0.5)
+        fmtLabel(left, "Progressbar: %u", progValue)
         progressBar(prog_value, 100)
         setLayoutRowStatic(25, 2, ratio)
         label("Property float:")
-        nk_property_float(ctx, "Float:", 0, propertyFloat, 64.0, 0.1, 0.2)
+        property("Float:", 0, propertyFloat, 64.0, 0.1, 0.2)
         label("Property int:")
         property("Int:", 0, propertyInt, 100, 1, 1)
         label("Property neg:")
@@ -264,10 +264,10 @@ proc overview*(ctx: PContext) =
         setLayoutRowDynamic(25, 1)
         label("Range:")
         setLayoutRowDynamic(25, 3)
-        nk_property_float(ctx, "#min:", 0, rangeFloatMin, rangeFloatMax, 1.0, 0.2)
-        nk_property_float(ctx, "#float:", rangeFloatMin, rangeFloatValue,
+        property("#min:", 0, rangeFloatMin, rangeFloatMax, 1.0, 0.2)
+        property("#float:", rangeFloatMin, rangeFloatValue,
             rangeFloatMax, 1.0, 0.2)
-        nk_property_float(ctx, "#max:", rangeFloatMin, rangeFloatMax, 100, 1.0, 0.2)
+        property("#max:", rangeFloatMin, rangeFloatMax, 100, 1.0, 0.2)
         property("#min:", cint.low, rangeIntMin, rangeIntMax, 1, 10)
         property("#neg:", rangeIntMin, rangeIntValue, rangeIntMax,
             1, 10)
@@ -277,37 +277,33 @@ proc overview*(ctx: PContext) =
         checkbox("Inactive", inactive)
         setLayoutRowStatic(30, 80, 1)
         if inactive == 1:
-          saveButtonStyle(ctx)
-          setButtonStyle(ctx, normal, 40, 40, 40)
-          setButtonStyle(ctx, hover, 40, 40, 40)
-          setButtonStyle(ctx, active, 40, 40, 40)
-          setButtonStyle(ctx, borderColor, 60, 60, 60)
-          setButtonStyle(ctx, textBackground, 60, 60, 60)
-          setButtonStyle(ctx, textNormal, 60, 60, 60)
-          setButtonStyle(ctx, textHover, 60, 60, 60)
-          setButtonStyle(ctx, textActive, 60, 60, 60)
+          saveButtonStyle()
+          setButtonStyle(normal, 40, 40, 40)
+          setButtonStyle(hover, 40, 40, 40)
+          setButtonStyle(active, 40, 40, 40)
+          setButtonStyle(borderColor, 60, 60, 60)
+          setButtonStyle(textBackground, 60, 60, 60)
+          setButtonStyle(textNormal, 60, 60, 60)
+          setButtonStyle(textHover, 60, 60, 60)
+          setButtonStyle(textActive, 60, 60, 60)
           labelButton("button"):
             discard
-          restoreButtonStyle(ctx)
+          restoreButtonStyle()
         else:
           labelButton("button"):
             echo "button pressed"
       treeNode("Selectable", minimized, 7):
         treeNode("List", minimized, 8):
           setLayoutRowStatic(18, 100, 1)
-          discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT,
-              selected[0])
-          discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT,
-              selected[1])
+          selectableLabel("Selectable", selected[0])
+          selectableLabel("Selectable", selected[1])
           label("Not Selectable")
-          discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT,
-              selected[2])
-          discard nk_selectable_label(ctx, "Selectable", NK_TEXT_LEFT,
-              selected[3])
+          selectableLabel("Selectable", selected[2])
+          selectableLabel("Selectable", selected[3])
         treeNode("Grid", minimized, 9):
           setLayoutRowStatic(50, 50, 4)
           for index, value in selected2.mpairs:
-            if nk_selectable_label(ctx, "Z", NK_TEXT_CENTERED, value):
+            if selectableLabel("Z", value, centered):
               let
                 x = index mod 4
                 y = (index / 4).int
@@ -382,9 +378,9 @@ proc overview*(ctx: PContext) =
         sum = $position[0] & " " & $position[1] & " " & $position[2]
         if createLabelCombo(ctx, sum.cstring, 200, 200):
           setLayoutRowDynamic(25, 1)
-          nk_property_float(ctx, "#X:", -1024.0, position[0], 1024.0, 1, 0.5)
-          nk_property_float(ctx, "#Y:", -1024.0, position[1], 1024.0, 1, 0.5)
-          nk_property_float(ctx, "#Z:", -1024.0, position[2], 1024.0, 1, 0.5)
+          property("#X:", -1024.0, position[0], 1024.0, 1, 0.5)
+          property("#Y:", -1024.0, position[1], 1024.0, 1, 0.5)
+          property("#Z:", -1024.0, position[2], 1024.0, 1, 0.5)
           nk_combo_end(ctx)
         sum = $chartSelection
         if createLabelCombo(ctx, sum.cstring, 200, 250):
@@ -504,7 +500,7 @@ proc overview*(ctx: PContext) =
             chartStep).cfloat)
       if lineIndex != 1:
         setLayoutRowDynamic(20, 1)
-        nk_labelf(ctx, NK_TEXT_LEFT, "Selected value: %.2f", cos(
+        fmtLabel(left, "Selected value: %.2f", cos(
             chartIndex.cfloat * chartStep).cfloat)
       setLayoutRowDynamic(100, 1)
       chart(column, 32, 0.0, 1.0):
@@ -520,7 +516,7 @@ proc overview*(ctx: PContext) =
             chartIndex.cfloat).cfloat));
       if col_index != -1:
         setLayoutRowDynamic(20, 1)
-        nk_labelf(ctx, NK_TEXT_LEFT, "Selected value: %.2f", abs(sin(
+        fmtLabel(left, "Selected value: %.2f", abs(sin(
             chartStep * colIndex.cfloat).cfloat))
       setLayoutRowDynamic(100, 1)
       chart(column, 32, 0.0, 1.0):
@@ -557,18 +553,10 @@ proc overview*(ctx: PContext) =
         slider(0, slider, 16, 1)
         if nk_contextual_item_label(ctx, "About", NK_TEXT_CENTERED):
           showAppAbout = true
-        discard nk_selectable_label(ctx, ((if selected[0] ==
-            nk_true: "Uns" else: "S") & "elect").cstring, NK_TEXT_LEFT,
-            selected[0])
-        discard nk_selectable_label(ctx, ((if selected[1] ==
-            nk_true: "Uns" else: "S") & "elect").cstring, NK_TEXT_LEFT,
-            selected[1])
-        discard nk_selectable_label(ctx, ((if selected[2] ==
-            nk_true: "Uns" else: "S") & "elect").cstring, NK_TEXT_LEFT,
-            selected[2])
-        discard nk_selectable_label(ctx, ((if selected[3] ==
-            nk_true: "Uns" else: "S") & "elect").cstring, NK_TEXT_LEFT,
-            selected[3])
+        selectableLabel((if selected[0]: "Uns" else: "S") & "elect", selected[0])
+        selectableLabel((if selected[1]: "Uns" else: "S") & "elect", selected[1])
+        selectableLabel((if selected[2]: "Uns" else: "S") & "elect", selected[2])
+        selectableLabel((if selected[3]: "Uns" else: "S") & "elect", selected[3])
         nk_contextual_end(ctx)
       layoutStatic(30, 2):
         row(120):
@@ -723,15 +711,14 @@ proc overview*(ctx: PContext) =
         if nk_group_begin(ctx, "Group", groupFlags):
           setLayoutRowStatic(18, 100, 1)
           for i in 0 .. 15:
-            discard nk_selectable_label(ctx, (if selected2[i] ==
-                nk_true: "Selected" else: "Unselected").cstring,
-                NK_TEXT_CENTERED, selected2[i])
+            selectableLabel((if selected2[i]: "Selected" else: "Unselected"),
+                selected2[i], centered)
           nk_group_end(ctx)
       treeNode("Tree", minimized, 17):
         var sel = rootSelected
         if nk_tree_element_push_hashed(ctx, NK_TREE_NODE, "Root", minimized,
             sel, "overview771", 12, 771):
-          var nodeSelect = selected3[0]
+          var nodeSelect: nk_bool = selected3[0].nk_bool
           if sel != rootSelected:
             rootSelected = sel
             for i in 0 .. 7:
@@ -744,17 +731,15 @@ proc overview*(ctx: PContext) =
                 selected[i] = nodeSelect
             setLayoutRowStatic(18, 100, 1)
             for j in 0 .. 3:
-              discard nk_selectable_symbol_label(ctx, circleSolid, (
-                  if selected[j] ==
-                  nk_true: "Selected" else: "Unselected").cstring,
-                  NK_TEXT_RIGHT, selected[j])
+              selectableSymbolLabel(circleSolid, (
+                  if selected[j]: "Selected" else: "Unselected"),
+                  selected[j], right)
             nk_tree_element_pop(ctx)
           setLayoutRowStatic(18, 100, 1)
           for i in 0 .. 7:
-            discard nk_selectable_symbol_label(ctx, circleSolid, (
-                if selected3[i] ==
-                nk_true: "Selected" else: "Unselected").cstring,
-                NK_TEXT_RIGHT, selected3[i])
+            selectableSymbolLabel(circleSolid, (
+                if selected3[i]: "Selected" else: "Unselected"),
+                selected3[i], right)
           nk_tree_element_pop(ctx)
       treeNode("Notebook", minimized, 18):
         discard stylePushVec2(ctx, spacing, 0, 0)
@@ -766,12 +751,12 @@ proc overview*(ctx: PContext) =
               widgetWidth = textWidth + 3 * getButtonStyle(ctx, padding).x;
             row(widgetWidth):
               if currentTab == i:
-                saveButtonStyle(ctx)
+                saveButtonStyle()
                 setButtonStyle2(ctx, active, normal)
                 currentTab = current_tab
                 labelButton(names[i]):
                   currentTab = i.cint
-                restoreButtonStyle(ctx)
+                restoreButtonStyle()
               else:
                 currentTab = current_tab
                 labelButton(names[i]):
@@ -829,7 +814,7 @@ proc overview*(ctx: PContext) =
         if nk_group_begin(ctx, "Group_Without_Border", 0):
           setLayoutRowStatic(18, 150, 1)
           for i in 0 .. 63:
-            nk_labelf(ctx, NK_TEXT_LEFT, "%s: scrollable region",
+            fmtLabel(left, "%s: scrollable region",
                 fmt"{i:#X}".cstring)
           nk_group_end(ctx)
         if nk_group_begin(ctx, "Group_With_Border", nkWindowBorder):
@@ -845,9 +830,8 @@ proc overview*(ctx: PContext) =
         if nk_group_begin(ctx, "Group_left", nkWindowBorder):
           setLayoutRowStatic(18, 100, 1)
           for i in 0 .. 31:
-            discard nk_selectable_label(ctx, (if selected4[i] ==
-                nk_true: "Selected" else: "Unselected").cstring,
-                NK_TEXT_CENTERED, selected4[i])
+            selectableLabel((if selected4[i]: "Selected" else: "Unselected"),
+                selected4[i], centered)
           nk_group_end(ctx);
         layoutSpacePush(ctx, 160, 0, 150, 240)
         if nk_group_begin(ctx, "Group_top", nkWindowBorder):
@@ -885,25 +869,22 @@ proc overview*(ctx: PContext) =
         if nk_group_begin(ctx, "Group_right_top", nkWindowBorder):
           setLayoutRowStatic(18, 100, 1)
           for i in 0 .. 3:
-            discard nk_selectable_label(ctx, (if selected[i] ==
-                nk_true: "Selected" else: "Unselected").cstring,
-                NK_TEXT_CENTERED, selected[i])
+            selectableLabel((if selected[i]: "Selected" else: "Unselected"),
+                selected[i], centered)
           nk_group_end(ctx)
         layoutSpacePush(ctx, 320, 160, 150, 150)
         if nk_group_begin(ctx, "Group_right_center", nkWindowBorder):
           setLayoutRowStatic(18, 100, 1)
           for i in 0 .. 3:
-            discard nk_selectable_label(ctx, (if selected[i] ==
-                nk_true: "Selected" else: "Unselected").cstring,
-                NK_TEXT_CENTERED, selected[i])
+            selectableLabel((if selected[i]: "Selected" else: "Unselected"),
+                selected[i], centered)
           nk_group_end(ctx);
         layoutSpacePush(ctx, 320, 320, 150, 150)
         if nk_group_begin(ctx, "Group_right_bottom", nkWindowBorder):
           setLayoutRowStatic(18, 100, 1)
           for i in 0 .. 3:
-            discard nk_selectable_label(ctx, (if selected[i] ==
-                nk_true: "Selected" else: "Unselected").cstring,
-                NK_TEXT_CENTERED, selected[i])
+            selectableLabel((if selected[i]: "Selected" else: "Unselected"),
+                selected[i], centered)
           nk_group_end(ctx);
         nk_layout_space_end(ctx)
       treeNode("Splitter", minimized, 21):
@@ -911,14 +892,14 @@ proc overview*(ctx: PContext) =
         label("Use slider and spinner to change tile size")
         label("Drag the space between tiles to change tile ratio")
         treeNode("Vertical", minimized, 21):
-          let rowLayout: array[5, cfloat] = [a, 8, b, 8, c]
+          let rowLayout: array[5, cfloat] = [a.cfloat, 8, b.cfloat, 8, c.cfloat]
           setLayoutRowStatic(30, 100, 2)
           label("left:")
-          discard nk_slider_float(ctx, 10.0, a, 200.0, 10.0)
+          slider(10.0, a, 200.0, 10.0)
           label("middle:")
-          discard nk_slider_float(ctx, 10.0, b, 200.0, 10.0)
+          slider(10.0, b, 200.0, 10.0)
           label("right:")
-          discard nk_slider_float(ctx, 10.0, c, 200.0, 10.0)
+          slider(10.0, c, 200.0, 10.0)
           setLayoutRowStatic(200, 5, rowLayout)
           if nk_group_begin(ctx, "left", nkWindowNoScrollbar or
               nkWindowBorder or nkWindowNoScrollbar):
@@ -985,11 +966,11 @@ proc overview*(ctx: PContext) =
         treeNode("Horizontal", minimized, 22):
           setLayoutRowStatic(30, 100, 2)
           label("top:")
-          discard nk_slider_float(ctx, 10.0, a, 200.0, 10.0)
+          slider(10.0, a, 200.0, 10.0)
           label("middle:")
-          discard nk_slider_float(ctx, 10.0, b, 200.0, 10.0)
+          slider(10.0, b, 200.0, 10.0)
           label("bottom:")
-          discard nk_slider_float(ctx, 10.0, c, 200.0, 10.0)
+          slider(10.0, c, 200.0, 10.0)
           setLayoutRowDynamic(a, 1)
           if nk_group_begin(ctx, "top", nkWindowBorder or
               nkWindowNoScrollbar):
