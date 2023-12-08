@@ -318,19 +318,18 @@ proc overview*(ctx: PContext) =
       treeNode("Combo", minimized, 10):
         setLayoutRowStatic(25, 200, 1);
         currentWeapon = comboList(weapons, currentWeapon, 25, 200, 200)
-        if createColorCombo(ctx, comboColor, 200, 200):
+        colorCombo(comboColor, 200, 200):
           let ratios: array[2, cfloat] = [0.15.cfloat, 0.85]
           setLayoutRowDynamic(30, 2, ratios)
           label("R:")
-          comboColor.r = nk_slide_int(ctx, 0, comboColor.r, 255, 5)
+          comboColor.r = slide(0, comboColor.r, 255, 5)
           label("G:")
-          comboColor.g = nk_slide_int(ctx, 0, comboColor.g, 255, 5)
+          comboColor.g = slide(0, comboColor.g, 255, 5)
           label("B:")
-          comboColor.b = nk_slide_int(ctx, 0, comboColor.b, 255, 5)
+          comboColor.b = slide(0, comboColor.b, 255, 5)
           label("A:")
-          comboColor.a = nk_slide_int(ctx, 0, comboColor.a, 255, 5)
-          nk_combo_end(ctx)
-        if createColorCombo(ctx, comboColor2, 200, 400):
+          comboColor.a = slide(0, comboColor.a, 255, 5)
+        colorCombo(comboColor2, 200, 400):
           setLayoutRowDynamic(120, 1)
           comboColor2 = colorPicker(ctx, comboColor2, NK_RGBA)
           setLayoutRowDynamic(25, 2)
@@ -356,7 +355,6 @@ proc overview*(ctx: PContext) =
             hsva[2] = nk_propertyf(ctx, "#V:", 0, hsva[2], 1.0, 0.01, 0.05)
             hsva[3] = nk_propertyf(ctx, "#A:", 0, hsva[3], 1.0, 0.01, 0.05)
             comboColor2 = hsvaToColorf(hsva)
-          nk_combo_end(ctx)
         var sum = $(progA + progB + progC + progD)
         if createLabelCombo(ctx, sum.cstring, 200, 200):
           setLayoutRowDynamic(30, 1)
@@ -567,10 +565,10 @@ proc overview*(ctx: PContext) =
             discard
       if createContextual(ctx, 0, 350, 60, bounds):
         setLayoutRowDynamic(30, 4);
-        popupColor.r = nk_propertyi(ctx, "#r", 0, popupColor.r, 255, 1, 1)
-        popupColor.g = nk_propertyi(ctx, "#g", 0, popupColor.g, 255, 1, 1)
-        popupColor.b = nk_propertyi(ctx, "#b", 0, popupColor.b, 255, 1, 1)
-        popupColor.a = nk_propertyi(ctx, "#a", 0, popupColor.a, 255, 1, 1)
+        popupColor.r = nk_propertyi(ctx, "#r", 0, popupColor.r.cint, 255, 1, 1).int
+        popupColor.g = nk_propertyi(ctx, "#g", 0, popupColor.g.cint, 255, 1, 1).int
+        popupColor.b = nk_propertyi(ctx, "#b", 0, popupColor.b.cint, 255, 1, 1).int
+        popupColor.a = nk_propertyi(ctx, "#a", 0, popupColor.a.cint, 255, 1, 1).int
         nk_contextual_end(ctx)
       layoutStatic(30, 2):
         row(120):
