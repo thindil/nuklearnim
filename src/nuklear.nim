@@ -258,11 +258,6 @@ proc nk_button_symbol(ctx; symbol: SymbolType): nk_bool {.importc, cdecl.}
 proc nk_button_symbol_label(ctx; symbol: SymbolType;
     label: cstring; align: nk_flags): nk_bool {.importc, cdecl.}
 
-# -------
-# Sliders
-# -------
-proc nk_slide_int*(ctx; min, val, max, step: cint): cint {.importc, cdecl.}
-
 # ----------
 # Properties
 # ----------
@@ -349,7 +344,7 @@ type
   NimColor* = object
     ## Used to store information about the selected color. Usually later
     ## converted to Nuklear structure nk_color
-    r*, g*, b*, a*: cint
+    r*, g*, b*, a*: int
   NimColorF* = object
     ## Also used to store information about the selected color, but as a float
     ## values.
@@ -775,6 +770,22 @@ template symbolLabelButton*(symbol: SymbolType; label: string;
     onPressCode
 
 # -------
+# Sliders
+# -------
+proc slide*(min, val, max, step: int): int =
+  ## Draw a slide widget with integer values
+  ##
+  ## * min  - the minimal value on the slider
+  ## * val  - the current value on the slider
+  ## * max  - the maximum value on the slider
+  ## * step - the amount of incrementing or decrementing the value on the
+  ##          slider with mouse click
+  ##
+  ## Returns the new value on the slider
+  proc nk_slide_int(ctx; min, val, max, step: cint): cint {.importc, nodecl.}
+  return nk_slide_int(ctx, min.cint, val.cint, max.cint, step.cint).int
+
+# -------
 # Layouts
 # -------
 proc layoutSpacePush*(ctx; x, y, w, h: cfloat) =
@@ -1101,7 +1112,7 @@ proc styleFromTable*(table: openArray[NimColor]) =
   proc nk_style_from_table(ctx; table: pointer) {.importc, nodecl.}
   var newTable: array[countColors.ord, nk_color]
   for index, color in table.pairs:
-    newTable[index] = nk_rgba(color.r, color.g, color.b, color.a)
+    newTable[index] = nk_rgba(color.r.cint, color.g.cint, color.b.cint, color.a.cint)
   nk_style_from_table(ctx, newTable.addr)
 proc defaultStyle*() =
   ## reset the UI colors to the default Nuklear setting
@@ -1131,8 +1142,10 @@ proc comboList*(items: openArray[string]; selected, itemHeight: int; x,
     optionsList.add(items[i].cstring)
   return nk_combo(ctx, optionsList[0].addr, amount.cint + 1,
       selected.cint, itemHeight.cint, new_nk_vec2(x.cfloat, y.cfloat)).int
-proc createColorCombo*(ctx; color: NimColor; x, y: cfloat): bool =
-  ## Create a Nuklear combo widget which display color as the value
+
+proc createColorCombo(ctx; color: NimColor; x, y: cfloat): bool =
+  ## Create a Nuklear combo widget which display color as the value, internal
+  ## use only, temporary code
   ##
   ## * ctx   - the Nuklear context
   ## * color - the color displayed as the value of the combo
@@ -1140,11 +1153,24 @@ proc createColorCombo*(ctx; color: NimColor; x, y: cfloat): bool =
   ## * y     - the height of the combo's values list
   ##
   ## Returns true if combo was successfully created, otherwise false
-  return nk_combo_begin_color(ctx, nk_rgb(color.r, color.g, color.b),
-      new_nk_vec2(x, y))
-proc createColorCombo*(ctx; color: NimColorF; x, y: cfloat): bool =
+  return nk_combo_begin_color(ctx, nk_rgb(color.r.cint, color.g.cint,
+      color.b.cint), new_nk_vec2(x, y))
+
+template colorCombo*(color: NimColor; x, y: float; content: untyped) =
+  ## Create a Nuklear combo widget which display color as the value, internal
+  ## use only, temporary code
+  ##
+  ## * color   - the color displayed as the value of the combo
+  ## * x       - the width of the combo
+  ## * y       - the height of the combo's values list
+  ## * content - the content of the combo widget
+  if createColorCombo(ctx, color, x.cfloat, y.cfloat):
+    content
+    nk_combo_end(ctx)
+
+proc createColorCombo(ctx; color: NimColorF; x, y: cfloat): bool =
   ## Create a Nuklear combo widget which display color with float values as
-  ## the value
+  ## the value, internal use only, temporary code
   ##
   ## * ctx   - the Nuklear context
   ## * color - the color with float values displayed as the value of the combo
@@ -1154,6 +1180,20 @@ proc createColorCombo*(ctx; color: NimColorF; x, y: cfloat): bool =
   ## Returns true if combo was successfully created, otherwise false
   return nk_combo_begin_color(ctx, nk_rgb_cf(nk_colorf(r: color.r, g: color.g,
       b: color.b, a: color.a)), new_nk_vec2(x, y))
+
+
+template colorCombo*(color: NimColorF; x, y: float; content: untyped) =
+  ## Create a Nuklear combo widget which display color with float values as
+  ## the value
+  ##
+  ## * color   - the color with float values displayed as the value of the combo
+  ## * x       - the width of the combo
+  ## * y       - the height of the combo's values list
+  ## * content - the content of the combo widget
+  if createColorCombo(ctx, color, x.cfloat, y.cfloat):
+    content
+    nk_combo_end(ctx)
+
 proc createLabelCombo*(ctx; selected: cstring; x, y: cfloat): bool =
   ## Create a Nuklear combo widget which display the custom text as the value
   ##
@@ -1210,8 +1250,9 @@ proc createColorChart*(ctx; ctype: ChartType; color,
   proc nk_chart_begin_colored(ctx; ctype: ChartType; color,
       higlight: nk_color; count: cint; min_value,
       max_value: cfloat): nk_bool {.importc, nodecl.}
-  return nk_chart_begin_colored(ctx, ctype, nk_rgb(color.r, color.g, color.b),
-      nk_rgb(higlight.r, higlight.g, higlight.b), count, min_value,
+  return nk_chart_begin_colored(ctx, ctype, nk_rgb(color.r.cint, color.g.cint,
+      color.b.cint), nk_rgb(higlight.r.cint, higlight.g.cint, higlight.b.cint),
+          count, min_value,
     max_value)
 
 proc addColorChartSlot*(ctx; ctype: ChartType; color,
@@ -1228,8 +1269,9 @@ proc addColorChartSlot*(ctx; ctype: ChartType; color,
   ## * max_value - the maximum value of the chart
   proc nk_chart_add_slot_colored(ctx; ctype: ChartType; color,
       higlight: nk_color; count: cint; min_value, max_value: cfloat) {.importc, nodecl.}
-  nk_chart_add_slot_colored(ctx, ctype, nk_rgb(color.r, color.g, color.b),
-      nk_rgb(higlight.r, higlight.g, higlight.b), count, min_value, max_value)
+  nk_chart_add_slot_colored(ctx, ctype, nk_rgb(color.r.cint, color.g.cint,
+      color.b.cint), nk_rgb(higlight.r.cint, higlight.g.cint, higlight.b.cint),
+          count, min_value, max_value)
 
 template chart*(cType: ChartType; num: int; min, max: float; content: untyped) =
   ## Create a chart of the selected type
