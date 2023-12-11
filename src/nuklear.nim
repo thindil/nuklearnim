@@ -85,8 +85,8 @@ type
       triangleUp, triangleDown, triangleLeft, triangleRight, plus, minus, max
   nk_style_item_type* = enum
     NK_STYLE_ITEM_COLOR, NK_STYLE_ITEM_IMAGE
-  nk_color_format* = enum
-    NK_RGB, NK_RGBA
+  colorFormat* = enum
+    rgb, rgba
   ChartEvent* = enum
     hovering = 0x01,
     clicked = 0x02,
@@ -261,8 +261,6 @@ proc nk_button_symbol_label(ctx; symbol: SymbolType;
 # ----------
 # Properties
 # ----------
-proc nk_propertyf*(ctx; name: cstring; min, val, max, step,
-    inc_per_pixel: cfloat): cfloat {.importc, cdecl.}
 proc nk_propertyi*(ctx; name: cstring; min, val, max, step: cint;
     inc_per_pixel: cfloat): cint {.importc, cdecl.}
 
@@ -279,7 +277,7 @@ proc nk_style_set_font*(ctx; font: ptr nk_user_font) {.importc, nodecl.}
 # ------
 proc nk_combo_begin_color(ctx; color: nk_color;
     size: nk_vec2): nk_bool {.importc, nodecl.}
-proc nk_combo_end*(ctx) {.importc, cdecl.}
+proc nk_combo_end(ctx) {.importc, cdecl.}
 proc nk_combo_close*(ctx) {.importc, cdecl.}
 
 # ------
@@ -348,7 +346,7 @@ type
   NimColorF* = object
     ## Also used to store information about the selected color, but as a float
     ## values.
-    r*, g*, b*, a*: cfloat
+    r*, g*, b*, a*: float
   NimRect* = object
     ## Used to store information about UI rectangle. Usually later converted to
     ## Nuklear nk_rect
@@ -1012,6 +1010,26 @@ proc property*(name: string; min: float; val: var float; max, step: float;
       step.cfloat, incPerPixel.cfloat)
   val = newVal.float
 
+proc property2*(name: string; min, val, max, step, incPerPixel: float): float =
+  ## Create a Nuklear property widget with float values
+  ##
+  ## * name        - the name of the property and its label to show on it.
+  ##                 Using symbol # will generate random string in its place,
+  ##                 but it will not show in the property's text
+  ## * min         - the minimal value of the property
+  ## * val         - the current value of the property
+  ## * max         - the maximum value of the property
+  ## * step        - the amount which increase or decrease the property value
+  ##                 when the user press arrows buttons
+  ## * incPerPixel - the amount which increase or decrease the property value
+  ##                 when the user drag in it
+  ##
+  ## Returns the new value of the property
+  proc nk_propertyf(ctx; name: cstring; min, val, max, step,
+      inc_per_pixel: cfloat): cfloat {.importc, nodecl.}
+  return nk_propertyf(ctx, name.cstring, min.cfloat, val.cfloat, max.cfloat,
+      step.cfloat, incPerPixel.cfloat).float
+
 # -----
 # Style
 # -----
@@ -1178,8 +1196,8 @@ proc createColorCombo(ctx; color: NimColorF; x, y: cfloat): bool =
   ## * y     - the height of the combo's values list
   ##
   ## Returns true if combo was successfully created, otherwise false
-  return nk_combo_begin_color(ctx, nk_rgb_cf(nk_colorf(r: color.r, g: color.g,
-      b: color.b, a: color.a)), new_nk_vec2(x, y))
+  return nk_combo_begin_color(ctx, nk_rgb_cf(nk_colorf(r: color.r.cfloat,
+      g: color.g.cfloat, b: color.b.cfloat, a: color.a.cfloat)), new_nk_vec2(x, y))
 
 
 template colorCombo*(color: NimColorF; x, y: float; content: untyped) =
@@ -1194,8 +1212,9 @@ template colorCombo*(color: NimColorF; x, y: float; content: untyped) =
     content
     nk_combo_end(ctx)
 
-proc createLabelCombo*(ctx; selected: cstring; x, y: cfloat): bool =
-  ## Create a Nuklear combo widget which display the custom text as the value
+proc createLabelCombo(ctx; selected: cstring; x, y: cfloat): bool =
+  ## Create a Nuklear combo widget which display the custom text as the value,
+  ## internal use only, temporary code
   ##
   ## * ctx      - the Nuklear context
   ## * selected - the text to display as the value of the combo
@@ -1207,10 +1226,21 @@ proc createLabelCombo*(ctx; selected: cstring; x, y: cfloat): bool =
       size: nk_vec2): nk_bool {.importc, nodecl.}
   return nk_combo_begin_label(ctx, selected, new_nk_vec2(x, y))
 
+template labelCombo*(selected: string; x, y: float; content: untyped) =
+  ## Create a Nuklear combo widget which display the custom text as the value
+  ##
+  ## * selected - the text to display as the value of the combo
+  ## * x        - the width of the combo
+  ## * y        - the height of the combo's values list
+  ## * content - the content of the combo widget
+  if createLabelCombo(ctx, selected.cstring, x.cfloat, y.cfloat):
+    content
+    nk_combo_end(ctx)
+
 # ------
 # Colors
 # ------
-proc colorfToHsva*(hsva: var array[4, cfloat]; color: NimColorF) =
+proc colorfToHsva*(hsva: var array[4, float]; color: NimColorF) =
   ## Convert Nim float color object to HSVA values
   ##
   ## * hsva  - the array of 4 values for HSVA color
@@ -1220,7 +1250,7 @@ proc colorfToHsva*(hsva: var array[4, cfloat]; color: NimColorF) =
   proc nk_colorf_hsva_fv(hsva: pointer; color: nk_colorf) {.importc, nodecl.}
   nk_colorf_hsva_fv(hsva.addr, nk_colorf(r: color.r, g: color.g,
       b: color.b, a: color.a))
-proc hsvaToColorf*(hsva: array[4, cfloat]): NimColorF =
+proc hsvaToColorf*(hsva: array[4, float]): NimColorF =
   ## Convert HSVA values to Nim color with float values
   ##
   ## * hsva - the array with HSVA values to convert
@@ -1450,17 +1480,16 @@ proc selectableSymbolLabel*(sym: SymbolType; title: string; value: var bool;
 # -------
 # Widgets
 # -------
-proc colorPicker*(ctx; color: NimColorF;
-    format: nk_color_format): NimColorF =
+proc colorPicker*(color: NimColorF;
+    format: colorFormat): NimColorF =
   ## Create the color picker widget
   ##
-  ## * ctx    - the Nuklear context
   ## * color  - the starting color for the widget
   ## * format - the color format for the widget
   ##
   ## Returns Nim color selected by the user in the widget
   proc nk_color_picker(ctx; color: nk_colorf;
-      fmt: nk_color_format): nk_colorf {.importc, nodecl.}
+      fmt: colorFormat): nk_colorf {.importc, nodecl.}
   let newColor = nk_color_picker(ctx, nk_colorf(r: color.r, g: color.g,
       b: color.b, a: color.a), format)
   result = NimColorF(r: newColor.r, g: newColor.g, b: newColor.b, a: newColor.a)

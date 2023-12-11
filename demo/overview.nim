@@ -37,7 +37,7 @@ type
   Options = enum
     A, B, C
   ColorMode = enum
-    COL_RGB, COL_HSV
+    rgb, hsv
 const
   values = [26.0, 13.0, 30.0, 15.0, 25.0, 10.0, 20.0, 40.0, 12.0, 8.0, 22.0,
       28.0, 5.0]
@@ -331,69 +331,65 @@ proc overview*(ctx: PContext) =
           comboColor.a = slide(0, comboColor.a, 255, 5)
         colorCombo(comboColor2, 200, 400):
           setLayoutRowDynamic(120, 1)
-          comboColor2 = colorPicker(ctx, comboColor2, NK_RGBA)
+          comboColor2 = colorPicker(comboColor2, rgba)
           setLayoutRowDynamic(25, 2)
-          if option("RGB", colMode == COL_RGB):
-            colMode = COL_RGB
-          if option("HSV", colMode == COL_HSV):
-            colMode = COL_HSV
+          if option("RGB", colMode == rgb):
+            colMode = rgb
+          if option("HSV", colMode == hsv):
+            colMode = hsv
           setLayoutRowDynamic(25, 1)
-          if colMode == COL_RGB:
-            comboColor2.r = nk_propertyf(ctx, "#R:", 0, comboColor2.r, 1.0,
+          if colMode == rgb:
+            comboColor2.r = property2("#R:", 0, comboColor2.r, 1.0,
                 0.01, 0.005)
-            comboColor2.g = nk_propertyf(ctx, "#G:", 0, comboColor2.g, 1.0,
+            comboColor2.g = property2("#G:", 0, comboColor2.g, 1.0,
                 0.01, 0.005)
-            comboColor2.b = nk_propertyf(ctx, "#B:", 0, comboColor2.b, 1.0,
+            comboColor2.b = property2("#B:", 0, comboColor2.b, 1.0,
                 0.01, 0.005)
-            comboColor2.a = nk_propertyf(ctx, "#A:", 0, comboColor2.a, 1.0,
+            comboColor2.a = property2("#A:", 0, comboColor2.a, 1.0,
                 0.01, 0.005)
           else:
-            var hsva: array[4, cfloat]
+            var hsva: array[4, float]
             colorfToHsva(hsva, comboColor2)
-            hsva[0] = nk_propertyf(ctx, "#H:", 0, hsva[0], 1.0, 0.01, 0.05)
-            hsva[1] = nk_propertyf(ctx, "#S:", 0, hsva[1], 1.0, 0.01, 0.05)
-            hsva[2] = nk_propertyf(ctx, "#V:", 0, hsva[2], 1.0, 0.01, 0.05)
-            hsva[3] = nk_propertyf(ctx, "#A:", 0, hsva[3], 1.0, 0.01, 0.05)
+            hsva[0] = property2("#H:", 0, hsva[0], 1.0, 0.01, 0.05)
+            hsva[1] = property2("#S:", 0, hsva[1], 1.0, 0.01, 0.05)
+            hsva[2] = property2("#V:", 0, hsva[2], 1.0, 0.01, 0.05)
+            hsva[3] = property2("#A:", 0, hsva[3], 1.0, 0.01, 0.05)
             comboColor2 = hsvaToColorf(hsva)
         var sum = $(progA + progB + progC + progD)
-        if createLabelCombo(ctx, sum.cstring, 200, 200):
+        labelCombo(sum, 200, 200):
           setLayoutRowDynamic(30, 1)
           progressBar(progA, 100)
           progressBar(progB, 100)
           progressBar(progC, 100)
           progressBar(progD, 100)
-          nk_combo_end(ctx)
         sum = $(checkValues[0] + checkValues[1] + checkValues[2] + checkValues[
             3] + checkValues[4])
-        if createLabelCombo(ctx, sum.cstring, 200, 200):
+        labelCombo(sum, 200, 200):
           setLayoutRowDynamic(30, 1)
           checkBox(weapons[0], checkValues[0])
           checkBox(weapons[1], checkValues[1])
           checkBox(weapons[2], checkValues[2])
           checkBox(weapons[3], checkValues[3])
           checkBox(weapons[4], checkValues[4])
-          nk_combo_end(ctx)
         sum = $position[0] & " " & $position[1] & " " & $position[2]
-        if createLabelCombo(ctx, sum.cstring, 200, 200):
+        labelCombo(sum, 200, 200):
           setLayoutRowDynamic(25, 1)
           property("#X:", -1024.0, position[0], 1024.0, 1, 0.5)
           property("#Y:", -1024.0, position[1], 1024.0, 1, 0.5)
           property("#Z:", -1024.0, position[2], 1024.0, 1, 0.5)
-          nk_combo_end(ctx)
         sum = $chartSelection
-        if createLabelCombo(ctx, sum.cstring, 200, 250):
+        labelCombo(sum, 200, 250):
           setLayoutRowDynamic(150, 1)
           chart(column, values.len, 0, 50):
             for value in values:
               if chartPush(value) == clicked:
                 chartSelection = value
                 nk_combo_close(ctx)
-          nk_combo_end(ctx)
         if not timeSelected and not dateSelected:
           selectedDate = now()
         sum = $selectedDate.hour & ":" & $selectedDate.minute & ":" &
             $selectedDate.second
-        if createLabelCombo(ctx, sum.cstring, 200, 250):
+        labelCombo(sum, 200, 250):
           timeSelected = true
           setLayoutRowDynamic(25, 1)
           {.warning[Deprecated]: off.}
@@ -403,10 +399,9 @@ proc overview*(ctx: PContext) =
               60, 1, 1)
           selectedDate.hour = nk_propertyi(ctx, "#H:", 0, selectedDate.hour, 23,
               1, 1)
-          nk_combo_end(ctx);
         sum = $selectedDate.monthday & "-" & $selectedDate.month & "-" &
             $selectedDate.year
-        if createLabelCombo(ctx, sum.cstring, 350, 400):
+        labelCombo(sum, 350, 400):
           dateSelected = true
           layoutDynamic(20, 3):
             row(0.05):
@@ -440,7 +435,6 @@ proc overview*(ctx: PContext) =
               selectedDate.monthdayZero = i
               nk_combo_close(ctx)
           {.warning[Deprecated]: on.}
-          nk_combo_end(ctx)
       treeNode("Input", minimized, 11):
         setLayoutRowStatic(25, 2, ratio)
         label("Default:")
