@@ -384,7 +384,7 @@ proc overview*(ctx: PContext) =
             for value in values:
               if chartPush(value) == clicked:
                 chartSelection = value
-                nk_combo_close(ctx)
+                comboClose()
         if not timeSelected and not dateSelected:
           selectedDate = now()
         sum = $selectedDate.hour & ":" & $selectedDate.minute & ":" &
@@ -393,11 +393,11 @@ proc overview*(ctx: PContext) =
           timeSelected = true
           setLayoutRowDynamic(25, 1)
           {.warning[Deprecated]: off.}
-          selectedDate.second = nk_propertyi(ctx, "#S:", 0, selectedDate.second,
+          selectedDate.second = property2("#S:", 0, selectedDate.second,
               60, 1, 1)
-          selectedDate.minute = nk_propertyi(ctx, "#M:", 0, selectedDate.minute,
+          selectedDate.minute = property2("#M:", 0, selectedDate.minute,
               60, 1, 1)
-          selectedDate.hour = nk_propertyi(ctx, "#H:", 0, selectedDate.hour, 23,
+          selectedDate.hour = property2("#H:", 0, selectedDate.hour, 23,
               1, 1)
         sum = $selectedDate.monthday & "-" & $selectedDate.month & "-" &
             $selectedDate.year
@@ -428,12 +428,12 @@ proc overview*(ctx: PContext) =
           var spacing = getDayOfWeek(1, selectedDate.month,
               selectedDate.year).ord - dMon.ord
           if spacing > 0:
-            nk_spacing(ctx, spacing.cint)
+            addSpacing(spacing)
           for i in 1 .. getDaysInMonth(selectedDate.month, selectedDate.year):
             sum = $i
             labelButton(sum):
               selectedDate.monthdayZero = i
-              nk_combo_close(ctx)
+              comboClose()
           {.warning[Deprecated]: on.}
       treeNode("Input", minimized, 11):
         setLayoutRowStatic(25, 2, ratio)
@@ -488,7 +488,7 @@ proc overview*(ctx: PContext) =
             lineIndex = i
           chartId = chartId + chartStep
       if chartIndex != -1:
-        nk_tooltipf(ctx, "Value: %.2f", cos(chartIndex.cfloat *
+        fmtTooltip("Value: %.2f", cos(chartIndex.cfloat *
             chartStep).cfloat)
       if lineIndex != 1:
         setLayoutRowDynamic(20, 1)
@@ -504,16 +504,16 @@ proc overview*(ctx: PContext) =
             colIndex = i
           chartId = chartId + chartStep
       if chartIndex != -1:
-        nk_tooltipf(ctx, "Value: %.2f", abs(sin(chartStep *
-            chartIndex.cfloat).cfloat));
+        fmtTooltip("Value: %.2f", abs(sin(chartStep *
+            chartIndex.cfloat).cfloat))
       if col_index != -1:
         setLayoutRowDynamic(20, 1)
         fmtLabel(left, "Selected value: %.2f", abs(sin(
             chartStep * colIndex.cfloat).cfloat))
       setLayoutRowDynamic(100, 1)
       chart(column, 32, 0.0, 1.0):
-        nk_chart_add_slot(ctx, lines, 32, -1.0, 1.0)
-        nk_chart_add_slot(ctx, lines, 32, -1.0, 1.0)
+        addChartSlot(lines, 32, -1.0, 1.0)
+        addChartSlot(lines, 32, -1.0, 1.0)
         chartId = 0
         for i in 0 .. 31:
           discard nk_chart_push_slot(ctx, abs(sin(chartId)), 0)
@@ -523,9 +523,9 @@ proc overview*(ctx: PContext) =
       setLayoutRowDynamic(100, 1)
       if createColorChart(ctx, lines, NimColor(r: 255, g: 0, b: 0),
           NimColor(r: 150, g: 0, b: 0), 32, 0.0, 1.0):
-        addColorChartSlot(ctx, lines, NimColor(r: 0, g: 0, b: 255),
+        addColorChartSlot(lines, NimColor(r: 0, g: 0, b: 255),
             NimColor(r: 0, g: 0, b: 150), 32, -1.0, 1.0)
-        addColorChartSlot(ctx, lines, NimColor(r: 0, g: 255, b: 0),
+        addColorChartSlot(lines, NimColor(r: 0, g: 255, b: 0),
             NimColor(r: 0, g: 150, b: 0), 32, -1.0, 1.0)
         chartId = 0
         for i in 0 .. 31:
@@ -559,10 +559,10 @@ proc overview*(ctx: PContext) =
             discard
       if createContextual(ctx, 0, 350, 60, bounds):
         setLayoutRowDynamic(30, 4);
-        popupColor.r = nk_propertyi(ctx, "#r", 0, popupColor.r.cint, 255, 1, 1).int
-        popupColor.g = nk_propertyi(ctx, "#g", 0, popupColor.g.cint, 255, 1, 1).int
-        popupColor.b = nk_propertyi(ctx, "#b", 0, popupColor.b.cint, 255, 1, 1).int
-        popupColor.a = nk_propertyi(ctx, "#a", 0, popupColor.a.cint, 255, 1, 1).int
+        popupColor.r = property2("#r", 0, popupColor.r, 255, 1, 1)
+        popupColor.g = property2("#g", 0, popupColor.g, 255, 1, 1)
+        popupColor.b = property2("#b", 0, popupColor.b, 255, 1, 1)
+        popupColor.a = property2("#a", 0, popupColor.a, 255, 1, 1)
         nk_contextual_end(ctx)
       layoutStatic(30, 2):
         row(120):
@@ -764,7 +764,7 @@ proc overview*(ctx: PContext) =
             setLayoutRowDynamic(100, 1)
             if createColorChart(ctx, lines, NimColor(r: 255, g: 0,
                 b: 0, a: 255), NimColor(r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
-              addColorChartSlot(ctx, lines, NimColor(r: 0, g: 0,
+              addColorChartSlot(lines, NimColor(r: 0, g: 0,
                   b: 255, a: 255), NimColor(r: 0, g: 0, b: 150, a: 255), 32,
                   -1.0, 1.0)
               id = 0.0
@@ -786,10 +786,10 @@ proc overview*(ctx: PContext) =
             setLayoutRowDynamic(100, 1)
             if createColorChart(ctx, lines, NimColor(r: 255, g: 0,
                 b: 0, a: 255), NimColor(r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
-              addColorChartSlot(ctx, lines, NimColor(r: 0, g: 0,
+              addColorChartSlot(lines, NimColor(r: 0, g: 0,
                   b: 255, a: 255), NimColor(r: 0, g: 0, b: 150, a: 255), 32,
                   -1.0, 1.0)
-              addColorChartSlot(ctx, column, NimColor(r: 0, g: 255,
+              addColorChartSlot(column, NimColor(r: 0, g: 255,
                   b: 0), NimColor(r: 0, g: 150, b: 0), 32, 0.0, 1.0)
               id = 0.0
               for i in 0 .. 31:
@@ -910,7 +910,7 @@ proc overview*(ctx: PContext) =
               discard
             nk_group_end(ctx)
           var bounds = getWidgetBounds(ctx)
-          nk_spacing(ctx, 1)
+          addSpacing(1)
           if (isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h) or
               isMousePrevHovering(ctx, bounds.x, bounds.y, bounds.w,
               bounds.h)) and isMouseDown(ctx, NK_BUTTON_LEFT):
@@ -933,7 +933,7 @@ proc overview*(ctx: PContext) =
               discard
             nk_group_end(ctx)
           bounds = getWidgetBounds(ctx)
-          nk_spacing(ctx, 1)
+          addSpacing(1)
           if (isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h) or
               isMousePrevHovering(ctx, bounds.x, bounds.y, bounds.w,
               bounds.h)) and isMouseDown(ctx, NK_BUTTON_LEFT):
@@ -982,7 +982,7 @@ proc overview*(ctx: PContext) =
             nk_group_end(ctx)
           setLayoutRowDynamic(8, 1)
           var bounds = getWidgetBounds(ctx)
-          nk_spacing(ctx, 1)
+          addSpacing(1)
           if (isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h) or
               isMousePrevHovering(ctx, bounds.x, bounds.y, bounds.w,
               bounds.h)) and isMouseDown(ctx, NK_BUTTON_LEFT):

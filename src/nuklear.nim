@@ -183,7 +183,6 @@ proc nk_input_end*(ctx) {.importc, nodecl.}
 # General
 # -------
 proc nk_end(ctx) {.importc, cdecl.}
-proc nk_spacing*(ctx; cols: cint) {.importc, cdecl.}
 
 # ----
 # Text
@@ -226,8 +225,6 @@ proc nk_menu_item_label(ctx; text: cstring;
 proc nk_chart_begin(ctx; ctype: ChartType; num: cint; min,
     max: cfloat): nk_bool {.importc, cdecl.}
 proc nk_chart_end*(ctx) {.importc, cdecl.}
-proc nk_chart_add_slot*(ctx; ctype: ChartType; count: cint;
-    min_value, max_value: cfloat) {.importc, cdecl.}
 proc nk_chart_push_slot*(ctx; value: cfloat;
     slot: cint): nk_flags {.importc, cdecl.}
 
@@ -258,12 +255,6 @@ proc nk_button_symbol(ctx; symbol: SymbolType): nk_bool {.importc, cdecl.}
 proc nk_button_symbol_label(ctx; symbol: SymbolType;
     label: cstring; align: nk_flags): nk_bool {.importc, cdecl.}
 
-# ----------
-# Properties
-# ----------
-proc nk_propertyi*(ctx; name: cstring; min, val, max, step: cint;
-    inc_per_pixel: cfloat): cint {.importc, cdecl.}
-
 # -----
 # Style
 # -----
@@ -278,7 +269,6 @@ proc nk_style_set_font*(ctx; font: ptr nk_user_font) {.importc, nodecl.}
 proc nk_combo_begin_color(ctx; color: nk_color;
     size: nk_vec2): nk_bool {.importc, nodecl.}
 proc nk_combo_end(ctx) {.importc, cdecl.}
-proc nk_combo_close*(ctx) {.importc, cdecl.}
 
 # ------
 # Colors
@@ -315,7 +305,7 @@ proc nk_contextual_item_label*(ctx; label: cstring;
 # --------
 # Tooltips
 # --------
-proc nk_tooltipf*(ctx; fmt: cstring) {.importc, nodecl, varargs.}
+proc nk_tooltipf(ctx; fmt: cstring) {.importc, nodecl, varargs.}
 proc nk_tooltip*(ctx; text: cstring) {.importc, nodecl.}
 
 # ------
@@ -555,6 +545,13 @@ proc windowIsHidden*(name: string): bool =
   ## Returns true if the window is hidden, otherwise false
   proc nk_window_is_hidden(ctx; name: cstring): cint {.importc, nodecl.}
   return nk_window_is_hidden(ctx, name.cstring) > 0
+
+proc addSpacing*(cols: int) =
+  ## Add spacing in the selected between the row's boundaries in the row
+  ##
+  ## * cols - the amount of columns to add as the spacing
+  proc nk_spacing(ctx; cols: cint) {.importc, nodecl.}
+  nk_spacing(ctx, cols.cint)
 
 # ------
 # Popups
@@ -1030,6 +1027,25 @@ proc property2*(name: string; min, val, max, step, incPerPixel: float): float =
   return nk_propertyf(ctx, name.cstring, min.cfloat, val.cfloat, max.cfloat,
       step.cfloat, incPerPixel.cfloat).float
 
+proc property2*(name: string; min, val, max, step: int; incPerPixel: float): int =
+  ## Create a Nuklear property widget with integer values
+  ##
+  ## * name        - the name of the property and its label to show on it.
+  ##                 Using symbol # will generate random string in its place,
+  ##                 but it will not show in the property's text
+  ## * min         - the minimal value of the property
+  ## * val         - the current value of the property
+  ## * max         - the maximum value of the property
+  ## * step        - the amount which increase or decrease the property value
+  ##                 when the user press arrows buttons
+  ## * incPerPixel - the amount which increase or decrease the property value
+  ##                 when the user drag in it
+  ##
+  ## Returns the new value of the property
+  proc nk_propertyi(ctx; name: cstring; min, val, max, step: cint;
+      inc_per_pixel: cfloat): cint {.importc, nodecl.}
+  return nk_propertyi(ctx, name.cstring, min.cint, val.cint, max.cint, step.cint, incPerPixel.cfloat).int
+
 # -----
 # Style
 # -----
@@ -1237,6 +1253,11 @@ template labelCombo*(selected: string; x, y: float; content: untyped) =
     content
     nk_combo_end(ctx)
 
+proc comboClose*() =
+  ## Stop adding a value to a combo
+  proc nk_combo_close(ctx) {.importc, nodecl.}
+  nk_combo_close(ctx)
+
 # ------
 # Colors
 # ------
@@ -1285,11 +1306,10 @@ proc createColorChart*(ctx; ctype: ChartType; color,
           count, min_value,
     max_value)
 
-proc addColorChartSlot*(ctx; ctype: ChartType; color,
+proc addColorChartSlot*(ctype: ChartType; color,
     higlight: NimColor; count: cint; min_value, max_value: cfloat) =
   ## Add another chart to the existing one
   ##
-  ## * ctx       - the Nuklear context
   ## * ctype     - the type of the chart
   ## * color     - the color used for drawing the chart
   ## * highligh  - the color used for highlighting point when mouse hovering
@@ -1330,6 +1350,17 @@ proc chartPush*(value: float): ChartEvent {.discardable.} =
     return hovering
   return none
 
+proc addChartSlot*(ctype: ChartType; count: int; minValue, maxValue: float) =
+  ## Add another chart to the existing one
+  ##
+  ## * ctype     - the type of the chart
+  ## * count     - the amount of values on the chart
+  ## * min_value - the minimal value of the chart
+  ## * max_value - the maximum value of the chart
+  proc nk_chart_add_slot(ctx; ctype: ChartType; count: cint;
+      min_value, max_value: cfloat) {.importc, nodecl.}
+  nk_chart_add_slot(ctx, ctype, count.cint, minValue.cfloat, maxValue.cfloat)
+
 # ----------
 # Contextual
 # ----------
@@ -1351,6 +1382,17 @@ proc createContextual*(ctx; flags: nk_flags; x, y: cfloat;
   return nk_contextual_begin(ctx, flags, new_nk_vec2(x, y), new_nk_rect(
       trigger_bounds.x, trigger_bounds.y, trigger_bounds.w,
       trigger_bounds.h))
+
+# --------
+# Tooltips
+# --------
+
+macro fmtTooltip*(args: varargs[untyped]): untyped =
+  ## Draw a tooltip formatted in the same way like the C function printf
+  ##
+  ## * args      - the tooltip's text and its arguments to draw
+  result = quote do:
+    nk_tooltipf(ctx, `args`)
 
 # -----
 # Input
