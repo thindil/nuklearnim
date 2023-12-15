@@ -516,12 +516,12 @@ proc overview*(ctx: PContext) =
         addChartSlot(lines, 32, -1.0, 1.0)
         chartId = 0
         for i in 0 .. 31:
-          discard nk_chart_push_slot(ctx, abs(sin(chartId)), 0)
-          discard nk_chart_push_slot(ctx, cos(chartId), 1)
-          discard nk_chart_push_slot(ctx, sin(chartId), 2)
+          chartPushSlot(abs(sin(chartId)), 0)
+          chartPushSlot(cos(chartId), 1)
+          chartPushSlot(sin(chartId), 2)
           chartId = chartId + chartStep
       setLayoutRowDynamic(100, 1)
-      if createColorChart(ctx, lines, NimColor(r: 255, g: 0, b: 0),
+      colorChart(lines, NimColor(r: 255, g: 0, b: 0),
           NimColor(r: 150, g: 0, b: 0), 32, 0.0, 1.0):
         addColorChartSlot(lines, NimColor(r: 0, g: 0, b: 255),
             NimColor(r: 0, g: 0, b: 150), 32, -1.0, 1.0)
@@ -529,14 +529,13 @@ proc overview*(ctx: PContext) =
             NimColor(r: 0, g: 150, b: 0), 32, -1.0, 1.0)
         chartId = 0
         for i in 0 .. 31:
-          discard nk_chart_push_slot(ctx, abs(sin(chartId)), 0)
-          discard nk_chart_push_slot(ctx, cos(chartId), 1)
-          discard nk_chart_push_slot(ctx, sin(chartId), 2)
+          chartPushSlot(abs(sin(chartId)), 0)
+          chartPushSlot(cos(chartId), 1)
+          chartPushSlot(sin(chartId), 2)
           chartId = chartId + chartStep
-        nk_chart_end(ctx)
     treeTab("Popup", minimized, 13):
       setLayoutRowStatic(30, 160, 1)
-      var bounds = getWidgetBounds(ctx)
+      var bounds = getWidgetBounds()
       label("Right click me for menu")
       if createContextual(ctx, 0, 100, 300, bounds):
         setLayoutRowDynamic(25, 1);
@@ -554,7 +553,7 @@ proc overview*(ctx: PContext) =
         row(120):
           label("Right Click here:")
         row(50):
-          bounds = getWidgetBounds(ctx)
+          bounds = getWidgetBounds()
           colorButton(popupColor.r, popupColor.g, popupColor.b):
             discard
       if createContextual(ctx, 0, 350, 60, bounds):
@@ -585,7 +584,7 @@ proc overview*(ctx: PContext) =
         except:
           popupActive = false
       setLayoutRowStatic(30, 150, 1)
-      bounds = getWidgetBounds(ctx)
+      bounds = getWidgetBounds()
       label("Hover me for tooltip")
       if isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h):
         nk_tooltip(ctx, "This is a tooltip")
@@ -762,29 +761,27 @@ proc overview*(ctx: PContext) =
           case currentTab
           of 0:
             setLayoutRowDynamic(100, 1)
-            if createColorChart(ctx, lines, NimColor(r: 255, g: 0,
+            colorChart(lines, NimColor(r: 255, g: 0,
                 b: 0, a: 255), NimColor(r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
               addColorChartSlot(lines, NimColor(r: 0, g: 0,
                   b: 255, a: 255), NimColor(r: 0, g: 0, b: 150, a: 255), 32,
                   -1.0, 1.0)
               id = 0.0
               for i in 0 .. 31:
-                discard nk_chart_push_slot(ctx, abs(sin(id)), 0)
-                discard nk_chart_push_slot(ctx, cos(id), 1)
+                chartPushSlot(abs(sin(id)), 0)
+                chartPushSlot(cos(id), 1)
                 id = id + step
-              nk_chart_end(ctx)
           of 1:
             setLayoutRowDynamic(100, 1)
-            if createColorChart(ctx, column, NimColor(r: 255, g: 0,
+            colorChart(column, NimColor(r: 255, g: 0,
                 b: 0, a: 255), NimColor(r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
               id = 0.0
               for i in 0 .. 31:
-                discard nk_chart_push_slot(ctx, abs(sin(id)), 0)
+                chartPushSlot(abs(sin(id)), 0)
                 id = id + step
-              nk_chart_end(ctx)
           of 2:
             setLayoutRowDynamic(100, 1)
-            if createColorChart(ctx, lines, NimColor(r: 255, g: 0,
+            colorChart(lines, NimColor(r: 255, g: 0,
                 b: 0, a: 255), NimColor(r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
               addColorChartSlot(lines, NimColor(r: 0, g: 0,
                   b: 255, a: 255), NimColor(r: 0, g: 0, b: 150, a: 255), 32,
@@ -793,11 +790,10 @@ proc overview*(ctx: PContext) =
                   b: 0), NimColor(r: 0, g: 150, b: 0), 32, 0.0, 1.0)
               id = 0.0
               for i in 0 .. 31:
-                discard nk_chart_push_slot(ctx, abs(sin(id)), 0)
-                discard nk_chart_push_slot(ctx, abs(cos(id)), 1)
-                discard nk_chart_push_slot(ctx, abs(sin(id)), 2)
+                chartPushSlot(abs(sin(id)), 0)
+                chartPushSlot(abs(cos(id)), 1)
+                chartPushSlot(abs(sin(id)), 2)
                 id = id + step
-              nk_chart_end(ctx)
           else:
             discard
           nk_group_end(ctx)
@@ -909,7 +905,7 @@ proc overview*(ctx: PContext) =
             labelButton("#FFFF"):
               discard
             nk_group_end(ctx)
-          var bounds = getWidgetBounds(ctx)
+          var bounds = getWidgetBounds()
           addSpacing(1)
           if (isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h) or
               isMousePrevHovering(ctx, bounds.x, bounds.y, bounds.w,
@@ -932,7 +928,7 @@ proc overview*(ctx: PContext) =
             labelButton("#FFFF"):
               discard
             nk_group_end(ctx)
-          bounds = getWidgetBounds(ctx)
+          bounds = getWidgetBounds()
           addSpacing(1)
           if (isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h) or
               isMousePrevHovering(ctx, bounds.x, bounds.y, bounds.w,
@@ -981,7 +977,7 @@ proc overview*(ctx: PContext) =
               discard
             nk_group_end(ctx)
           setLayoutRowDynamic(8, 1)
-          var bounds = getWidgetBounds(ctx)
+          var bounds = getWidgetBounds()
           addSpacing(1)
           if (isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h) or
               isMousePrevHovering(ctx, bounds.x, bounds.y, bounds.w,
@@ -1006,7 +1002,7 @@ proc overview*(ctx: PContext) =
               discard
             nk_group_end(ctx)
           setLayoutRowDynamic(8, 1)
-          bounds = getWidgetBounds(ctx)
+          bounds = getWidgetBounds()
           if (isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h) or
               isMousePrevHovering(ctx, bounds.x, bounds.y, bounds.w,
               bounds.h)) and isMouseDown(ctx, NK_BUTTON_LEFT):

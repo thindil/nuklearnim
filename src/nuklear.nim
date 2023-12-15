@@ -88,9 +88,9 @@ type
   colorFormat* = enum
     rgb, rgba
   ChartEvent* = enum
+    none,
     hovering = 0x01,
-    clicked = 0x02,
-    none
+    clicked = 0x02
   nk_buttons* = enum
     NK_BUTTON_LEFT, NK_BUTTON_MIDDLE, NK_BUTTON_RIGHT, NK_BUTTON_DOUBLE, NK_BUTTON_MAX
   nk_style_colors* = enum
@@ -224,9 +224,7 @@ proc nk_menu_item_label(ctx; text: cstring;
 # ------
 proc nk_chart_begin(ctx; ctype: ChartType; num: cint; min,
     max: cfloat): nk_bool {.importc, cdecl.}
-proc nk_chart_end*(ctx) {.importc, cdecl.}
-proc nk_chart_push_slot*(ctx; value: cfloat;
-    slot: cint): nk_flags {.importc, cdecl.}
+proc nk_chart_end(ctx) {.importc, cdecl.}
 
 # ------
 # Popups
@@ -517,10 +515,8 @@ template window*(name: string; x, y, w, h: float; flags: set[WindowFlags];
     content
   nk_end(ctx)
 
-proc getWidgetBounds*(ctx): NimRect =
+proc getWidgetBounds*(): NimRect =
   ## Get the rectable with the current Nuklear widget coordinates
-  ##
-  ## * ctx - the Nuklear context
   ##
   ## Returns a rectangle with the current Nuklear widget coordinates
   ## converted to NimRect
@@ -1027,7 +1023,8 @@ proc property2*(name: string; min, val, max, step, incPerPixel: float): float =
   return nk_propertyf(ctx, name.cstring, min.cfloat, val.cfloat, max.cfloat,
       step.cfloat, incPerPixel.cfloat).float
 
-proc property2*(name: string; min, val, max, step: int; incPerPixel: float): int =
+proc property2*(name: string; min, val, max, step: int;
+    incPerPixel: float): int =
   ## Create a Nuklear property widget with integer values
   ##
   ## * name        - the name of the property and its label to show on it.
@@ -1044,7 +1041,8 @@ proc property2*(name: string; min, val, max, step: int; incPerPixel: float): int
   ## Returns the new value of the property
   proc nk_propertyi(ctx; name: cstring; min, val, max, step: cint;
       inc_per_pixel: cfloat): cint {.importc, nodecl.}
-  return nk_propertyi(ctx, name.cstring, min.cint, val.cint, max.cint, step.cint, incPerPixel.cfloat).int
+  return nk_propertyi(ctx, name.cstring, min.cint, val.cint, max.cint,
+      step.cint, incPerPixel.cfloat).int
 
 # -----
 # Style
@@ -1284,9 +1282,9 @@ proc hsvaToColorf*(hsva: array[4, float]): NimColorF =
 # ------
 # Charts
 # ------
-proc createColorChart*(ctx; ctype: ChartType; color,
+proc createColorChart(ctx; ctype: ChartType; color,
     higlight: NimColor; count: cint; min_value, max_value: cfloat): bool =
-  ## Create a colored chart
+  ## Create a colored chart, internal use only, temporary code
   ##
   ## * ctx       - the Nuklear context
   ## * ctype     - the type of the chart
@@ -1305,6 +1303,22 @@ proc createColorChart*(ctx; ctype: ChartType; color,
       color.b.cint), nk_rgb(higlight.r.cint, higlight.g.cint, higlight.b.cint),
           count, min_value,
     max_value)
+
+template colorChart*(cType: ChartType; color, highlight: NimColor; count: int;
+    minValue, maxValue: float; content: untyped) =
+  ## Create a colored chart
+  ##
+  ## * cType    - the type of the chart
+  ## * color    - the color used for drawing the chart
+  ## * highligh - the color used for highlighting point when mouse hovering
+  ##              over it
+  ## * count    - the amount of values on the chart
+  ## * minValue - the minimal value of the chart
+  ## * maxValue - the maximum value of the chart
+  if createColorChart(ctx, cType, color, highlight, count.cint, minValue.cfloat,
+      maxValue.cfloat):
+    content
+    nk_chart_end(ctx)
 
 proc addColorChartSlot*(ctype: ChartType; color,
     higlight: NimColor; count: cint; min_value, max_value: cfloat) =
@@ -1360,6 +1374,22 @@ proc addChartSlot*(ctype: ChartType; count: int; minValue, maxValue: float) =
   proc nk_chart_add_slot(ctx; ctype: ChartType; count: cint;
       min_value, max_value: cfloat) {.importc, nodecl.}
   nk_chart_add_slot(ctx, ctype, count.cint, minValue.cfloat, maxValue.cfloat)
+
+proc chartPushSlot*(value: float; slot: int): ChartEvent {.discardable.} =
+  ## Push, add the value to the current chart at the selected position
+  ##
+  ## * value - the value to add
+  ## * slot  - the slot to which the value will be added
+  ##
+  ## Returns the mouse event if any happened over the value in the chart
+  proc nk_chart_push_slot(ctx; value: cfloat; slot: cint): nk_flags {.importc, nodecl.}
+
+  let res = nk_chart_push_slot(ctx, value.cfloat, slot.cint)
+  if (res and clicked.nk_flags) == clicked.nk_flags:
+    return clicked
+  if (res and hovering.nk_flags) == hovering.nk_flags:
+    return hovering
+  return none
 
 # ----------
 # Contextual
