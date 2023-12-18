@@ -537,18 +537,17 @@ proc overview*(ctx: PContext) =
       setLayoutRowStatic(30, 160, 1)
       var bounds = getWidgetBounds()
       label("Right click me for menu")
-      if createContextual(ctx, 0, 100, 300, bounds):
+      contextualMenu({windowNoFlags}, 100, 300, bounds):
         setLayoutRowDynamic(25, 1);
         checkbox("Menu", showMenu)
         progressBar(prog, 100)
         slider(0, slider, 16, 1)
-        if nk_contextual_item_label(ctx, "About", NK_TEXT_CENTERED):
+        contextualItemLabel("About", centered):
           showAppAbout = true
         selectableLabel((if selected[0]: "Uns" else: "S") & "elect", selected[0])
         selectableLabel((if selected[1]: "Uns" else: "S") & "elect", selected[1])
         selectableLabel((if selected[2]: "Uns" else: "S") & "elect", selected[2])
         selectableLabel((if selected[3]: "Uns" else: "S") & "elect", selected[3])
-        nk_contextual_end(ctx)
       layoutStatic(30, 2):
         row(120):
           label("Right Click here:")
@@ -556,13 +555,12 @@ proc overview*(ctx: PContext) =
           bounds = getWidgetBounds()
           colorButton(popupColor.r, popupColor.g, popupColor.b):
             discard
-      if createContextual(ctx, 0, 350, 60, bounds):
+      contextualMenu({windowNoFlags}, 350, 60, bounds):
         setLayoutRowDynamic(30, 4);
         popupColor.r = property2("#r", 0, popupColor.r, 255, 1, 1)
         popupColor.g = property2("#g", 0, popupColor.g, 255, 1, 1)
         popupColor.b = property2("#b", 0, popupColor.b, 255, 1, 1)
         popupColor.a = property2("#a", 0, popupColor.a, 255, 1, 1)
-        nk_contextual_end(ctx)
       layoutStatic(30, 2):
         row(120):
           label("Popup:")
@@ -586,8 +584,8 @@ proc overview*(ctx: PContext) =
       setLayoutRowStatic(30, 150, 1)
       bounds = getWidgetBounds()
       label("Hover me for tooltip")
-      if isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h):
-        nk_tooltip(ctx, "This is a tooltip")
+      if isMouseHovering(bounds):
+        tooltip("This is a tooltip")
     treeTab("Layout", minimized, 14):
       treeNode("Widget", minimized, 15):
         setLayoutRowDynamic(30, 1)
@@ -907,7 +905,7 @@ proc overview*(ctx: PContext) =
             nk_group_end(ctx)
           var bounds = getWidgetBounds()
           addSpacing(1)
-          if (isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h) or
+          if (isMouseHovering(bounds) or
               isMousePrevHovering(ctx, bounds.x, bounds.y, bounds.w,
               bounds.h)) and isMouseDown(ctx, NK_BUTTON_LEFT):
             a = rowLayout[0] + getMouseDelta(ctx).x
@@ -930,7 +928,7 @@ proc overview*(ctx: PContext) =
             nk_group_end(ctx)
           bounds = getWidgetBounds()
           addSpacing(1)
-          if (isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h) or
+          if (isMouseHovering(bounds) or
               isMousePrevHovering(ctx, bounds.x, bounds.y, bounds.w,
               bounds.h)) and isMouseDown(ctx, NK_BUTTON_LEFT):
             b = rowLayout[2] + getMouseDelta(ctx).x
@@ -979,7 +977,7 @@ proc overview*(ctx: PContext) =
           setLayoutRowDynamic(8, 1)
           var bounds = getWidgetBounds()
           addSpacing(1)
-          if (isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h) or
+          if (isMouseHovering(bounds) or
               isMousePrevHovering(ctx, bounds.x, bounds.y, bounds.w,
               bounds.h)) and isMouseDown(ctx, NK_BUTTON_LEFT):
             a = a + getMouseDelta(ctx).y
@@ -1003,7 +1001,7 @@ proc overview*(ctx: PContext) =
             nk_group_end(ctx)
           setLayoutRowDynamic(8, 1)
           bounds = getWidgetBounds()
-          if (isMouseHovering(ctx, bounds.x, bounds.y, bounds.w, bounds.h) or
+          if (isMouseHovering(bounds) or
               isMousePrevHovering(ctx, bounds.x, bounds.y, bounds.w,
               bounds.h)) and isMouseDown(ctx, NK_BUTTON_LEFT):
             b = b + getMouseDelta(ctx).y
