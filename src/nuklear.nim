@@ -296,15 +296,14 @@ proc nk_filter_ascii*(box: ptr nk_text_edit;
 # ----------
 # Contextual
 # ----------
-proc nk_contextual_end*(ctx) {.importc, cdecl.}
-proc nk_contextual_item_label*(ctx; label: cstring;
+proc nk_contextual_end(ctx) {.importc, cdecl.}
+proc nk_contextual_item_label(ctx; label: cstring;
     align: nk_flags): nk_bool {.importc, cdecl.}
 
 # --------
 # Tooltips
 # --------
 proc nk_tooltipf(ctx; fmt: cstring) {.importc, nodecl, varargs.}
-proc nk_tooltip*(ctx; text: cstring) {.importc, nodecl.}
 
 # ------
 # Groups
@@ -1394,9 +1393,9 @@ proc chartPushSlot*(value: float; slot: int): ChartEvent {.discardable.} =
 # ----------
 # Contextual
 # ----------
-proc createContextual*(ctx; flags: nk_flags; x, y: cfloat;
+proc createContextual(ctx; flags: nk_flags; x, y: cfloat;
     trigger_bounds: NimRect): bool =
-  ## Create a contextual menu
+  ## Create a contextual menu, internal use only, temporary code
   ##
   ## * ctx            - the Nuklear context
   ## * flags          - the flags for the menu
@@ -1413,6 +1412,29 @@ proc createContextual*(ctx; flags: nk_flags; x, y: cfloat;
       trigger_bounds.x, trigger_bounds.y, trigger_bounds.w,
       trigger_bounds.h))
 
+template contextualMenu*(flags: set[WindowFlags]; x, y;
+    triggerBounds: NimRect; content: untyped) =
+  ## Create a contextual menu
+  ##
+  ## * flags         - the flags for the menu
+  ## * x             - the width of the menu
+  ## * y             - the height of the menu
+  ## * triggerBounds - the rectange of coordinates in the window where clicking
+  ##                   cause the menu to appear
+  ## * content       - the content of the menu
+  if createContextual(ctx, winSetToInt(flags), x, y, triggerBounds):
+    content
+    nk_contextual_end(ctx)
+
+template contextualItemLabel*(label: string; align: TextAlignment; onPressCode: untyped) =
+  ## Add a clickable label to a contextual menu
+  ##
+  ## * label       - the text to show on the label
+  ## * align       - the alignment of the text to show
+  ## * onPressCode - the Nim code to execute when the label was pressed
+  if nk_contextual_item_label(ctx, label.cstring, align.nk_flags):
+    onPressCode
+
 # --------
 # Tooltips
 # --------
@@ -1424,13 +1446,19 @@ macro fmtTooltip*(args: varargs[untyped]): untyped =
   result = quote do:
     nk_tooltipf(ctx, `args`)
 
+proc tooltip*(text: string) =
+  ## Draw a tooltip with the selected text
+  ##
+  ## * text - the text to show on the tooltip window
+  proc nk_tooltip(ctx; text: cstring) {.importc, nodecl.}
+  nk_tooltip(ctx, text.cstring)
+
 # -----
 # Input
 # -----
-proc isMouseHovering*(ctx; x, y, w, h: cfloat): bool =
+proc isMouseHovering*(rect: NimRect): bool =
   ## Check if mouse is hovering over the selected rectangle
   ##
-  ## * ctx - the Nuklear context
   ## * x   - the X coordinate of top left corner of the rectangle
   ## * y   - the Y coordinate of top left corner of the rectangle
   ## * w   - the width of the rectangle in pixels
@@ -1439,8 +1467,8 @@ proc isMouseHovering*(ctx; x, y, w, h: cfloat): bool =
   ## Returns true if the mouse is hovering over the rectangle, otherwise false
   proc nk_input_is_mouse_hovering_rect(i: ptr nk_input;
       rect: nk_rect): nk_bool {.importc, nodecl.}
-  return nk_input_is_mouse_hovering_rect(ctx.input.addr, new_nk_rect(x, y,
-      w, h))
+  return nk_input_is_mouse_hovering_rect(ctx.input.addr, new_nk_rect(rect.x, rect.y,
+      rect.w, rect.h))
 proc isMousePrevHovering*(ctx; x, y, w, h: cfloat): bool =
   ## Check if the mouse was previously hovering over the selected rectangle
   ##
