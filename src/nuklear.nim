@@ -199,9 +199,9 @@ proc nk_layout_row_begin(ctx; fmt: nk_layout_format;
 proc nk_layout_row_push(ctx; width: cfloat) {.importc, cdecl.}
 proc nk_layout_row(ctx; fmt: nk_layout_format; height: cfloat;
     cols: cint; ratio: pointer) {.importc, nodecl.}
-proc nk_layout_space_begin*(ctx; fmt: nk_layout_format;
+proc nk_layout_space_begin(ctx; fmt: nk_layout_format;
     height: cfloat; widget_count: cint) {.importc, cdecl.}
-proc nk_layout_space_end*(ctx) {.importc, cdecl.}
+proc nk_layout_space_end(ctx) {.importc, cdecl.}
 proc nk_layout_row_template_begin*(ctx; height: cfloat) {.importc, cdecl.}
 proc nk_layout_row_template_push_dynamic*(ctx) {.importc, cdecl.}
 proc nk_layout_row_template_push_variable*(ctx;
@@ -778,8 +778,8 @@ proc slide*(min, val, max, step: int): int =
 # -------
 # Layouts
 # -------
-proc layoutSpacePush*(ctx; x, y, w, h: cfloat) =
-  ## Push the next widget's position and size
+proc layoutSpacePush(ctx; x, y, w, h: cfloat) =
+  ## Push the next widget's position and size, internal use only, temporary code
   ##
   ## * ctx - the Nuklear context
   ## * x   - the amount of pixels or ratio to push the position in X axis
@@ -860,6 +860,40 @@ proc setLayoutRowDynamic*(height: float; cols: int; ratio: openArray[cfloat]) =
   ## * cols   - the amount of columns in each row
   ## * ratio  - the array or sequence of cfloat with width of the colums
   nk_layout_row(ctx, NK_DYNAMIC, height.cfloat, cols.cint, ratio.addr)
+
+template layoutSpaceStatic*(height: float; widgetsCount: int; content: untyped) =
+  ## Start setting manualy each row of the current widgets layout. The layout
+  ## will not resize when the parent window change its size
+  ##
+  ## * height       - the width in pixels or window's ratio of each row
+  ## * widgetsCount - the amount of widgets in each row.
+  ## * content      - the content of the layout
+  nk_layout_space_begin(ctx, NK_STATIC, height.cfloat, widgetsCount.cint)
+  content
+  nk_layout_space_end(ctx)
+
+template layoutSpaceDynamic*(height: float; widgetsCount: int; content: untyped) =
+  ## Start setting manualy each row of the current widgets layout. The layout
+  ## will resize when the parent window change its size
+  ##
+  ## * height       - the width in pixels or window's ratio of each row
+  ## * widgetsCount - the amount of widgets in each row.
+  ## * content      - the content of the layout
+  nk_layout_space_begin(ctx, NK_DYNAMIC, height.cfloat, widgetsCount.cint)
+  content
+  nk_layout_space_end(ctx)
+
+template row*(x, y, w, h: float; content: untyped) =
+  ## Set the content of the row in the current widgets layout, used in space
+  ## layout
+  ##
+  ## * x       - the amount of pixels or ratio to push the position in X axis
+  ## * y       - the amount of pixels or ratio to push the position in Y axis
+  ## * w       - the amount of pixels or ratio to push the width
+  ## * h       - the amount of pixels or ratio to push the height
+  ## * content - the content of the row
+  layoutSpacePush(ctx, x.cfloat, y.cfloat, w.cfloat, h.cfloat)
+  content
 
 # -----
 # Menus

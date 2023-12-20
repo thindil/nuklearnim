@@ -650,20 +650,19 @@ proc overview*(ctx: PContext) =
               discard
         setLayoutRowDynamic(30, 1)
         label("Static free space with custom position and custom size:")
-        nk_layout_space_begin(ctx, NK_STATIC, 60, 4)
-        layoutSpacePush(ctx, 100, 0, 100, 30)
-        labelButton("button"):
-          discard
-        layoutSpacePush(ctx, 0, 15, 100, 30)
-        labelButton("button"):
-          discard
-        layoutSpacePush(ctx, 200, 15, 100, 30)
-        labelButton("button"):
-          discard
-        layoutSpacePush(ctx, 100, 30, 100, 30)
-        labelButton("button"):
-          discard
-        nk_layout_space_end(ctx)
+        layoutSpaceStatic(60, 4):
+          row(100, 0, 100, 30):
+            labelButton("button"):
+              discard
+          row(0, 15, 100, 30):
+            labelButton("button"):
+              discard
+          row(200, 15, 100, 30):
+            labelButton("button"):
+              discard
+          row(100, 30, 100, 30):
+            labelButton("button"):
+              discard
         setLayoutRowDynamic(30, 1)
         label("Row template:")
         nk_layout_row_template_begin(ctx, 30)
@@ -811,68 +810,67 @@ proc overview*(ctx: PContext) =
               discard
           nk_group_end(ctx)
       treeNode("Complex", minimized, 20):
-        nk_layout_space_begin(ctx, NK_STATIC, 500, 64)
-        layoutSpacePush(ctx, 0, 0, 150, 500)
-        if nk_group_begin(ctx, "Group_left", nkWindowBorder):
-          setLayoutRowStatic(18, 100, 1)
-          for i in 0 .. 31:
-            selectableLabel((if selected4[i]: "Selected" else: "Unselected"),
-                selected4[i], centered)
-          nk_group_end(ctx);
-        layoutSpacePush(ctx, 160, 0, 150, 240)
-        if nk_group_begin(ctx, "Group_top", nkWindowBorder):
-          setLayoutRowDynamic(25, 1)
-          labelButton("#FFAA"):
-            discard
-          labelButton("#FFBB"):
-            discard
-          labelButton("#FFCC"):
-            discard
-          labelButton("#FFDD"):
-            discard
-          labelButton("#FFEE"):
-            discard
-          labelButton("#FFFF"):
-            discard
-          nk_group_end(ctx)
-        layoutSpacePush(ctx, 160, 250, 150, 250)
-        if nk_group_begin(ctx, "Group_buttom", nkWindowBorder):
-          setLayoutRowDynamic(25, 1)
-          labelButton("#FFAA"):
-            discard
-          labelButton("#FFBB"):
-            discard
-          labelButton("#FFCC"):
-            discard
-          labelButton("#FFDD"):
-            discard
-          labelButton("#FFEE"):
-            discard
-          labelButton("#FFFF"):
-            discard
-          nk_group_end(ctx);
-        layoutSpacePush(ctx, 320, 0, 150, 150)
-        if nk_group_begin(ctx, "Group_right_top", nkWindowBorder):
-          setLayoutRowStatic(18, 100, 1)
-          for i in 0 .. 3:
-            selectableLabel((if selected[i]: "Selected" else: "Unselected"),
-                selected[i], centered)
-          nk_group_end(ctx)
-        layoutSpacePush(ctx, 320, 160, 150, 150)
-        if nk_group_begin(ctx, "Group_right_center", nkWindowBorder):
-          setLayoutRowStatic(18, 100, 1)
-          for i in 0 .. 3:
-            selectableLabel((if selected[i]: "Selected" else: "Unselected"),
-                selected[i], centered)
-          nk_group_end(ctx);
-        layoutSpacePush(ctx, 320, 320, 150, 150)
-        if nk_group_begin(ctx, "Group_right_bottom", nkWindowBorder):
-          setLayoutRowStatic(18, 100, 1)
-          for i in 0 .. 3:
-            selectableLabel((if selected[i]: "Selected" else: "Unselected"),
-                selected[i], centered)
-          nk_group_end(ctx);
-        nk_layout_space_end(ctx)
+        layoutSpaceStatic(500, 64):
+          row(0, 0, 150, 500):
+            if nk_group_begin(ctx, "Group_left", nkWindowBorder):
+              setLayoutRowStatic(18, 100, 1)
+              for i in 0 .. 31:
+                selectableLabel((if selected4[i]: "Selected" else: "Unselected"),
+                    selected4[i], centered)
+              nk_group_end(ctx);
+          row(160, 0, 150, 240):
+            if nk_group_begin(ctx, "Group_top", nkWindowBorder):
+              setLayoutRowDynamic(25, 1)
+              labelButton("#FFAA"):
+                discard
+              labelButton("#FFBB"):
+                discard
+              labelButton("#FFCC"):
+                discard
+              labelButton("#FFDD"):
+                discard
+              labelButton("#FFEE"):
+                discard
+              labelButton("#FFFF"):
+                discard
+              nk_group_end(ctx)
+          row(160, 250, 150, 250):
+            if nk_group_begin(ctx, "Group_buttom", nkWindowBorder):
+              setLayoutRowDynamic(25, 1)
+              labelButton("#FFAA"):
+                discard
+              labelButton("#FFBB"):
+                discard
+              labelButton("#FFCC"):
+                discard
+              labelButton("#FFDD"):
+                discard
+              labelButton("#FFEE"):
+                discard
+              labelButton("#FFFF"):
+                discard
+              nk_group_end(ctx)
+          row(320, 0, 150, 150):
+            if nk_group_begin(ctx, "Group_right_top", nkWindowBorder):
+              setLayoutRowStatic(18, 100, 1)
+              for i in 0 .. 3:
+                selectableLabel((if selected[i]: "Selected" else: "Unselected"),
+                    selected[i], centered)
+              nk_group_end(ctx)
+          row(320, 160, 150, 150):
+            if nk_group_begin(ctx, "Group_right_center", nkWindowBorder):
+              setLayoutRowStatic(18, 100, 1)
+              for i in 0 .. 3:
+                selectableLabel((if selected[i]: "Selected" else: "Unselected"),
+                    selected[i], centered)
+              nk_group_end(ctx)
+          row(320, 320, 150, 150):
+            if nk_group_begin(ctx, "Group_right_bottom", nkWindowBorder):
+              setLayoutRowStatic(18, 100, 1)
+              for i in 0 .. 3:
+                selectableLabel((if selected[i]: "Selected" else: "Unselected"),
+                    selected[i], centered)
+              nk_group_end(ctx)
       treeNode("Splitter", minimized, 21):
         setLayoutRowStatic(20, 320, 1)
         label("Use slider and spinner to change tile size")
