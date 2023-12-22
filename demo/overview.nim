@@ -665,11 +665,10 @@ proc overview*(ctx: PContext) =
               discard
         setLayoutRowDynamic(30, 1)
         label("Row template:")
-        nk_layout_row_template_begin(ctx, 30)
-        nk_layout_row_template_push_dynamic(ctx)
-        nk_layout_row_template_push_variable(ctx, 80)
-        nk_layout_row_template_push_static(ctx, 80)
-        nk_layout_row_template_end(ctx)
+        setRowTemplate(30):
+          rowTemplateDynamic()
+          rowTemplateVariable(80)
+          rowTemplateStatic(80)
         labelButton("button"):
           discard
         labelButton("button"):
@@ -677,13 +676,13 @@ proc overview*(ctx: PContext) =
         labelButton("button"):
           discard
       treeNode("Group", minimized, 16):
-        var groupFlags: nk_flags = 0
-        if groupBorder == nk_true.cint:
-          groupFlags = groupFlags or nkWindowBorder
-        if groupNoScrollbar == nk_true.cint:
-          groupFlags = groupFlags or nkWindowNoScrollbar
-        if groupTitlebar == nk_true.cint:
-          groupFlags = groupFlags or nkWindowTitle
+        var groupFlags: set[WindowFlags]
+        if groupBorder:
+          groupFlags.incl(windowBorder)
+        if groupNoScrollbar:
+          groupFlags.incl(windowNoScrollbar)
+        if groupTitlebar:
+          groupFlags.incl(windowTitle)
         setLayoutRowDynamic(30, 3)
         checkbox("Titlebar", groupTitlebar)
         checkbox("Border", groupBorder)
@@ -696,12 +695,11 @@ proc overview*(ctx: PContext) =
           row(130):
             property("#Height:", 100, groupHeight, 500, 10, 1)
         setLayoutRowStatic(groupHeight.cfloat, groupWidth, 2)
-        if nk_group_begin(ctx, "Group", groupFlags):
+        group("Group", groupFlags):
           setLayoutRowStatic(18, 100, 1)
           for i in 0 .. 15:
             selectableLabel((if selected2[i]: "Selected" else: "Unselected"),
                 selected2[i], centered)
-          nk_group_end(ctx)
       treeNode("Tree", minimized, 17):
         var sel = rootSelected
         if nk_tree_element_push_hashed(ctx, NK_TREE_NODE, "Root", minimized,
@@ -752,7 +750,7 @@ proc overview*(ctx: PContext) =
         nk_style_pop_float(ctx)
         nk_style_pop_vec2(ctx)
         setLayoutRowDynamic(140, 1)
-        if nk_group_begin(ctx, "Notebook", nkWindowBorder):
+        group("Notebook", {windowBorder}):
           var id: cfloat
           let step: cfloat = (2 * 3.141592654f) / 32
           case currentTab
@@ -793,33 +791,29 @@ proc overview*(ctx: PContext) =
                 id = id + step
           else:
             discard
-          nk_group_end(ctx)
       treeNode("Simple", minimized, 19):
         setLayoutRowDynamic(300, 2)
-        if nk_group_begin(ctx, "Group_Without_Border", 0):
+        group("Group_Without_Border", {windowNoFlags}):
           setLayoutRowStatic(18, 150, 1)
           for i in 0 .. 63:
             fmtLabel(left, "%s: scrollable region",
                 fmt"{i:#X}".cstring)
-          nk_group_end(ctx)
-        if nk_group_begin(ctx, "Group_With_Border", nkWindowBorder):
+        group("Group_With_Border", {windowBorder}):
           setLayoutRowDynamic(25, 2)
           for i in 0 .. 63:
             let number = (((i mod 7) * 10)) + (64 + (i mod 2) * 2)
             labelButton(fmt"{number:08}"):
               discard
-          nk_group_end(ctx)
       treeNode("Complex", minimized, 20):
         layoutSpaceStatic(500, 64):
           row(0, 0, 150, 500):
-            if nk_group_begin(ctx, "Group_left", nkWindowBorder):
+            group("Group_left", {windowBorder}):
               setLayoutRowStatic(18, 100, 1)
               for i in 0 .. 31:
                 selectableLabel((if selected4[i]: "Selected" else: "Unselected"),
                     selected4[i], centered)
-              nk_group_end(ctx);
           row(160, 0, 150, 240):
-            if nk_group_begin(ctx, "Group_top", nkWindowBorder):
+            group("Group_top", {windowBorder}):
               setLayoutRowDynamic(25, 1)
               labelButton("#FFAA"):
                 discard
@@ -833,9 +827,8 @@ proc overview*(ctx: PContext) =
                 discard
               labelButton("#FFFF"):
                 discard
-              nk_group_end(ctx)
           row(160, 250, 150, 250):
-            if nk_group_begin(ctx, "Group_buttom", nkWindowBorder):
+            group("Group_buttom", {windowBorder}):
               setLayoutRowDynamic(25, 1)
               labelButton("#FFAA"):
                 discard
@@ -849,28 +842,24 @@ proc overview*(ctx: PContext) =
                 discard
               labelButton("#FFFF"):
                 discard
-              nk_group_end(ctx)
           row(320, 0, 150, 150):
-            if nk_group_begin(ctx, "Group_right_top", nkWindowBorder):
+            group("Group_right_top", {windowBorder}):
               setLayoutRowStatic(18, 100, 1)
               for i in 0 .. 3:
                 selectableLabel((if selected[i]: "Selected" else: "Unselected"),
                     selected[i], centered)
-              nk_group_end(ctx)
           row(320, 160, 150, 150):
-            if nk_group_begin(ctx, "Group_right_center", nkWindowBorder):
+            group("Group_right_center", {windowBorder}):
               setLayoutRowStatic(18, 100, 1)
               for i in 0 .. 3:
                 selectableLabel((if selected[i]: "Selected" else: "Unselected"),
                     selected[i], centered)
-              nk_group_end(ctx)
           row(320, 320, 150, 150):
-            if nk_group_begin(ctx, "Group_right_bottom", nkWindowBorder):
+            group("Group_right_bottom", {windowBorder}):
               setLayoutRowStatic(18, 100, 1)
               for i in 0 .. 3:
                 selectableLabel((if selected[i]: "Selected" else: "Unselected"),
                     selected[i], centered)
-              nk_group_end(ctx)
       treeNode("Splitter", minimized, 21):
         setLayoutRowStatic(20, 320, 1)
         label("Use slider and spinner to change tile size")
@@ -885,8 +874,7 @@ proc overview*(ctx: PContext) =
           label("right:")
           slider(10.0, c, 200.0, 10.0)
           setLayoutRowStatic(200, 5, rowLayout)
-          if nk_group_begin(ctx, "left", nkWindowNoScrollbar or
-              nkWindowBorder or nkWindowNoScrollbar):
+          group("left", {windowNoScrollbar, windowBorder}):
             setLayoutRowDynamic(25, 1)
             labelButton("#FFAA"):
               discard
@@ -900,7 +888,6 @@ proc overview*(ctx: PContext) =
               discard
             labelButton("#FFFF"):
               discard
-            nk_group_end(ctx)
           var bounds = getWidgetBounds()
           addSpacing(1)
           if (isMouseHovering(bounds) or
@@ -908,8 +895,7 @@ proc overview*(ctx: PContext) =
               bounds.h)) and isMouseDown(ctx, NK_BUTTON_LEFT):
             a = rowLayout[0] + getMouseDelta(ctx).x
             b = rowLayout[2] - getMouseDelta(ctx).x
-          if nk_group_begin(ctx, "center", nkWindowBorder or
-              nkWindowNoScrollbar):
+          group("center", {windowBorder, windowNoScrollbar}):
             setLayoutRowDynamic(25, 1)
             labelButton("#FFAA"):
               discard
@@ -923,7 +909,6 @@ proc overview*(ctx: PContext) =
               discard
             labelButton("#FFFF"):
               discard
-            nk_group_end(ctx)
           bounds = getWidgetBounds()
           addSpacing(1)
           if (isMouseHovering(bounds) or
@@ -931,8 +916,7 @@ proc overview*(ctx: PContext) =
               bounds.h)) and isMouseDown(ctx, NK_BUTTON_LEFT):
             b = rowLayout[2] + getMouseDelta(ctx).x
             c = rowLayout[4] - getMouseDelta(ctx).x
-          if nk_group_begin(ctx, "right", nkWindowBorder or
-              nkWindowNoScrollbar):
+          group("right", {windowBorder, windowNoScrollbar}):
             setLayoutRowDynamic(25, 1)
             labelButton("#FFAA"):
               discard
@@ -946,7 +930,6 @@ proc overview*(ctx: PContext) =
               discard
             labelButton("#FFFF"):
               discard
-            nk_group_end(ctx)
         treeNode("Horizontal", minimized, 22):
           setLayoutRowStatic(30, 100, 2)
           label("top:")
@@ -956,8 +939,7 @@ proc overview*(ctx: PContext) =
           label("bottom:")
           slider(10.0, c, 200.0, 10.0)
           setLayoutRowDynamic(a, 1)
-          if nk_group_begin(ctx, "top", nkWindowBorder or
-              nkWindowNoScrollbar):
+          group("top", {windowBorder, windowNoScrollbar}):
             setLayoutRowDynamic(25, 3)
             labelButton("#FFAA"):
               discard
@@ -971,7 +953,6 @@ proc overview*(ctx: PContext) =
               discard
             labelButton("#FFFF"):
               discard
-            nk_group_end(ctx)
           setLayoutRowDynamic(8, 1)
           var bounds = getWidgetBounds()
           addSpacing(1)
@@ -981,8 +962,7 @@ proc overview*(ctx: PContext) =
             a = a + getMouseDelta(ctx).y
             b = b - getMouseDelta(ctx).y
           setLayoutRowDynamic(b, 1)
-          if nk_group_begin(ctx, "middle", nkWindowBorder or
-              nkWindowNoScrollbar):
+          group("middle", {windowBorder, windowNoScrollbar}):
             setLayoutRowDynamic(25, 3)
             labelButton("#FFAA"):
               discard
@@ -996,7 +976,6 @@ proc overview*(ctx: PContext) =
               discard
             labelButton("#FFFF"):
               discard
-            nk_group_end(ctx)
           setLayoutRowDynamic(8, 1)
           bounds = getWidgetBounds()
           if (isMouseHovering(bounds) or
@@ -1005,8 +984,7 @@ proc overview*(ctx: PContext) =
             b = b + getMouseDelta(ctx).y
             c = c - getMouseDelta(ctx).y
           setLayoutRowDynamic(c, 1)
-          if nk_group_begin(ctx, "bottom", nkWindowBorder or
-              nkWindowNoScrollbar):
+          group("bottom", {windowBorder, windowNoScrollbar}):
             setLayoutRowDynamic(25, 3)
             labelButton("#FFAA"):
               discard
@@ -1020,4 +998,3 @@ proc overview*(ctx: PContext) =
               discard
             labelButton("#FFFF"):
               discard
-            nk_group_end(ctx)

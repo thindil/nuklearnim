@@ -202,13 +202,8 @@ proc nk_layout_row(ctx; fmt: nk_layout_format; height: cfloat;
 proc nk_layout_space_begin(ctx; fmt: nk_layout_format;
     height: cfloat; widget_count: cint) {.importc, cdecl.}
 proc nk_layout_space_end(ctx) {.importc, cdecl.}
-proc nk_layout_row_template_begin*(ctx; height: cfloat) {.importc, cdecl.}
-proc nk_layout_row_template_push_dynamic*(ctx) {.importc, cdecl.}
-proc nk_layout_row_template_push_variable*(ctx;
-    min_width: cfloat) {.importc, cdecl.}
-proc nk_layout_row_template_push_static*(ctx;
-    width: cfloat) {.importc, cdecl.}
-proc nk_layout_row_template_end*(ctx) {.importc, cdecl.}
+proc nk_layout_row_template_begin(ctx; height: cfloat) {.importc, cdecl.}
+proc nk_layout_row_template_end(ctx) {.importc, cdecl.}
 
 # -----
 # Menus
@@ -308,9 +303,9 @@ proc nk_tooltipf(ctx; fmt: cstring) {.importc, nodecl, varargs.}
 # ------
 # Groups
 # ------
-proc nk_group_begin*(ctx; title: cstring;
+proc nk_group_begin(ctx; title: cstring;
     flags: nk_flags): nk_bool {.importc, cdecl.}
-proc nk_group_end*(ctx) {.importc, cdecl.}
+proc nk_group_end(ctx) {.importc, cdecl.}
 
 # -----
 # Fonts
@@ -894,6 +889,37 @@ template row*(x, y, w, h: float; content: untyped) =
   ## * content - the content of the row
   layoutSpacePush(ctx, x.cfloat, y.cfloat, w.cfloat, h.cfloat)
   content
+
+template setRowTemplate*(height: float; settings: untyped) =
+  ## Set the options for the row's template setting for the next rows
+  ##
+  ## * height   - the height of the each row
+  ## * settings - the template settings
+  nk_layout_row_template_begin(ctx, height.cfloat)
+  settings
+  nk_layout_row_template_end(ctx)
+
+proc rowTemplateDynamic*() =
+  ## Set the selected column's in the row width in the template's row as dynamic,
+  ## which means, the widget will resize with its parent.
+  proc nk_layout_row_template_push_dynamic(ctx) {.importc, nodecl.}
+  nk_layout_row_template_push_dynamic(ctx)
+
+proc rowTemplateVariable*(minWidth: float) =
+  ## Set the selected column's width in the row template as dynamic but with
+  ## requirement for minumum width for the widget
+  ##
+  ## * minWidth - the minimum width in pixels for the widgets in the column
+  proc nk_layout_row_template_push_variable(ctx; min_width: cfloat) {.importc, nodecl.}
+  nk_layout_row_template_push_variable(ctx, minWidth.cfloat)
+
+proc rowTemplateStatic*(width: float) =
+  ## Set the selected column's width in the row template to static value,
+  ## widgets in the column will not resize
+  ##
+  ## * width - the width of the column in the row template
+  proc nk_layout_row_template_push_static(ctx; width: cfloat) {.importc, nodecl.}
+  nk_layout_row_template_push_static(ctx, width.cfloat)
 
 # -----
 # Menus
@@ -1486,6 +1512,20 @@ proc tooltip*(text: string) =
   ## * text - the text to show on the tooltip window
   proc nk_tooltip(ctx; text: cstring) {.importc, nodecl.}
   nk_tooltip(ctx, text.cstring)
+
+# ------
+# Groups
+# ------
+
+template group*(title: string; flags: set[WindowFlags]; content: untyped) =
+  ## Set a group of widgets inside the parent
+  ##
+  ## * title   - the title of the group
+  ## * flags   - the set of WindowFlags for the group
+  ## * content - the content of the group
+  if nk_group_begin(ctx, title.cstring, winSetToInt(flags)):
+    content
+    nk_group_end(ctx)
 
 # -----
 # Input
