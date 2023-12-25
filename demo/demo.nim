@@ -45,7 +45,7 @@ type
 
 proc main() =
 
-  let ctx = nuklearInit(windowWidth, windowHeight, windowName)
+  nuklearInit(windowWidth, windowHeight, windowName)
 
   var
     op: difficulty = easy
@@ -73,7 +73,7 @@ proc main() =
       property("Compression:", 0, property, 100, 10, 1.0)
     if windowIsHidden("Demo"):
       break
-    overview(ctx)
+    overview()
     setStyle(themeDark)
 
     # Draw
