@@ -68,8 +68,8 @@ type
     NK_TEXT_LEFT = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_LEFT.int,
     NK_TEXT_CENTERED = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_CENTERED.int,
     NK_TEXT_RIGHT = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_RIGHT.int
-  nk_tree_type* = enum
-    NK_TREE_NODE, NK_TREE_TAB
+  TreeType* = enum
+    node, tab
   ChartType* = enum
     ## The types of charts
     lines, column, chartMax
@@ -91,8 +91,8 @@ type
     none,
     hovering = 0x01,
     clicked = 0x02
-  nk_buttons* = enum
-    NK_BUTTON_LEFT, NK_BUTTON_MIDDLE, NK_BUTTON_RIGHT, NK_BUTTON_DOUBLE, NK_BUTTON_MAX
+  Buttons* = enum
+    left, middle, right, double, max
   nk_style_colors* = enum
     NK_COLOR_TEXT, NK_COLOR_WINDOW, NK_COLOR_HEADER, NK_COLOR_BORDER,
     NK_COLOR_BUTTON, NK_COLOR_BUTTON_HOVER, NK_COLOR_BUTTON_ACTIVE,
@@ -210,7 +210,7 @@ proc nk_layout_row_template_end(ctx) {.importc, cdecl.}
 # -----
 proc nk_menubar_begin(ctx) {.importc, cdecl.}
 proc nk_menubar_end(ctx) {.importc, cdecl.}
-proc nk_menu_end*(ctx) {.importc, cdecl.}
+proc nk_menu_end(ctx) {.importc, cdecl.}
 proc nk_menu_item_label(ctx; text: cstring;
     aligmnent: nk_flags): nk_bool {.importc, cdecl.}
 
@@ -229,16 +229,16 @@ proc nk_popup_end(ctx) {.importc, nodecl.}
 # -----
 # Trees
 # -----
-proc nk_tree_state_push(ctx; ttype: nk_tree_type;
+proc nk_tree_state_push(ctx; ttype: TreeType;
     title: cstring; state: var CollapseStates): nk_bool {.importc, cdecl.}
 proc nk_tree_pop(ctx) {.importc, cdecl.}
-proc nk_tree_push_hashed(ctx; ttype: nk_tree_type;
+proc nk_tree_push_hashed(ctx; ttype: TreeType;
     title: cstring; state: CollapseStates; hash: cstring; len,
     id: cint): nk_bool {.importc, cdecl.}
-proc nk_tree_element_push_hashed*(ctx; ttype: nk_tree_type;
+proc nk_tree_element_push_hashed(ctx; ttype: TreeType;
     title: cstring; state: CollapseStates; selected: var nk_bool;
     hash: cstring; len, sed: cint): nk_bool {.importc, cdecl.}
-proc nk_tree_element_pop*(ctx) {.importc, cdecl.}
+proc nk_tree_element_pop(ctx) {.importc, cdecl.}
 
 # -------
 # Buttons
@@ -251,9 +251,7 @@ proc nk_button_symbol_label(ctx; symbol: SymbolType;
 # -----
 # Style
 # -----
-proc nk_style_item_color*(col: nk_color): nk_style_item {.importc, cdecl.}
-proc nk_style_pop_float*(ctx) {.importc, cdecl.}
-proc nk_style_pop_vec2*(ctx) {.importc, cdecl.}
+proc nk_style_item_color(col: nk_color): nk_style_item {.importc, cdecl.}
 proc nk_style_set_font*(ctx; font: ptr nk_user_font) {.importc, nodecl.}
 
 # ------
@@ -596,7 +594,7 @@ template treeNode*(title: string; state: var CollapseStates;
   ##
   ## Returns modified parameters state and current
   state = (if current == index: maximized else: minimized)
-  if ctx.nk_tree_state_push(NK_TREE_NODE, title.cstring, state):
+  if ctx.nk_tree_state_push(node, title.cstring, state):
     current = index
     content
     ctx.nk_tree_pop
@@ -616,7 +614,7 @@ template treeTab*(title: string; state: var CollapseStates;
   ##
   ## Returns modified parameters state and current
   state = (if current == index: maximized else: minimized)
-  if ctx.nk_tree_state_push(NK_TREE_TAB, title.cstring, state):
+  if ctx.nk_tree_state_push(tab, title.cstring, state):
     current = index
     content
     ctx.nk_tree_pop
@@ -632,7 +630,7 @@ template treeNode*(title: string; state: CollapseStates; index: Positive;
   ## * state   - the current state of the tree
   ## * index   - the index of the tree. Must be unique
   ## * content - the content of the tree
-  if nk_tree_push_hashed(ctx, NK_TREE_NODE, title.cstring, state, ($hash(
+  if nk_tree_push_hashed(ctx, node, title.cstring, state, ($hash(
       index)).cstring, 12, index.cint):
     content
     ctx.nk_tree_pop
@@ -645,10 +643,26 @@ template treeTab*(title: string; state: CollapseStates; index: Positive;
   ## * state   - the current state of the tree
   ## * index   - the index of the tree. Must be unique
   ## * content - the content of the tree
-  if nk_tree_push_hashed(ctx, NK_TREE_TAB, title.cstring, state, ($hash(
+  if nk_tree_push_hashed(ctx, tab, title.cstring, state, ($hash(
       index)).cstring, 12, index.cint):
     content
     ctx.nk_tree_pop
+
+template treeElement*(eType: TreeType; title: string; state: CollapseStates;
+    selected: var bool; index: Positive; content: untyped) =
+  ## Create a new tree's element of the selected type with the selected content
+  ##
+  ## * eType   - the type of the element
+  ## * title   - the title of the element
+  ## * state   - the current state of the element
+  ## * index   - the index of the element. Must be unique
+  ## * content - the content of the element
+  var sel: nk_bool = selected.nk_bool
+  if nktree_element_push_hashed(ctx, eType, title.cstring, state, sel, (
+      $hash(index)).cstring, 12, index.cint):
+    content
+    nk_tree_element_pop(ctx)
+  selected = sel
 
 # ------
 # Labels
@@ -856,7 +870,8 @@ proc setLayoutRowDynamic*(height: float; cols: int; ratio: openArray[cfloat]) =
   ## * ratio  - the array or sequence of cfloat with width of the colums
   nk_layout_row(ctx, NK_DYNAMIC, height.cfloat, cols.cint, ratio.addr)
 
-template layoutSpaceStatic*(height: float; widgetsCount: int; content: untyped) =
+template layoutSpaceStatic*(height: float; widgetsCount: int;
+    content: untyped) =
   ## Start setting manualy each row of the current widgets layout. The layout
   ## will not resize when the parent window change its size
   ##
@@ -867,7 +882,8 @@ template layoutSpaceStatic*(height: float; widgetsCount: int; content: untyped) 
   content
   nk_layout_space_end(ctx)
 
-template layoutSpaceDynamic*(height: float; widgetsCount: int; content: untyped) =
+template layoutSpaceDynamic*(height: float; widgetsCount: int;
+    content: untyped) =
   ## Start setting manualy each row of the current widgets layout. The layout
   ## will resize when the parent window change its size
   ##
@@ -1111,14 +1127,18 @@ proc headerAlign*(value: StyleHeaderAlign) =
   ##
   ## * value - the new value for the alignment
   ctx.style.window.header.align = value.ord.nk_style_header_align
+
 var buttonStyle: nk_style_button ## Used to store the Nuklear buttons style
+
 proc saveButtonStyle*() =
   ## Save the Nuklear buttons style to variable, so it can be restored later
   buttonStyle = ctx.style.button
+
 proc restoreButtonStyle*() =
   ## Restore previously save to the variable Nuklear buttons style
   ##
   ctx.style.button = buttonStyle
+
 proc setButtonStyle*(field: ButtonStyleTypes; r, g, b: cint) =
   ## Set the color for the selcted field of the Nuklear buttons style
   ##
@@ -1145,30 +1165,30 @@ proc setButtonStyle*(field: ButtonStyleTypes; r, g, b: cint) =
     ctx.style.button.text_active = nk_rgb(r, g, b)
   else:
     discard
-proc setButtonStyle2*(ctx; source, destination: ButtonStyleTypes) =
+
+proc setButtonStyle2*(source, destination: ButtonStyleTypes) =
   ## Copy one field of Nuklear buttons style to another
   ##
-  ## * ctx         - the Nuklear context
   ## * source      - the field which value will be copied
   ## * destination - the field to which the source value will be copied
   if source == active:
     if destination == normal:
       ctx.style.button.normal = ctx.style.button.active
-proc getButtonStyle*(ctx; field: ButtonStyleTypes): NimVec2 =
+
+proc getButtonStyle*(field: ButtonStyleTypes): NimVec2 =
   ## Get the value of the selected field of Nuklear buttons style
   ##
-  ## * ctx   - the Nuklear context
   ## * field - the field which value will be taken
   ##
   ## Returns vector with the value of the selected field
   if field == padding:
     return NimVec2(x: ctx.style.button.padding.x, y: ctx.style.button.padding.y)
-proc stylePushVec2*(ctx; field: WindowStyleTypes; x,
-    y: cfloat): bool =
+
+proc stylePushVec2*(field: WindowStyleTypes; x,
+    y: cfloat): bool {.discardable.} =
   ## Push the vector value for the selected Nuklear window style on a
   ## temporary stack
   ##
-  ## * ctx   - the Nuklear context
   ## * field - the Nuklear windows style field which will be modified
   ## * x     - the X value of the vector to push
   ## * y     - the Y value of the vector to push
@@ -1179,8 +1199,9 @@ proc stylePushVec2*(ctx; field: WindowStyleTypes; x,
   if field == spacing:
     return nk_style_push_vec2(ctx, ctx.style.window.spacing, new_nk_vec2(x,
         y))
-proc stylePushFloat*(ctx; field: ButtonStyleTypes;
-    value: cfloat): bool =
+
+proc stylePushFloat*(field: ButtonStyleTypes;
+    value: cfloat): bool {.discardable.} =
   ## Push the float value for the selected Nuklear buttons style on a
   ## temporary stack
   ##
@@ -1196,6 +1217,7 @@ proc stylePushFloat*(ctx; field: ButtonStyleTypes;
     return nk_style_push_float(ctx, ctx.style.button.rounding, value)
   else:
     return false
+
 proc styleFromTable*(table: openArray[NimColor]) =
   ## Set the Nuklear style colors from the table
   ##
@@ -1205,10 +1227,19 @@ proc styleFromTable*(table: openArray[NimColor]) =
   for index, color in table.pairs:
     newTable[index] = nk_rgba(color.r.cint, color.g.cint, color.b.cint, color.a.cint)
   nk_style_from_table(ctx, newTable.addr)
+
 proc defaultStyle*() =
   ## reset the UI colors to the default Nuklear setting
   proc nk_style_default(ctx) {.importc, nodecl.}
   nk_style_default(ctx)
+
+proc stylePopFloat*() =
+  proc nk_style_pop_float(ctx) {.importc, nodecl.}
+  nk_style_pop_float(ctx)
+
+proc stylePopVec2*() =
+  proc nk_style_pop_vec2(ctx) {.importc, nodecl.}
+  nk_style_pop_vec2(ctx)
 
 # ------
 # Combos
@@ -1486,7 +1517,8 @@ template contextualMenu*(flags: set[WindowFlags]; x, y;
     content
     nk_contextual_end(ctx)
 
-template contextualItemLabel*(label: string; align: TextAlignment; onPressCode: untyped) =
+template contextualItemLabel*(label: string; align: TextAlignment;
+    onPressCode: untyped) =
   ## Add a clickable label to a contextual menu
   ##
   ## * label       - the text to show on the label
@@ -1541,12 +1573,12 @@ proc isMouseHovering*(rect: NimRect): bool =
   ## Returns true if the mouse is hovering over the rectangle, otherwise false
   proc nk_input_is_mouse_hovering_rect(i: ptr nk_input;
       rect: nk_rect): nk_bool {.importc, nodecl.}
-  return nk_input_is_mouse_hovering_rect(ctx.input.addr, new_nk_rect(rect.x, rect.y,
-      rect.w, rect.h))
-proc isMousePrevHovering*(ctx; x, y, w, h: cfloat): bool =
+  return nk_input_is_mouse_hovering_rect(ctx.input.addr, new_nk_rect(rect.x,
+      rect.y, rect.w, rect.h))
+
+proc isMousePrevHovering*(x, y, w, h: float): bool =
   ## Check if the mouse was previously hovering over the selected rectangle
   ##
-  ## * ctx - the Nuklear context
   ## * x   - the X coordinate of top left corner of the rectangle
   ## * y   - the Y coordinate of top left corner of the rectangle
   ## * w   - the width of the rectangle in pixels
@@ -1557,20 +1589,18 @@ proc isMousePrevHovering*(ctx; x, y, w, h: cfloat): bool =
       rect: nk_rect): nk_bool {.importc, nodecl.}
   return nk_input_is_mouse_prev_hovering_rect(ctx.input.addr, new_nk_rect(
       x, y, w, h))
-proc isMouseDown*(ctx; id: nk_buttons): bool =
+
+proc isMouseDown*(id: Buttons): bool =
   ## Check if mouse is pressed
   ##
-  ## * ctx - the Nuklear context
   ## * id  - the mouse button which is pressed
   ##
   ## Returns true if the selected mouse button is pressed, otherwise false
-  proc nk_input_is_mouse_down(i: ptr nk_input;
-      id: nk_buttons): nk_bool {.importc, nodecl.}
+  proc nk_input_is_mouse_down(i: ptr nk_input; id: Buttons): nk_bool {.importc, nodecl.}
   return nk_input_is_mouse_down(ctx.input.addr, id)
-proc getMouseDelta*(ctx): NimVec2 =
+
+proc getMouseDelta*(): NimVec2 =
   ## Get the mouse vector between last check and current position of the mouse
-  ##
-  ## * ctx - the Nuklear context
   ##
   ## Returns vector with information about the mouse movement delta
   return NimVec2(x: ctx.input.mouse.delta.x, y: ctx.input.mouse.delta.y)

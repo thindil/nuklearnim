@@ -95,13 +95,13 @@ var
   popupColor: NimColor = NimColor(r: 255, g: 0, b: 0, a: 255)
   groupWidth: int = 320
   groupHeight: int = 200
-  rootSelected: nk_bool
+  rootSelected: bool
   selected3: array[8, bool]
   currentTab: cint = 0
   selected4: array[32, bool]
   a, b, c: float = 100
 
-proc overview*(ctx: PContext) =
+proc overview*() =
   windowFlags = {}
   headerAlign(headerRight)
   if border:
@@ -702,15 +702,13 @@ proc overview*(ctx: PContext) =
                 selected2[i], centered)
       treeNode("Tree", minimized, 17):
         var sel = rootSelected
-        if nk_tree_element_push_hashed(ctx, NK_TREE_NODE, "Root", minimized,
-            sel, "overview771", 12, 771):
-          var nodeSelect: nk_bool = selected3[0].nk_bool
+        treeElement(node, "Root", minimized, sel, 1):
+          var nodeSelect = selected3[0]
           if sel != rootSelected:
             rootSelected = sel
             for i in 0 .. 7:
               selected3[i] = sel
-          if nk_tree_element_push_hashed(ctx, NK_TREE_NODE, "Node",
-              minimized, node_select, "overview778", 12, 778):
+          treeElement(node, "Node", minimized, nodeSelect, 2):
             if nodeSelect != selected3[0]:
               selected3[0] = nodeSelect
               for i in 0 .. 3:
@@ -720,25 +718,23 @@ proc overview*(ctx: PContext) =
               selectableSymbolLabel(circleSolid, (
                   if selected[j]: "Selected" else: "Unselected"),
                   selected[j], right)
-            nk_tree_element_pop(ctx)
           setLayoutRowStatic(18, 100, 1)
           for i in 0 .. 7:
             selectableSymbolLabel(circleSolid, (
                 if selected3[i]: "Selected" else: "Unselected"),
                 selected3[i], right)
-          nk_tree_element_pop(ctx)
       treeNode("Notebook", minimized, 18):
-        discard stylePushVec2(ctx, spacing, 0, 0)
-        discard stylePushFloat(ctx, rounding, 0)
+        stylePushVec2(spacing, 0, 0)
+        stylePushFloat(rounding, 0)
         layoutStatic(20, 3):
           for i in 0 .. 2:
             let
               textWidth = getTextWidth(names[i])
-              widgetWidth = textWidth + 3 * getButtonStyle(ctx, padding).x;
+              widgetWidth = textWidth + 3 * getButtonStyle(padding).x;
             row(widgetWidth):
               if currentTab == i:
                 saveButtonStyle()
-                setButtonStyle2(ctx, active, normal)
+                setButtonStyle2(active, normal)
                 currentTab = current_tab
                 labelButton(names[i]):
                   currentTab = i.cint
@@ -747,8 +743,8 @@ proc overview*(ctx: PContext) =
                 currentTab = current_tab
                 labelButton(names[i]):
                   currentTab = i.cint
-        nk_style_pop_float(ctx)
-        nk_style_pop_vec2(ctx)
+        stylePopFloat()
+        stylePopVec2()
         setLayoutRowDynamic(140, 1)
         group("Notebook", {windowBorder}):
           var id: cfloat
@@ -756,11 +752,10 @@ proc overview*(ctx: PContext) =
           case currentTab
           of 0:
             setLayoutRowDynamic(100, 1)
-            colorChart(lines, NimColor(r: 255, g: 0,
-                b: 0, a: 255), NimColor(r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
-              addColorChartSlot(lines, NimColor(r: 0, g: 0,
-                  b: 255, a: 255), NimColor(r: 0, g: 0, b: 150, a: 255), 32,
-                  -1.0, 1.0)
+            colorChart(lines, NimColor(r: 255, g: 0, b: 0, a: 255), NimColor(
+                r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
+              addColorChartSlot(lines, NimColor(r: 0, g: 0, b: 255, a: 255),
+                  NimColor(r: 0, g: 0, b: 150, a: 255), 32, -1.0, 1.0)
               id = 0.0
               for i in 0 .. 31:
                 chartPushSlot(abs(sin(id)), 0)
@@ -768,21 +763,20 @@ proc overview*(ctx: PContext) =
                 id = id + step
           of 1:
             setLayoutRowDynamic(100, 1)
-            colorChart(column, NimColor(r: 255, g: 0,
-                b: 0, a: 255), NimColor(r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
+            colorChart(column, NimColor(r: 255, g: 0, b: 0, a: 255), NimColor(
+                r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
               id = 0.0
               for i in 0 .. 31:
                 chartPushSlot(abs(sin(id)), 0)
                 id = id + step
           of 2:
             setLayoutRowDynamic(100, 1)
-            colorChart(lines, NimColor(r: 255, g: 0,
-                b: 0, a: 255), NimColor(r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
-              addColorChartSlot(lines, NimColor(r: 0, g: 0,
-                  b: 255, a: 255), NimColor(r: 0, g: 0, b: 150, a: 255), 32,
-                  -1.0, 1.0)
-              addColorChartSlot(column, NimColor(r: 0, g: 255,
-                  b: 0), NimColor(r: 0, g: 150, b: 0), 32, 0.0, 1.0)
+            colorChart(lines, NimColor(r: 255, g: 0, b: 0, a: 255), NimColor(
+                r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
+              addColorChartSlot(lines, NimColor(r: 0, g: 0, b: 255, a: 255),
+                  NimColor(r: 0, g: 0, b: 150, a: 255), 32, -1.0, 1.0)
+              addColorChartSlot(column, NimColor(r: 0, g: 255, b: 0), NimColor(
+                  r: 0, g: 150, b: 0), 32, 0.0, 1.0)
               id = 0.0
               for i in 0 .. 31:
                 chartPushSlot(abs(sin(id)), 0)
@@ -810,8 +804,8 @@ proc overview*(ctx: PContext) =
             group("Group_left", {windowBorder}):
               setLayoutRowStatic(18, 100, 1)
               for i in 0 .. 31:
-                selectableLabel((if selected4[i]: "Selected" else: "Unselected"),
-                    selected4[i], centered)
+                selectableLabel((if selected4[
+                    i]: "Selected" else: "Unselected"), selected4[i], centered)
           row(160, 0, 150, 240):
             group("Group_top", {windowBorder}):
               setLayoutRowDynamic(25, 1)
@@ -891,10 +885,10 @@ proc overview*(ctx: PContext) =
           var bounds = getWidgetBounds()
           addSpacing(1)
           if (isMouseHovering(bounds) or
-              isMousePrevHovering(ctx, bounds.x, bounds.y, bounds.w,
-              bounds.h)) and isMouseDown(ctx, NK_BUTTON_LEFT):
-            a = rowLayout[0] + getMouseDelta(ctx).x
-            b = rowLayout[2] - getMouseDelta(ctx).x
+              isMousePrevHovering(bounds.x, bounds.y, bounds.w,
+              bounds.h)) and isMouseDown(left):
+            a = rowLayout[0] + getMouseDelta().x
+            b = rowLayout[2] - getMouseDelta().x
           group("center", {windowBorder, windowNoScrollbar}):
             setLayoutRowDynamic(25, 1)
             labelButton("#FFAA"):
@@ -912,10 +906,10 @@ proc overview*(ctx: PContext) =
           bounds = getWidgetBounds()
           addSpacing(1)
           if (isMouseHovering(bounds) or
-              isMousePrevHovering(ctx, bounds.x, bounds.y, bounds.w,
-              bounds.h)) and isMouseDown(ctx, NK_BUTTON_LEFT):
-            b = rowLayout[2] + getMouseDelta(ctx).x
-            c = rowLayout[4] - getMouseDelta(ctx).x
+              isMousePrevHovering(bounds.x, bounds.y, bounds.w,
+              bounds.h)) and isMouseDown(left):
+            b = rowLayout[2] + getMouseDelta().x
+            c = rowLayout[4] - getMouseDelta().x
           group("right", {windowBorder, windowNoScrollbar}):
             setLayoutRowDynamic(25, 1)
             labelButton("#FFAA"):
@@ -957,10 +951,10 @@ proc overview*(ctx: PContext) =
           var bounds = getWidgetBounds()
           addSpacing(1)
           if (isMouseHovering(bounds) or
-              isMousePrevHovering(ctx, bounds.x, bounds.y, bounds.w,
-              bounds.h)) and isMouseDown(ctx, NK_BUTTON_LEFT):
-            a = a + getMouseDelta(ctx).y
-            b = b - getMouseDelta(ctx).y
+              isMousePrevHovering(bounds.x, bounds.y, bounds.w,
+              bounds.h)) and isMouseDown(left):
+            a = a + getMouseDelta().y
+            b = b - getMouseDelta().y
           setLayoutRowDynamic(b, 1)
           group("middle", {windowBorder, windowNoScrollbar}):
             setLayoutRowDynamic(25, 3)
@@ -979,10 +973,10 @@ proc overview*(ctx: PContext) =
           setLayoutRowDynamic(8, 1)
           bounds = getWidgetBounds()
           if (isMouseHovering(bounds) or
-              isMousePrevHovering(ctx, bounds.x, bounds.y, bounds.w,
-              bounds.h)) and isMouseDown(ctx, NK_BUTTON_LEFT):
-            b = b + getMouseDelta(ctx).y
-            c = c - getMouseDelta(ctx).y
+              isMousePrevHovering(bounds.x, bounds.y, bounds.w,
+              bounds.h)) and isMouseDown(left):
+            b = b + getMouseDelta().y
+            c = c - getMouseDelta().y
           setLayoutRowDynamic(c, 1)
           group("bottom", {windowBorder, windowNoScrollbar}):
             setLayoutRowDynamic(25, 3)
