@@ -1,4 +1,4 @@
-# Copyright © 2023 Bartek Jasicki
+# Copyright © 2023-2024 Bartek Jasicki
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,7 @@ var
   slider, mslider: int = 10
   propertyInt, propertyNeg: int = 10
   mprog = 60
-  menuState = menuNone.ord
+  menuState: Natural = menuNone.ord
   state = minimized
   option = A
   intSlider: int = 5
