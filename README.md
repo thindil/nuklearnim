@@ -10,7 +10,7 @@ project (for roadmap, please look below).
 
 If you read this file on GitHub: **please don't send pull requests here**. All will
 be automatically closed. Any code propositions should go to the
-[Fossil](https://www.laeran.pl/repositories/nuklearnim) repository.
+[Fossil](https://www.laeran.pl.eu.org/repositories/nuklearnim) repository.
 
 ### Roadmap
 
