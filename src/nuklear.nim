@@ -24,142 +24,16 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 import std/[hashes, macros]
+import contracts
+import nk_types, nk_context, nk_tooltip, nk_widget
+export nk_types, nk_context, nk_tooltip, nk_widget
 
 ## Provides code for Nuklear binding
-
-# ---------
-# Constants
-# ---------
-const
-  nkWindowBorder*: cint = 1 shl 0
-  nkWindowMoveable*: cint = 1 shl 1
-  nkWindowScalable*: cint = 1 shl 2
-  nkWindowCloseable*: cint = 1 shl 3
-  nkWindowMinimizable*: cint = 1 shl 4
-  nkWindowNoScrollbar*: cint = 1 shl 5
-  nkWindowScaleLeft*: cint = 1 shl 9
-  nkWindowTitle*: cint = 1 shl 6
-
-# ------------
-# Simple types
-# ------------
-type
-  nk_flags* = cint
-  nk_size* = clong
-  nk_byte* = uint8
-  nk_rune* = cuint
-
-# ------------
-# Enumerations
-# ------------
-type
-  nk_style_header_align = enum
-    NK_HEADER_LEFT, NK_HEADER_RIGHT
-  nk_layout_format* = enum
-    NK_DYNAMIC, NK_STATIC
-  nk_text_align* = enum
-    NK_TEXT_ALIGN_LEFT = 0x01,
-    NK_TEXT_ALIGN_CENTERED = 0x02,
-    NK_TEXT_ALIGN_RIGHT = 0x04,
-    NK_TEXT_ALIGN_TOP = 0x08,
-    NK_TEXT_ALIGN_MIDDLE = 0x10,
-    NK_TEXT_ALIGN_BOTTOM = 0x20
-  nk_text_alignment* = enum
-    NK_TEXT_LEFT = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_LEFT.int,
-    NK_TEXT_CENTERED = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_CENTERED.int,
-    NK_TEXT_RIGHT = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_RIGHT.int
-  TreeType* = enum
-    node, tab
-  ChartType* = enum
-    ## The types of charts
-    lines, column, chartMax
-  nk_bool* = enum
-    nkFalse, nkTrue
-  nk_modify* = enum
-    NK_FIXED, NK_MODIFIABLE
-  CollapseStates* = enum
-    ## The states of a tree's content
-    minimized, maximized
-  SymbolType* = enum
-    none, x, underscore, circleSolid, circleOutline, rectSolid, rectOutline,
-      triangleUp, triangleDown, triangleLeft, triangleRight, plus, minus, max
-  nk_style_item_type* = enum
-    NK_STYLE_ITEM_COLOR, NK_STYLE_ITEM_IMAGE
-  colorFormat* = enum
-    rgb, rgba
-  ChartEvent* = enum
-    none,
-    hovering = 0x01,
-    clicked = 0x02
-  Buttons* = enum
-    left, middle, right, double, max
-  nk_style_colors* = enum
-    NK_COLOR_TEXT, NK_COLOR_WINDOW, NK_COLOR_HEADER, NK_COLOR_BORDER,
-    NK_COLOR_BUTTON, NK_COLOR_BUTTON_HOVER, NK_COLOR_BUTTON_ACTIVE,
-    NK_COLOR_TOGGLE, NK_COLOR_TOGGLE_HOVER, NK_COLOR_TOGGLE_CURSOR,
-    NK_COLOR_SELECT, NK_COLOR_SELECT_ACTIVE, NK_COLOR_SLIDER,
-    NK_COLOR_SLIDER_CURSOR, NK_COLOR_SLIDER_CURSOR_HOVER,
-    NK_COLOR_SLIDER_CURSOR_ACTIVE, NK_COLOR_PROPERTY, NK_COLOR_EDIT,
-    NK_COLOR_EDIT_CURSOR, NK_COLOR_COMBO, NK_COLOR_CHART,
-    NK_COLOR_CHART_COLOR, NK_COLOR_CHART_COLOR_HIGHLIGHT,
-    NK_COLOR_SCROLLBAR, NK_COLOR_SCROLLBAR_CURSOR,
-    NK_COLOR_SCROLLBAR_CURSOR_HOVER, NK_COLOR_SCROLLBAR_CURSOR_ACTIVE,
-    NK_COLOR_TAB_HEADER, NK_COLOR_COUNT
-  nk_anti_aliasing* = enum
-    NK_ANTI_ALIASING_OFF, NK_ANTI_ALIASING_ON
 
 # -------
 # Objects
 # -------
-type
-  nk_color* {.importc: "struct nk_color", nodecl.} = object
-    r*, g*, b*, a*: nk_byte
-  nk_colorf* {.importc: "struct nk_colorf", nodecl.} = object
-    r*, g*, b*, a*: cfloat
-  nk_vec2* {.importc: "struct nk_vec2", nodecl.} = object
-    x*, y*: cfloat
-  nk_style_item_data* {.importc, nodecl.} = object
-  nk_style_item* {.importc: "struct nk_style_item", nodecl.} = object
-  nk_style_window_header* {.importc, nodecl.} = object
-    align*: nk_style_header_align
-  nk_style_window* {.importc, nodecl.} = object
-    header*: nk_style_window_header
-    spacing*: nk_vec2
-  nk_style_button* {.importc: "struct nk_style_button", nodecl.} = object
-    normal*, hover*, active*: nk_style_item
-    border_color*, text_background*, text_normal*, text_hover*,
-      text_active*: nk_color
-    rounding*: cfloat
-    padding*: nk_vec2
-  nk_handle* {.bycopy, union.} = object
-    `ptr`*: pointer
-    id*: cint
-  nk_text_width_f* = proc (arg1: nk_handle; h: cfloat; arg3: cstring;
-      len: cint): cfloat {.cdecl.}
-  nk_user_font* {.importc: "struct nk_user_font", nodecl.} = object
-    userdata*: nk_handle
-    height*: cfloat
-    width*: nk_text_width_f
-  nk_style* {.importc, nodecl.} = object
-    window*: nk_style_window
-    button*: nk_style_button
-    font*: ptr nk_user_font
-  nk_mouse* {.importc, nodecl.} = object
-    delta*: nk_vec2
-  nk_input* {.importc, nodecl.} = object
-    mouse*: nk_mouse
-  nk_buffer* {.importc, nodecl.} = object
-  nk_context* {.importc: "struct nk_context", nodecl.} = object
-    style*: nk_style
-    input*: nk_input
-  nk_rect* {.importc: "struct nk_rect", nodecl.} = object
-    x*, y*, w*, h*: cfloat
-  nk_text_edit* = object
-  nk_font* {.importc: "struct nk_font", nodecl.} = object
-    handle*: nk_user_font
-  nk_font_atlas* {.importc: "struct nk_font_atlas", nodecl.} = object
-  nk_font_config* {.importc: "struct nk_font_config", nodecl.} = object
-  PContext* = ptr nk_context
+type PImage* = pointer
 
 # ---------------------
 # Procedures parameters
@@ -169,8 +43,8 @@ using ctx: PContext
 # -------------------
 # Creating structures
 # -------------------
-proc new_nk_rect*(x, y, w, h: cfloat): nk_rect {.importc: "nk_rect", nodecl.}
-proc new_nk_vec2*(x, y: cfloat): nk_vec2 {.importc: "nk_vec2", nodecl.}
+proc new_nk_rect(x, y, w, h: cfloat): nk_rect {.importc: "nk_rect", nodecl.}
+proc new_nk_vec2(x, y: cfloat): nk_vec2 {.importc: "nk_vec2", nodecl.}
 proc new_nk_font_config*(pixelHeight: cfloat): nk_font_config {.importc: "nk_font_config", nodecl.}
 
 # -----
@@ -293,11 +167,6 @@ proc nk_contextual_end(ctx) {.importc, cdecl.}
 proc nk_contextual_item_label(ctx; label: cstring;
     align: nk_flags): nk_bool {.importc, cdecl.}
 
-# --------
-# Tooltips
-# --------
-proc nk_tooltipf(ctx; fmt: cstring) {.importc, nodecl, varargs.}
-
 # ------
 # Groups
 # ------
@@ -312,147 +181,17 @@ proc nk_font_atlas_add_default*(atlas: ptr nk_font_atlas; height: cfloat;
     config: ptr nk_font_config): ptr nk_font {.importc, nodecl.}
 proc nk_font_atlas_add_from_file*(atlas: ptr nk_font_atlas; filePath: cstring;
     height: cfloat;  config: ptr nk_font_config): ptr nk_font {.importc, nodecl.}
+proc nk_font_atlas_clear*(atlas: ptr nk_font_atlas) {.importc, nodecl.}
 
 # ------------------------------------------------------------------
 # High level bindings. The new version of the binding
 # ------------------------------------------------------------------
 
-# -----
-# Types
-# -----
-type
-  NimColor* = object
-    ## Used to store information about the selected color. Usually later
-    ## converted to Nuklear structure nk_color
-    r*, g*, b*, a*: int
-  NimColorF* = object
-    ## Also used to store information about the selected color, but as a float
-    ## values.
-    r*, g*, b*, a*: float
-  NimRect* = object
-    ## Used to store information about UI rectangle. Usually later converted to
-    ## Nuklear nk_rect
-    x*, y*, w*, h*: cfloat
-  NimVec2* = object
-    ## Used to store information about UI vector. Usually later converted to
-    ## Nuklear nk_vec2
-    x*, y*: cfloat
-  ButtonStyleTypes* = enum
-    ## The types of fields in style's settings for UI buttons
-    normal, hover, active, borderColor, textBackground, textNormal, textHover,
-        textActive, rounding, padding
-  WindowStyleTypes* = enum
-    ## The types of fields in style's settings for windows
-    spacing
-  WindowFlags* {.size: sizeof(cint).} = enum
-    ## The settings for windows
-    windowNoFlags = 0,
-    windowBorder = 1 shl 0,
-    windowMoveable = 1 shl 1,
-    windowScalable = 1 shl 2,
-    windowCloseable = 1 shl 3
-    windowMinimizable = 1 shl 4,
-    windowNoScrollbar = 1 shl 5,
-    windowTitle = 1 shl 6,
-    windowScaleLeft = 1 shl 9
-  NuklearException* = object of CatchableError
-    ## An exception thrown when there is an issue with Nuklear library
-  PopupType* = enum
-    ## The types of popup windows
-    staticPopup, dynamicPopup
-  TextAlignment* {.size: sizeof(cint).} = enum
-    ## The alignments of a text
-    left = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_LEFT.int,
-    centered = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_CENTERED.int,
-    right = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_RIGHT.int
-  EditFlags* {.size: sizeof(cint).} = enum
-    ## The edit fields' flags
-    default = 0,
-    readOnly = 1 shl 0,
-    autoSelect = 1 shl 1,
-    sigEnter = 1 shl 2,
-    allowTab = 1 shl 3,
-    noCursor = 1 shl 4,
-    selectable = 1 shl 5,
-    clipboard = 1 shl 6,
-    ctrlEnterNewLine = 1 shl 7,
-    noHorizontalScroll = 1 shl 8,
-    alwaysInsertMode = 1 shl 9,
-    multiline = 1 shl 10,
-    gotoEndOnActivate = 1 shl 11
-  EditEvent* {.size: sizeof(cint).} = enum
-    ## The events which happen in a text field
-    none = 0,
-    active = 1 shl 0,
-    inactive = 1 shl 1,
-    activated = 1 shl 2,
-    deactivated = 1 shl 3,
-    commited = 1 shl 4
-  EditTypes* {.size: sizeof(cint).} = enum
-    ## The types of edit fields
-    simple = alwaysInsertMode,
-    field = simple.int or selectable.int or clipboard.int,
-    editor = allowTab.int or selectable.int or clipboard.int or multiline.int,
-    box = alwaysInsertMode.int or selectable.int or multiline.int or
-        allowTab.int or clipboard.int
-  PluginFilter* = proc (box: ptr nk_text_edit;
-      unicode: nk_rune): nk_bool {.cdecl.}
-    ## The procedure used to filter input in edit fields
-  StyleColors* = enum
-    ## Names of the colors for UI's elements which can be set. The last value
-    ## is special, it defines the amount of available colors' settings.
-    textColor, windowColor, headerColor, borderColor, buttonColor,
-      buttonHoverColor, buttonActiveColor, toggleColor, toggleHoverColor,
-      toggleCursorColor, selectColor, selectActiveColor, sliderColor,
-      sliderCursorColor, sliderCursorHoverColor, sliderCursorActiveColor,
-      propertyColor, editColor, editCursorColor, comboColor, chartColor,
-      colorChartColor, colorChartHighlightColor, scrollbarColor,
-      scrollbarCursorColor, scrollbarCursorHoverColor,
-      scrollbarCursorActiveColor, tabHeaderColor, countColors
-  StyleHeaderAlign* = enum
-    ## The styles of the window's header
-    headerLeft, headerRight
-  ButtonBehavior* = enum
-    ## The types of buttons behavior
-    default, repeater
-
-# ----------
-# Converters
-# ----------
-converter toBool*(x: nk_bool): bool =
-  ## Converts Nuklear nk_bool enum to Nim bool
-  x == nkTrue
-converter toNkFlags*(x: nk_text_alignment): nk_flags =
-  ## Converts Nuklear nk_text_alignment enum to Nuklear nk_flags type
-  x.ord.cint
-converter toNkFlags*(x: EditTypes): nk_flags =
-  ## Converts EditTypes enum to Nuklear nk_flags type
-  x.ord.cint
-converter toCint*(x: bool): cint =
-  ## Converts Nim bool type to Nim cint type
-  if x: 1 else: 0
-
-# ---------
-# Variables
-# ---------
-var ctx: PContext ## Pointer to the Nuklear context
-
 # -------
 # General
 # -------
-proc setContext*(context: PContext) =
-  ## Set the Nuklear lib context
-  ##
-  ## * context - the pointer to the Nuklear context
-  ctx = context
-
-proc getContext*(): PContext =
-  ## Get the Nuklear lib context, temporary code
-  ##
-  ## Returns the pointer to the Nuklear context
-  return ctx
-
-proc charArrayToString(charArray: openArray[char]; length: int): string =
+proc charArrayToString(charArray: openArray[char];
+    length: int): string {.raises: [], tags: [].} =
   ## Convert a characters' array to Nim string, internal use only, temporary
   ## code
   ##
@@ -464,7 +203,7 @@ proc charArrayToString(charArray: openArray[char]; length: int): string =
     result.add(charArray[i])
 
 proc stringToCharArray(str: string; length: int): tuple[charArray: seq[char];
-    length: cint] =
+    length: cint] {.raises: [], tags: [].} =
   ## Convert a Nim string to a characters array, internal use only, temporary
   ## code
   ##
@@ -479,7 +218,17 @@ proc stringToCharArray(str: string; length: int): tuple[charArray: seq[char];
       result.charArray.add('\0')
   result.length = str.len.cint
 
-proc createWin(name: cstring; x, y, w, h: cfloat; flags: nk_flags): bool =
+proc getWidgetBounds*(): NimRect {.raises: [], tags: [].} =
+  ## Get the rectable with the current Nuklear widget coordinates
+  ##
+  ## Returns a rectangle with the current Nuklear widget coordinates
+  ## converted to NimRect
+  proc nk_widget_bounds(ctx): nk_rect {.importc, nodecl.}
+  let rect = nk_widget_bounds(ctx)
+  return NimRect(x: rect.x, y: rect.y, w: rect.w, h: rect.h)
+
+proc createWin(name: cstring; x, y, w, h: cfloat;
+    flags: nk_flags): bool {.raises: [], tags: [].} =
   ## Create a new Nuklear window/widget, internal use only, temporary code
   ##
   ## Returns true if window was succesfully created otherwise false.
@@ -487,7 +236,7 @@ proc createWin(name: cstring; x, y, w, h: cfloat; flags: nk_flags): bool =
       flags: nk_flags): nk_bool {.importc, nodecl.}
   return nk_begin(ctx, name, new_nk_rect(x, y, w, h), flags)
 
-proc winSetToInt(flags: set[WindowFlags]): cint =
+proc winSetToInt(flags: set[WindowFlags]): cint {.raises: [], tags: [].} =
   result = 0
   {.warning[HoleEnumConv]: off.}
   for flag in flags:
@@ -509,15 +258,6 @@ template window*(name: string; x, y, w, h: float; flags: set[WindowFlags];
     content
   nk_end(ctx)
 
-proc getWidgetBounds*(): NimRect =
-  ## Get the rectable with the current Nuklear widget coordinates
-  ##
-  ## Returns a rectangle with the current Nuklear widget coordinates
-  ## converted to NimRect
-  proc nk_widget_bounds(ctx): nk_rect {.importc, nodecl.}
-  let rect = nk_widget_bounds(ctx)
-  return NimRect(x: rect.x, y: rect.y, w: rect.w, h: rect.h)
-
 proc getTextWidth*(text: string): float =
   ## Get the width in pixels of the selected text in the current font
   ##
@@ -527,7 +267,7 @@ proc getTextWidth*(text: string): float =
   return ctx.style.font.width(ctx.style.font.userdata, ctx.style.font.height,
       text, text.len.cint)
 
-proc windowIsHidden*(name: string): bool =
+proc windowIsHidden*(name: string): bool {.raises: [], tags: [].} =
   ## Check if the window with the selected name is hidden
   ##
   ## * name - the name of the window to check
@@ -536,7 +276,7 @@ proc windowIsHidden*(name: string): bool =
   proc nk_window_is_hidden(ctx; name: cstring): cint {.importc, nodecl.}
   return nk_window_is_hidden(ctx, name.cstring) > 0
 
-proc addSpacing*(cols: int) =
+proc addSpacing*(cols: int) {.raises: [], tags: [].} =
   ## Add spacing in the selected between the row's boundaries in the row
   ##
   ## * cols - the amount of columns to add as the spacing
@@ -547,7 +287,7 @@ proc addSpacing*(cols: int) =
 # Popups
 # ------
 proc createPopup(pType: PopupType; title: cstring;
-    flags: nk_flags; x, y, w, h: cfloat): bool =
+    flags: nk_flags; x, y, w, h: cfloat): bool {.raises: [], tags: [].} =
   ## Create a new Nuklear popup window, internal use only, temporary code
   ##
   ## Returns true if the popup was successfully created, otherwise false.
@@ -574,7 +314,7 @@ template popup*(pType: PopupType; title: string; flags: set[WindowFlags]; x,
   content
   ctx.nk_popup_end
 
-proc closePopup*() =
+proc closePopup*() {.raises: [], tags: [].} =
   ## Close the last popup window
   proc nk_popup_close(ctx) {.importc, nodecl.}
   ctx.nk_popup_close()
@@ -669,7 +409,8 @@ template treeElement*(eType: TreeType; title: string; state: CollapseStates;
 # ------
 # Labels
 # ------
-proc colorLabel*(str: string; r, g, b: int; align: TextAlignment = left) =
+proc colorLabel*(str: string; r, g, b: int;
+    align: TextAlignment = left) {.raises: [], tags: [].} =
   ## Draw a text with the selected color
   ##
   ## * str   - the text to display
@@ -681,7 +422,7 @@ proc colorLabel*(str: string; r, g, b: int; align: TextAlignment = left) =
       color: nk_color) {.importc, nodecl.}
   nk_label_colored(ctx, str.cstring, align.nk_flags, nk_rgb(r.cint, g.cint, b.cint))
 
-proc label*(str: string; alignment: TextAlignment = left) =
+proc label*(str: string; alignment: TextAlignment = left) {.raises: [], tags: [].} =
   ## Draw the text with the selected alignment
   ##
   ## * str       - the text to draw
@@ -689,7 +430,8 @@ proc label*(str: string; alignment: TextAlignment = left) =
   proc nk_label(ctx; str: cstring; alignment: nk_flags) {.importc, nodecl.}
   nk_label(ctx, str.cstring, alignment.nk_flags)
 
-proc text*(str: string; len: int = str.len; alignment: TextAlignment = left) =
+proc text*(str: string; len: int = str.len;
+    alignment: TextAlignment = left) {.raises: [], tags: [].} =
   ## Draw the part of the text
   ##
   ## * str       - the text to draw
@@ -699,7 +441,7 @@ proc text*(str: string; len: int = str.len; alignment: TextAlignment = left) =
   proc nk_text(ctx; str: cstring; len: cint; alignment: nk_flags) {.importc, nodecl.}
   nk_text(ctx, str.cstring, len.cint, alignment.nk_flags)
 
-proc wrapLabel*(str: string) =
+proc wrapLabel*(str: string) {.raises: [], tags: [].} =
   ## Draw a text and wrap it if its lentgh is bigger than the width of its
   ## container
   ##
@@ -718,7 +460,7 @@ macro fmtLabel*(alignment: TextAlignment; args: varargs[untyped]): untyped =
 # -------
 # Buttons
 # -------
-proc createColorButton(r, g, b: cint): bool =
+proc createColorButton(r, g, b: cint): bool {.raises: [], tags: [].} =
   ## Draw a button with the selected color background, internal use only, temporary code
   ##
   ## * r   - the red value for the button color in RGB
@@ -742,7 +484,7 @@ template labelButton*(title: string; onPressCode: untyped) =
   if nk_button_label(ctx, title.cstring):
     onPressCode
 
-proc setButtonBehavior*(behavior: ButtonBehavior) =
+proc setButtonBehavior*(behavior: ButtonBehavior) {.raises: [], tags: [].} =
   ## Set the behavior of the the next button, when it is clicked
   ##
   ## * behavior - the behavior of a button
@@ -773,7 +515,7 @@ template symbolLabelButton*(symbol: SymbolType; label: string;
 # -------
 # Sliders
 # -------
-proc slide*(min, val, max, step: int): int =
+proc slide*(min, val, max, step: int): int {.raises: [], tags: [].} =
   ## Draw a slide widget with integer values
   ##
   ## * min  - the minimal value on the slider
@@ -789,7 +531,7 @@ proc slide*(min, val, max, step: int): int =
 # -------
 # Layouts
 # -------
-proc layoutSpacePush(ctx; x, y, w, h: cfloat) =
+proc layoutSpacePush(ctx; x, y, w, h: cfloat) {.raises: [], tags: [].} =
   ## Push the next widget's position and size, internal use only, temporary code
   ##
   ## * ctx - the Nuklear context
@@ -800,7 +542,7 @@ proc layoutSpacePush(ctx; x, y, w, h: cfloat) =
   proc nk_layout_space_push(ctx; rect: nk_rect) {.importc, nodecl.}
   nk_layout_space_push(ctx, new_nk_rect(x, y, w, h))
 
-proc setLayoutRowDynamic*(height: float; cols: int) =
+proc setLayoutRowDynamic*(height: float; cols: int) {.raises: [], tags: [].} =
   ## Set the current widgets layout to divide it into selected amount of
   ## columns with the selected height in rows and grows in width when the
   ## parent window resizes
@@ -810,7 +552,7 @@ proc setLayoutRowDynamic*(height: float; cols: int) =
   proc nk_layout_row_dynamic(ctx; height: cfloat; cols: cint) {.importc, cdecl.}
   nk_layout_row_dynamic(ctx, height.cfloat, cols.cint)
 
-proc setLayoutRowStatic*(height: float; width, cols: int) =
+proc setLayoutRowStatic*(height: float; width, cols: int) {.raises: [], tags: [].} =
   ## Set the current widgets layout to divide it into selected amount of
   ## columns with the selected height in rows but it will not grow in width
   ## when the parent window resizes
@@ -852,7 +594,8 @@ template row*(width: float; content: untyped) =
   nk_layout_row_push(ctx, width.cfloat)
   content
 
-proc setLayoutRowStatic*(height: float; cols: int; ratio: openArray[cfloat]) =
+proc setLayoutRowStatic*(height: float; cols: int; ratio: openArray[
+    cfloat]) {.raises: [], tags: [].} =
   ## Set the current widgets layout to divide it into selected amount of
   ## columns with the selected height in rows but it will not grow in width
   ## when the parent window resizes
@@ -862,7 +605,8 @@ proc setLayoutRowStatic*(height: float; cols: int; ratio: openArray[cfloat]) =
   ## * ratio  - the array or sequence of cfloat with width of the colums
   nk_layout_row(ctx, NK_STATIC, height.cfloat, cols.cint, ratio.addr)
 
-proc setLayoutRowDynamic*(height: float; cols: int; ratio: openArray[cfloat]) =
+proc setLayoutRowDynamic*(height: float; cols: int; ratio: openArray[
+    cfloat]) {.raises: [], tags: [].} =
   ## Set the current widgets layout to divide it into selected amount of
   ## columns with the selected height in rows but it will grow in width
   ## when the parent window resizes
@@ -917,13 +661,13 @@ template setRowTemplate*(height: float; settings: untyped) =
   settings
   nk_layout_row_template_end(ctx)
 
-proc rowTemplateDynamic*() =
+proc rowTemplateDynamic*() {.raises: [], tags: [].} =
   ## Set the selected column's in the row width in the template's row as dynamic,
   ## which means, the widget will resize with its parent.
   proc nk_layout_row_template_push_dynamic(ctx) {.importc, nodecl.}
   nk_layout_row_template_push_dynamic(ctx)
 
-proc rowTemplateVariable*(minWidth: float) =
+proc rowTemplateVariable*(minWidth: float) {.raises: [], tags: [].} =
   ## Set the selected column's width in the row template as dynamic but with
   ## requirement for minumum width for the widget
   ##
@@ -931,7 +675,7 @@ proc rowTemplateVariable*(minWidth: float) =
   proc nk_layout_row_template_push_variable(ctx; minWidth: cfloat) {.importc, nodecl.}
   nk_layout_row_template_push_variable(ctx, minWidth.cfloat)
 
-proc rowTemplateStatic*(width: float) =
+proc rowTemplateStatic*(width: float) {.raises: [], tags: [].} =
   ## Set the selected column's width in the row template to static value,
   ## widgets in the column will not resize
   ##
@@ -950,7 +694,8 @@ template menuBar*(content: untyped) =
   content
   nk_menubar_end(ctx)
 
-proc createMenu(ctx; text: cstring; align: nk_flags; x, y: cfloat): bool =
+proc createMenu(ctx; text: cstring; align: nk_flags; x,
+    y: cfloat): bool {.raises: [], tags: [].} =
   ## Create a Nuklear menu, internal use only, temporary code
   ##
   ## Returns true if the popup was successfully created, otherwise false.
@@ -993,7 +738,8 @@ template menuItem*(label: string; align: TextAlignment; onPressCode: untyped) =
 # Sliders
 # -------
 
-proc slider*(min: int; val: var int; max, step: int): bool {.discardable.} =
+proc slider*(min: int; val: var int; max, step: int): bool {.discardable,
+    raises: [], tags: [].} =
   ## Create a Nuklear slider with integer values
   ##
   ## * min  - the minimal value on the slider
@@ -1012,7 +758,7 @@ proc slider*(min: int; val: var int; max, step: int): bool {.discardable.} =
   val = newVal
 
 proc slider*(min: float; val: var float; max,
-    step: float): bool {.discardable.} =
+    step: float): bool {.discardable, raises: [], tags: [].} =
   ## Create a Nuklear slider with float values
   ##
   ## * min  - the minimal value on the slider
@@ -1035,7 +781,7 @@ proc slider*(min: float; val: var float; max,
 # ----------
 
 proc property*(name: string; min: int; val: var int; max, step: int;
-    incPerPixel: float) =
+    incPerPixel: float) {.raises: [], tags: [].} =
   ## Create a Nuklear property widget with integer values
   ##
   ## * name        - the name of the property and its label to show on it.
@@ -1058,7 +804,7 @@ proc property*(name: string; min: int; val: var int; max, step: int;
   val = newVal.int
 
 proc property*(name: string; min: float; val: var float; max, step: float;
-    incPerPixel: float) =
+    incPerPixel: float) {.raises: [], tags: [].} =
   ## Create a Nuklear property widget with float values
   ##
   ## * name        - the name of the property and its label to show on it.
@@ -1080,7 +826,8 @@ proc property*(name: string; min: float; val: var float; max, step: float;
       step.cfloat, incPerPixel.cfloat)
   val = newVal.float
 
-proc property2*(name: string; min, val, max, step, incPerPixel: float): float =
+proc property2*(name: string; min, val, max, step,
+    incPerPixel: float): float {.raises: [], tags: [].} =
   ## Create a Nuklear property widget with float values
   ##
   ## * name        - the name of the property and its label to show on it.
@@ -1101,7 +848,7 @@ proc property2*(name: string; min, val, max, step, incPerPixel: float): float =
       step.cfloat, incPerPixel.cfloat).float
 
 proc property2*(name: string; min, val, max, step: int;
-    incPerPixel: float): int =
+    incPerPixel: float): int {.raises: [], tags: [].} =
   ## Create a Nuklear property widget with integer values
   ##
   ## * name        - the name of the property and its label to show on it.
@@ -1124,7 +871,7 @@ proc property2*(name: string; min, val, max, step: int;
 # -----
 # Style
 # -----
-proc headerAlign*(value: StyleHeaderAlign) =
+proc headerAlign*(value: StyleHeaderAlign) {.raises: [], tags: [].} =
   ## Set the Nuklear windows header alignment
   ##
   ## * value - the new value for the alignment
@@ -1132,16 +879,17 @@ proc headerAlign*(value: StyleHeaderAlign) =
 
 var buttonStyle: nk_style_button ## Used to store the Nuklear buttons style
 
-proc saveButtonStyle*() =
+proc saveButtonStyle*() {.raises: [], tags: [].} =
   ## Save the Nuklear buttons style to variable, so it can be restored later
   buttonStyle = ctx.style.button
 
-proc restoreButtonStyle*() =
+proc restoreButtonStyle*() {.raises: [], tags: [].} =
   ## Restore previously save to the variable Nuklear buttons style
   ##
   ctx.style.button = buttonStyle
 
-proc setButtonStyle*(field: ButtonStyleTypes; r, g, b: cint) =
+proc setButtonStyle*(field: ButtonStyleTypes; r, g, b: cint) {.raises: [],
+    tags: [].} =
   ## Set the color for the selcted field of the Nuklear buttons style
   ##
   ## * field - the style's field which value will be changed
@@ -1168,7 +916,8 @@ proc setButtonStyle*(field: ButtonStyleTypes; r, g, b: cint) =
   else:
     discard
 
-proc setButtonStyle2*(source, destination: ButtonStyleTypes) =
+proc setButtonStyle2*(source, destination: ButtonStyleTypes) {.raises: [],
+    tags: [].} =
   ## Copy one field of Nuklear buttons style to another
   ##
   ## * source      - the field which value will be copied
@@ -1177,7 +926,7 @@ proc setButtonStyle2*(source, destination: ButtonStyleTypes) =
     if destination == normal:
       ctx.style.button.normal = ctx.style.button.active
 
-proc getButtonStyle*(field: ButtonStyleTypes): NimVec2 =
+proc getButtonStyle*(field: ButtonStyleTypes): NimVec2 {.raises: [], tags: [].} =
   ## Get the value of the selected field of Nuklear buttons style
   ##
   ## * field - the field which value will be taken
@@ -1187,7 +936,7 @@ proc getButtonStyle*(field: ButtonStyleTypes): NimVec2 =
     return NimVec2(x: ctx.style.button.padding.x, y: ctx.style.button.padding.y)
 
 proc stylePushVec2*(field: WindowStyleTypes; x,
-    y: cfloat): bool {.discardable.} =
+    y: cfloat): bool {.discardable, raises: [], tags: [].} =
   ## Push the vector value for the selected Nuklear window style on a
   ## temporary stack
   ##
@@ -1203,7 +952,7 @@ proc stylePushVec2*(field: WindowStyleTypes; x,
         y))
 
 proc stylePushFloat*(field: ButtonStyleTypes;
-    value: cfloat): bool {.discardable.} =
+    value: cfloat): bool {.discardable, raises: [], tags: [].} =
   ## Push the float value for the selected Nuklear buttons style on a
   ## temporary stack
   ##
@@ -1220,7 +969,7 @@ proc stylePushFloat*(field: ButtonStyleTypes;
   else:
     return false
 
-proc styleFromTable*(table: openArray[NimColor]) =
+proc styleFromTable*(table: openArray[NimColor]) {.raises: [], tags: [].} =
   ## Set the Nuklear style colors from the table
   ##
   ## * table - the colors table which will be set
@@ -1230,16 +979,16 @@ proc styleFromTable*(table: openArray[NimColor]) =
     newTable[index] = nk_rgba(color.r.cint, color.g.cint, color.b.cint, color.a.cint)
   nk_style_from_table(ctx, newTable.addr)
 
-proc defaultStyle*() =
+proc defaultStyle*() {.raises: [], tags: [].} =
   ## reset the UI colors to the default Nuklear setting
   proc nk_style_default(ctx) {.importc, nodecl.}
   nk_style_default(ctx)
 
-proc stylePopFloat*() =
+proc stylePopFloat*() {.raises: [], tags: [].} =
   proc nk_style_pop_float(ctx) {.importc, nodecl.}
   nk_style_pop_float(ctx)
 
-proc stylePopVec2*() =
+proc stylePopVec2*() {.raises: [], tags: [].} =
   proc nk_style_pop_vec2(ctx) {.importc, nodecl.}
   nk_style_pop_vec2(ctx)
 
@@ -1247,7 +996,7 @@ proc stylePopVec2*() =
 # Combos
 # ------
 proc comboList*(items: openArray[string]; selected, itemHeight: int; x,
-    y: float; amount: int = items.len - 1): int =
+    y: float; amount: int = items.len - 1): int {.raises: [], tags: [].} =
   ## Create a Nuklear combo widget
   ##
   ## * items       - the list of values for the combo
@@ -1267,7 +1016,8 @@ proc comboList*(items: openArray[string]; selected, itemHeight: int; x,
   return nk_combo(ctx, optionsList[0].addr, amount.cint + 1,
       selected.cint, itemHeight.cint, new_nk_vec2(x.cfloat, y.cfloat)).int
 
-proc createColorCombo(ctx; color: NimColor; x, y: cfloat): bool =
+proc createColorCombo(ctx; color: NimColor; x, y: cfloat): bool {.raises: [],
+    tags: [].} =
   ## Create a Nuklear combo widget which display color as the value, internal
   ## use only, temporary code
   ##
@@ -1292,7 +1042,8 @@ template colorCombo*(color: NimColor; x, y: float; content: untyped) =
     content
     nk_combo_end(ctx)
 
-proc createColorCombo(ctx; color: NimColorF; x, y: cfloat): bool =
+proc createColorCombo(ctx; color: NimColorF; x, y: cfloat): bool {.raises: [],
+    tags: [].} =
   ## Create a Nuklear combo widget which display color with float values as
   ## the value, internal use only, temporary code
   ##
@@ -1318,7 +1069,8 @@ template colorCombo*(color: NimColorF; x, y: float; content: untyped) =
     content
     nk_combo_end(ctx)
 
-proc createLabelCombo(ctx; selected: cstring; x, y: cfloat): bool =
+proc createLabelCombo(ctx; selected: cstring; x, y: cfloat): bool {.raises: [],
+    tags: [].} =
   ## Create a Nuklear combo widget which display the custom text as the value,
   ## internal use only, temporary code
   ##
@@ -1343,7 +1095,7 @@ template labelCombo*(selected: string; x, y: float; content: untyped) =
     content
     nk_combo_end(ctx)
 
-proc comboClose*() =
+proc comboClose*() {.raises: [], tags: [].} =
   ## Stop adding a value to a combo
   proc nk_combo_close(ctx) {.importc, nodecl.}
   nk_combo_close(ctx)
@@ -1351,7 +1103,8 @@ proc comboClose*() =
 # ------
 # Colors
 # ------
-proc colorfToHsva*(hsva: var array[4, float]; color: NimColorF) =
+proc colorfToHsva*(hsva: var array[4, float]; color: NimColorF) {.raises: [],
+    tags: [].} =
   ## Convert Nim float color object to HSVA values
   ##
   ## * hsva  - the array of 4 values for HSVA color
@@ -1361,7 +1114,7 @@ proc colorfToHsva*(hsva: var array[4, float]; color: NimColorF) =
   proc nk_colorf_hsva_fv(hsva: pointer; color: nk_colorf) {.importc, nodecl.}
   nk_colorf_hsva_fv(hsva.addr, nk_colorf(r: color.r, g: color.g,
       b: color.b, a: color.a))
-proc hsvaToColorf*(hsva: array[4, float]): NimColorF =
+proc hsvaToColorf*(hsva: array[4, float]): NimColorF {.raises: [], tags: [].} =
   ## Convert HSVA values to Nim color with float values
   ##
   ## * hsva - the array with HSVA values to convert
@@ -1375,7 +1128,8 @@ proc hsvaToColorf*(hsva: array[4, float]): NimColorF =
 # Charts
 # ------
 proc createColorChart(ctx; ctype: ChartType; color,
-    higlight: NimColor; count: cint; minValue, maxValue: cfloat): bool =
+    higlight: NimColor; count: cint; minValue,
+        maxValue: cfloat): bool {.raises: [], tags: [].} =
   ## Create a colored chart, internal use only, temporary code
   ##
   ## * ctx       - the Nuklear context
@@ -1412,7 +1166,8 @@ template colorChart*(cType: ChartType; color, highlight: NimColor; count: int;
     nk_chart_end(ctx)
 
 proc addColorChartSlot*(ctype: ChartType; color,
-    higlight: NimColor; count: cint; minValue, maxValue: cfloat) =
+    higlight: NimColor; count: cint; minValue, maxValue: cfloat) {.raises: [],
+        tags: [].} =
   ## Add another chart to the existing one
   ##
   ## * ctype     - the type of the chart
@@ -1440,7 +1195,7 @@ template chart*(cType: ChartType; num: int; min, max: float; content: untyped) =
     content
     ctx.nk_chart_end
 
-proc chartPush*(value: float): ChartEvent {.discardable.} =
+proc chartPush*(value: float): ChartEvent {.discardable, raises: [], tags: [].} =
   ## Push, add the value to the current chart
   ##
   ## * value - the value to add
@@ -1455,7 +1210,8 @@ proc chartPush*(value: float): ChartEvent {.discardable.} =
     return hovering
   return none
 
-proc addChartSlot*(ctype: ChartType; count: int; minValue, maxValue: float) =
+proc addChartSlot*(ctype: ChartType; count: int; minValue,
+    maxValue: float) {.raises: [], tags: [].} =
   ## Add another chart to the existing one
   ##
   ## * ctype     - the type of the chart
@@ -1466,7 +1222,8 @@ proc addChartSlot*(ctype: ChartType; count: int; minValue, maxValue: float) =
       minValue, maxValue: cfloat) {.importc, nodecl.}
   nk_chart_add_slot(ctx, ctype, count.cint, minValue.cfloat, maxValue.cfloat)
 
-proc chartPushSlot*(value: float; slot: int): ChartEvent {.discardable.} =
+proc chartPushSlot*(value: float; slot: int): ChartEvent {.discardable,
+    raises: [], tags: [].} =
   ## Push, add the value to the current chart at the selected position
   ##
   ## * value - the value to add
@@ -1486,7 +1243,7 @@ proc chartPushSlot*(value: float; slot: int): ChartEvent {.discardable.} =
 # Contextual
 # ----------
 proc createContextual(ctx; flags: nk_flags; x, y: cfloat;
-    triggerBounds: NimRect): bool =
+    triggerBounds: NimRect): bool {.raises: [], tags: [].} =
   ## Create a contextual menu, internal use only, temporary code
   ##
   ## * ctx            - the Nuklear context
@@ -1528,24 +1285,6 @@ template contextualItemLabel*(label: string; align: TextAlignment;
   if nk_contextual_item_label(ctx, label.cstring, align.nk_flags):
     onPressCode
 
-# --------
-# Tooltips
-# --------
-
-macro fmtTooltip*(args: varargs[untyped]): untyped =
-  ## Draw a tooltip formatted in the same way like the C function printf
-  ##
-  ## * args      - the tooltip's text and its arguments to draw
-  result = quote do:
-    nk_tooltipf(ctx, `args`)
-
-proc tooltip*(text: string) =
-  ## Draw a tooltip with the selected text
-  ##
-  ## * text - the text to show on the tooltip window
-  proc nk_tooltip(ctx; text: cstring) {.importc, nodecl.}
-  nk_tooltip(ctx, text.cstring)
-
 # ------
 # Groups
 # ------
@@ -1563,7 +1302,7 @@ template group*(title: string; flags: set[WindowFlags]; content: untyped) =
 # -----
 # Input
 # -----
-proc isMouseHovering*(rect: NimRect): bool =
+proc isMouseHovering*(rect: NimRect): bool {.raises: [], tags: [].} =
   ## Check if mouse is hovering over the selected rectangle
   ##
   ## * x   - the X coordinate of top left corner of the rectangle
@@ -1577,7 +1316,7 @@ proc isMouseHovering*(rect: NimRect): bool =
   return nk_input_is_mouse_hovering_rect(ctx.input.addr, new_nk_rect(rect.x,
       rect.y, rect.w, rect.h))
 
-proc isMousePrevHovering*(x, y, w, h: float): bool =
+proc isMousePrevHovering*(x, y, w, h: float): bool {.raises: [], tags: [].} =
   ## Check if the mouse was previously hovering over the selected rectangle
   ##
   ## * x   - the X coordinate of top left corner of the rectangle
@@ -1591,7 +1330,7 @@ proc isMousePrevHovering*(x, y, w, h: float): bool =
   return nk_input_is_mouse_prev_hovering_rect(ctx.input.addr, new_nk_rect(
       x, y, w, h))
 
-proc isMouseDown*(id: Buttons): bool =
+proc isMouseDown*(id: Buttons): bool {.raises: [], tags: [].} =
   ## Check if mouse is pressed
   ##
   ## * id  - the mouse button which is pressed
@@ -1600,7 +1339,7 @@ proc isMouseDown*(id: Buttons): bool =
   proc nk_input_is_mouse_down(i: ptr nk_input; id: Buttons): nk_bool {.importc, nodecl.}
   return nk_input_is_mouse_down(ctx.input.addr, id)
 
-proc getMouseDelta*(): NimVec2 =
+proc getMouseDelta*(): NimVec2 {.raises: [], tags: [].} =
   ## Get the mouse vector between last check and current position of the mouse
   ##
   ## Returns vector with information about the mouse movement delta
@@ -1610,7 +1349,8 @@ proc getMouseDelta*(): NimVec2 =
 # Edit text
 # ---------
 proc editString*(text: var string; maxLen: int; editType: EditTypes = simple;
-    filter: PluginFilter = nk_filter_default; flags: set[EditFlags] = {}): EditEvent {.discardable.} =
+    filter: PluginFilter = nk_filter_default; flags: set[EditFlags] = {
+        }): EditEvent {.discardable, raises: [], tags: [].} =
   ## Draw the field of hte selected type and with the selected filter to edit a
   ## text
   ##
@@ -1645,7 +1385,7 @@ proc editString*(text: var string; maxLen: int; editType: EditTypes = simple;
 # -----------
 
 proc selectableLabel*(str: string; value: var bool;
-    align: TextAlignment = left): bool {.discardable.} =
+    align: TextAlignment = left): bool {.discardable, raises: [], tags: [].} =
   ## Draw the text which can be selected with the mouse
   ##
   ## * str   - the text which will be draw
@@ -1663,7 +1403,7 @@ proc selectableLabel*(str: string; value: var bool;
   value = newValue
 
 proc selectableSymbolLabel*(sym: SymbolType; title: string; value: var bool;
-    align: TextAlignment = left): bool {.discardable.} =
+    align: TextAlignment = left): bool {.discardable, raises: [], tags: [].} =
   ## Draw the text with the symbol which can be selected with the mouse
   ##
   ## * sym   - the symbol which will be draw
@@ -1682,59 +1422,45 @@ proc selectableSymbolLabel*(sym: SymbolType; title: string; value: var bool;
   discard $newValue
   value = newValue
 
-# -------
-# Widgets
-# -------
+# ------
+# Images
+# ------
+proc image*(image: PImage) {.raises: [], tags: [].} =
+  ## Draw an image
+  ##
+  ## * image - pointer to the image which will be drawn
+  proc nk_new_image(ctx; img: nk_image) {.importc: "nk_image", nodecl.}
+  proc nk_image_ptr(iPtr: pointer): nk_image {.importc, nodecl.}
+  nk_new_image(ctx = ctx, img = nk_image_ptr(iPtr = image))
+
+# ------
+# Tooltips
+# ------
+proc showTooltips*() {.raises: [], tags: [], contractual.} =
+  ## Check if the mouse is in any of tooltips related widgets bounds. If yes,
+  ## update the timer and if delay reached 0, show the selected tooltip. The best
+  ## place to call it is at the end of the Nuklear window declaration.
+  ## Temporary here due to problems with importing nk_rect.
+  var inBounds: bool = false
+  for tp in tooltips:
+    if isMouseHovering(rect = tp.bounds):
+      inBounds = true
+      delay -= frameDelay
+      if delay <= 0:
+        tooltip(text = tp.text)
+  if not inBounds:
+    delay = tooltipDelay
+
 proc colorPicker*(color: NimColorF;
-    format: colorFormat): NimColorF =
-  ## Create the color picker widget
+    format: colorFormat): NimColorF {.raises: [], tags: [], contractual.} =
+  ## Create the color picker widget. Temporary here due to problems with importing nk_colorf.
   ##
   ## * color  - the starting color for the widget
   ## * format - the color format for the widget
   ##
   ## Returns Nim color selected by the user in the widget
   proc nk_color_picker(ctx; color: nk_colorf;
-      fmt: colorFormat): nk_colorf {.importc, nodecl.}
+      fmt: colorFormat): nk_colorf {.importc, nodecl, raises: [], tags: [], contractual.}
   let newColor = nk_color_picker(ctx, nk_colorf(r: color.r, g: color.g,
       b: color.b, a: color.a), format)
   result = NimColorF(r: newColor.r, g: newColor.g, b: newColor.b, a: newColor.a)
-
-proc checkBox*(label: string; checked: var bool): bool {.discardable.} =
-  ## Create a Nuklear checkbox widget
-  ##
-  ## * label   - the text to show with the checkbox
-  ## * checked - the state of the checkbox, if true, the checkbox is checked
-  ##
-  ## Returns true if the state of the checkbox was changed, otherwise false.
-  proc nk_checkbox_label(ctx; text: cstring;
-      active: var cint): nk_bool {.importc, nodecl.}
-  var active: cint = (if checked: 1 else: 0)
-  result = nk_checkbox_label(ctx = ctx, text = label.cstring,
-      active = active) == nkTrue
-  checked = active == 1
-
-proc option*(label: string; selected: bool): bool =
-  ## Create a Nuklear option (radio) widget
-  ##
-  ## * label    - the text show with the option
-  ## * selected - the state of the option, if true the option is selected
-  ##
-  ## Returns true if the option is selected, otherwise false
-  proc nk_option_label(ctx; name: cstring; active: cint): nk_bool {.importc, nodecl.}
-  var active: cint = (if selected: 1 else: 0)
-  return nk_option_label(ctx = ctx, name = label.cstring, active = active) == nkTrue
-
-proc progressBar*(value: var int; maxValue: int;
-    modifyable: bool = true): bool {.discardable.} =
-  ## Create a Nuklear progress bar widget
-  ##
-  ## * value      - the current value of the progress bar
-  ## * maxValue   - the maximum value of the progress bar
-  ## * modifyable - if true, the user can modify the value of the progress bar
-  ##
-  ## Returns true if the value parameter was changed, otherwise false
-  proc nk_progress(ctx; cur: var nk_size; max: nk_size;
-      modifyable: nk_bool): nk_bool {.importc, nodecl.}
-  return nk_progress(ctx = ctx, cur = value, max = maxValue,
-      modifyable = modifyable.nk_bool) == nkTrue
-
