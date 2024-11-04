@@ -5,8 +5,8 @@ a WYSIWYG (or DIY) type of the project. ;)
 I created the project because I needed a GUI library for my other projects in
 Nim. It is more like backup than a real project. I will occasionally update the
 binding as I will work more with it in other cases. For this reason I
-don't accept any bug reports or requests for features. Not until stage 3 of the
-project (for roadmap, please look below).
+don't accept any bug reports or requests for features. Not until stable stage 3 of
+the project (for roadmap, please look below).
 
 If you read this file on GitHub: **please don't send pull requests here**. All will
 be automatically closed. Any code propositions should go to the
@@ -14,32 +14,32 @@ be automatically closed. Any code propositions should go to the
 
 ### Roadmap
 
-* Stage 2: High level binding with Nuklear GUI library. The current stage.
-* Stage 3: Rewrite everything in Nim.
+* Stage 3: Rewrite everything in Nim. The current stage, started.
 
 ### Usage
 
-To use it in your project, you will need 4 files:
+To use it in your project, you will need files:
 
 * `nuklear.h` - Nuklear library itself
-* `nuklear.nim` - Nim binding to the Nuklear library
+* `nuklear.nim` - Nim main binding file to the Nuklear library.
+* `nk_*.nim` - Nim submodules, for various Nuklear UI elements.
 * nuklear_xxx.h - the selected backend for Nuklear library. For example,
-  `nuklear_xlib.h`
+  `nuklear_sdl_renderer.h`
 * nuklear_xxx.nim - Nim binding for the selected backed. In the same example,
-  it will be `nuklear_xlib.nim`.
+  it will be `nuklear_sdl_renderer.nim`.
 
 You will need also to set the proper flags for C compiler, so it will be able to
 find the library.
 
 In your project, always import binding to the backed, not to the library
-itself. For example, `import nuklear_xlib`.
+itself. For example, `import nuklear_sdl_renderer`.
 
 ### Demo
 
 To build the demo, enter *demo* directory and run *build.nims* script. You will
 need to set paths in *config.nims* file too. To see all available backends,
 just run *build.nims* without any argument. For example, to build the demo with
-Xlib backend, type `./build.nims xlib`.
+Xlib backend, type `./build.nims sdl2`.
 
 ### Documentation
 
