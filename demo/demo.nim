@@ -46,6 +46,8 @@ type
 proc main() =
 
   nuklearInit(windowWidth, windowHeight, windowName)
+  when defined(sdl2):
+    nuklearSetDefaultFont()
 
   var
     op: difficulty = easy
