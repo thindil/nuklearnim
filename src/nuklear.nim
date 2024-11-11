@@ -119,8 +119,8 @@ proc nk_tree_element_pop(ctx) {.importc, cdecl.}
 # -------
 proc nk_button_label(ctx; title: cstring): nk_bool {.importc, cdecl.}
 proc nk_button_symbol(ctx; symbol: SymbolType): nk_bool {.importc, cdecl.}
-proc nk_button_symbol_label(ctx; symbol: SymbolType;
-    label: cstring; align: nk_flags): nk_bool {.importc, cdecl.}
+proc nk_button_symbol_label(ctx; symbol: SymbolType; label: cstring;
+    align: nk_flags): nk_bool {.importc, cdecl.}
 
 # -----
 # Style
@@ -276,6 +276,13 @@ proc windowIsHidden*(name: string): bool {.raises: [], tags: [].} =
   proc nk_window_is_hidden(ctx; name: cstring): cint {.importc, nodecl.}
   return nk_window_is_hidden(ctx, name.cstring) > 0
 
+proc windowClose*(name: string) {.raises: [], tags: [].} =
+  ## Closes the window
+  ##
+  ## * name - the name of the window to close
+  proc nk_window_close(ctx; name: cstring) {.importc, nodecl.}
+  nk_window_close(ctx, name.cstring)
+
 proc addSpacing*(cols: int) {.raises: [], tags: [].} =
   ## Add spacing in the selected between the row's boundaries in the row
   ##
@@ -286,6 +293,31 @@ proc addSpacing*(cols: int) {.raises: [], tags: [].} =
 # ------
 # Popups
 # ------
+proc nkPopupBegin(ctx; pType: PopupType; title: string; flags: set[WindowFlags];
+    x, y, w, h: float): bool {.raises: [], tags: [], contractual.} =
+  ## Try to create a new popup window. Internal use only.
+  ##
+  ## * ctx   - the Nuklear context
+  ## * pType - the type of the popup
+  ## * title - the title of the popup
+  ## * flags - the flags for the popup
+  ## * x     - the X position of the top left corner of the popup
+  ## * y     - the Y position of the top left corner of the popup
+  ## * w     - the width of the popup
+  ## * h     - the height of the popup
+  require:
+    ctx != nil
+    title.len > 0
+    ctx.current != nil
+    ctx.current.layout != nil
+  body:
+    if ctx == nil or ctx.current == nil or ctx.current.layout == nil:
+      return false
+    let
+      win: ptr nk_window = ctx.current
+      panel: ptr nk_panel = win.layout
+    return true
+
 proc createPopup(pType: PopupType; title: cstring;
     flags: nk_flags; x, y, w, h: cfloat): bool {.raises: [], tags: [].} =
   ## Create a new Nuklear popup window, internal use only, temporary code
@@ -512,6 +544,32 @@ template symbolLabelButton*(symbol: SymbolType; label: string;
   if nk_button_symbol_label(ctx, symbol, label.cstring, align.nk_flags):
     onPressCode
 
+proc createStyledButton(bTitle: cstring; bStyle: ButtonStyle): bool {.raises: [
+    ], tags: [].} =
+  ## Draw a button with the selected style, internal use only, temporary code
+  ##
+  ## * bTitle - the text to shown on the button
+  ## * bStyle - the button's style settings
+  var buttonStyle: nk_style_button = ctx.style.button
+  buttonStyle.border_color = nk_rgb(bStyle.borderColor.r.cint,
+      bStyle.borderColor.g.cint, bStyle.borderColor.b.cint)
+  buttonStyle.rounding = bStyle.rounding.cfloat
+  buttonStyle.padding = new_nk_vec2(bStyle.padding.x, bStyle.padding.y)
+  proc nk_button_label_styled(ctx; style: var nk_style_button;
+      title: cstring): nk_bool {.importc, nodecl.}
+  return nk_button_label_styled(ctx, buttonStyle, bTitle)
+
+template labelButtonStyled*(title: string; style: ButtonStyle;
+    onPressCode: untyped) =
+  ## Draw the button with the selected text on it and unique style of the
+  ## button. Execute the selected code on pressing it.
+  ##
+  ## * title       - the text to shown on the button
+  ## * style       - the style used to draw the button
+  ## * onPressCode - the Nim code to execute when the button was pressed
+  if createStyledButton(bTitle = title.cstring, bStyle = style):
+    onPressCode
+
 # -------
 # Sliders
 # -------
@@ -682,6 +740,26 @@ proc rowTemplateStatic*(width: float) {.raises: [], tags: [].} =
   ## * width - the width of the column in the row template
   proc nk_layout_row_template_push_static(ctx; width: cfloat) {.importc, nodecl.}
   nk_layout_row_template_push_static(ctx, width.cfloat)
+
+proc layoutWidgetBounds*(): NimRect {.raises: [], tags: [].} =
+  ## Get the rectangle of the current widget in the layout
+  ##
+  ## Returns NimRect with the data for the current widget
+  proc nk_layout_widget_bounds(ctx): nk_rect {.importc, nodecl.}
+  let rect = nk_layout_widget_bounds(ctx = ctx)
+  result = NimRect(x: rect.x, y: rect.y, w: rect.w, h: rect.h)
+
+proc layoutSetMinRowHeight*(height: float) {.raises: [], tags: [].} =
+  ## Set the currently used minimum row height. Must contains also paddings size.
+  ##
+  ## * height - the new minimum row height for auto generating the row height
+  proc nk_layout_set_min_row_height(ctx; height: cfloat) {.importc, nodecl.}
+  nk_layout_set_min_row_height(ctx = ctx, height = height.cfloat)
+
+proc lyoutResetMinRowHeight*() {.raises: [], tags: [].} =
+  ## Reset the currently used minimum row height.
+  proc nk_layout_reset_min_row_height(ctx) {.importc, nodecl.}
+  nk_layout_reset_min_row_height(ctx = ctx)
 
 # -----
 # Menus
@@ -888,31 +966,32 @@ proc restoreButtonStyle*() {.raises: [], tags: [].} =
   ##
   ctx.style.button = buttonStyle
 
-proc setButtonStyle*(field: ButtonStyleTypes; r, g, b: cint) {.raises: [],
-    tags: [].} =
+proc setButtonStyle*(field: ButtonStyleTypes; r: cint = 255; g: cint = 255;
+    b: cint = 255; a: cint = 255) {.raises: [], tags: [].} =
   ## Set the color for the selcted field of the Nuklear buttons style
   ##
   ## * field - the style's field which value will be changed
-  ## * r     - the red value for the style color in RGB
-  ## * g     - the green value for the style color in RGB
-  ## * b     - the blue value for the style color in RGB
+  ## * r     - the red value for the style color in RGBA
+  ## * g     - the green value for the style color in RGBA
+  ## * b     - the blue value for the style color in RGBA
+  ## * a     - the alpha value for the style color in RGBA
   case field
   of normal:
-    ctx.style.button.normal = nk_style_item_color(nk_rgb(r, g, b))
+    ctx.style.button.normal = nk_style_item_color(nk_rgba(r, g, b, a))
   of hover:
-    ctx.style.button.hover = nk_style_item_color(nk_rgb(r, g, b))
+    ctx.style.button.hover = nk_style_item_color(nk_rgba(r, g, b, a))
   of active:
-    ctx.style.button.active = nk_style_item_color(nk_rgb(r, g, b))
+    ctx.style.button.active = nk_style_item_color(nk_rgba(r, g, b, a))
   of borderColor:
-    ctx.style.button.border_color = nk_rgb(r, g, b)
+    ctx.style.button.border_color = nk_rgba(r, g, b, a)
   of textBackground:
-    ctx.style.button.text_background = nk_rgb(r, g, b)
+    ctx.style.button.text_background = nk_rgba(r, g, b, a)
   of textNormal:
-    ctx.style.button.text_normal = nk_rgb(r, g, b)
+    ctx.style.button.text_normal = nk_rgba(r, g, b, a)
   of textHover:
-    ctx.style.button.text_hover = nk_rgb(r, g, b)
+    ctx.style.button.text_hover = nk_rgba(r, g, b, a)
   of textActive:
-    ctx.style.button.text_active = nk_rgb(r, g, b)
+    ctx.style.button.text_active = nk_rgba(r, g, b, a)
   else:
     discard
 
@@ -1433,9 +1512,9 @@ proc image*(image: PImage) {.raises: [], tags: [].} =
   proc nk_image_ptr(iPtr: pointer): nk_image {.importc, nodecl.}
   nk_new_image(ctx = ctx, img = nk_image_ptr(iPtr = image))
 
-# ------
+# --------
 # Tooltips
-# ------
+# --------
 proc showTooltips*() {.raises: [], tags: [], contractual.} =
   ## Check if the mouse is in any of tooltips related widgets bounds. If yes,
   ## update the timer and if delay reached 0, show the selected tooltip. The best
@@ -1451,6 +1530,9 @@ proc showTooltips*() {.raises: [], tags: [], contractual.} =
   if not inBounds:
     delay = tooltipDelay
 
+# -------
+# Widgets
+# -------
 proc colorPicker*(color: NimColorF;
     format: colorFormat): NimColorF {.raises: [], tags: [], contractual.} =
   ## Create the color picker widget. Temporary here due to problems with importing nk_colorf.
@@ -1464,3 +1546,4 @@ proc colorPicker*(color: NimColorF;
   let newColor = nk_color_picker(ctx, nk_colorf(r: color.r, g: color.g,
       b: color.b, a: color.a), format)
   result = NimColorF(r: newColor.r, g: newColor.g, b: newColor.b, a: newColor.a)
+
