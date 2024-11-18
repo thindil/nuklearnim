@@ -61,6 +61,8 @@ type
     ## Internal Nuklear type
   nk_ushort* = cushort
     ## Internal Nuklear type
+  nk_hash* = cuint
+    ## Internal Nuklear type
 
 # ------------
 # Enumerations
@@ -138,6 +140,7 @@ type
 # -------
 # Objects
 # -------
+{.push ruleOff: "namedParams".}
 type
   nk_color* {.importc: "struct nk_color", nodecl.} = object
     ## Internal Nuklear type
@@ -172,7 +175,7 @@ type
     normal*, hover*, active*: nk_style_item
     border_color*, text_background*, text_normal*, text_hover*,
       text_active*: nk_color
-    rounding*: cfloat
+    rounding*, border*: cfloat
     padding*: nk_vec2
   nk_handle* {.bycopy, union.} = object
     ## Internal Nuklear type
@@ -199,11 +202,30 @@ type
     mouse*: nk_mouse
   nk_buffer* {.importc, nodecl.} = object
     ## Internal Nuklear type
+  PanelType* {.size: sizeof(cint).} = enum
+    ## The types of panels
+    panelNone = 0,
+    panelWindow = 1 shl 0,
+    panelGroup = 1 shl 1,
+    panelPopup = 1 shl 2,
+    panelContextual = 1 shl 4,
+    panelCombo = 1 shl 5,
+    panelMenu = 1 shl 6,
+    panelTooltip = 1 shl 7
   nk_panel* {.importc: "struct nk_paned", nodecl.} = object
     ## Internal Nuklear type
+    `type`*: PanelType
+  nk_popup_state* {.importc: "struct nk_popup_state", nodecl.} = object
+    ## Internal Nuklear type
+    win*: ptr nk_window
+    active*: nk_bool
+    `type`*: PanelType
+    name*: nk_hash
   nk_window* {.importc: "struct nk_window", nodecl.} = object
     ## Internal Nuklear type
     layout*: ptr nk_panel
+    popup*: nk_popup_state
+    parent*: ptr nk_window
   nk_context* {.importc: "struct nk_context", nodecl.} = object
     ## Internal Nuklear type
     style*: nk_style
@@ -226,6 +248,8 @@ type
     handle*: nk_handle
     w*, h*: nk_ushort
     region*: array[4, nk_ushort]
+  PNkWindow* = ptr nk_window
+    ## Pointer to nk_window structure
 
 # ------------------------------------------------------------------
 # High level bindings. The new version of the binding
@@ -234,7 +258,6 @@ type
 # -----
 # Types
 # -----
-{.push ruleOff: "namedParams".}
 type
   NimColor* = object
     ## Used to store information about the selected color. Usually later
@@ -260,7 +283,7 @@ type
   ButtonStyleTypes* = enum
     ## The types of fields in style's settings for UI buttons
     normal, hover, active, borderColor, textBackground, textNormal, textHover,
-        textActive, rounding, padding
+        textActive, rounding, padding, border
   WindowStyleTypes* = enum
     ## The types of fields in style's settings for windows
     spacing
@@ -335,6 +358,12 @@ type
   ButtonBehavior* = enum
     ## The types of buttons behavior
     default, repeater
+  PanelSet* {.size: sizeof(cint).} = enum
+    ## The setting of panels
+    panelSetNonBlock = panelContextual.int or panelCombo.int or panelMenu.int or
+        panelTooltip.int,
+    panelSetPopup = panelSetNonBlock.int or panelPopup.int,
+    panelSetSub = panelSetPopup.int or panelGroup.int
 {.pop ruleOn: "namedParams".}
 
 # ----------
