@@ -136,6 +136,9 @@ type
   nk_anti_aliasing* = enum
     ## Internal Nuklear type
     NK_ANTI_ALIASING_OFF, NK_ANTI_ALIASING_ON
+  nk_window_flags* = enum
+    ## Internal Nuklear type
+    NK_WINDOW_DYNAMIC = 1 shl 11
 
 # -------
 # Objects
@@ -177,6 +180,8 @@ type
       text_active*: nk_color
     rounding*, border*: cfloat
     padding*: nk_vec2
+    image_padding*: nk_vec2
+    touch_padding*: nk_vec2
   nk_handle* {.bycopy, union.} = object
     ## Internal Nuklear type
     `ptr`*: pointer
@@ -200,8 +205,10 @@ type
   nk_input* {.importc: "struct nk_input", nodecl.} = object
     ## Internal Nuklear type
     mouse*: nk_mouse
-  nk_buffer* {.importc, nodecl.} = object
+  nk_popup_buffer* {.importc: "struct nk_popup_buffer", nodecl.} = object
     ## Internal Nuklear type
+    begin*, `end`*, parent*, last*: nk_size
+    active*: nk_bool
   PanelType* {.size: sizeof(cint).} = enum
     ## The types of panels
     panelNone = 0,
@@ -212,25 +219,39 @@ type
     panelCombo = 1 shl 5,
     panelMenu = 1 shl 6,
     panelTooltip = 1 shl 7
+  nk_command_buffer* {.importc: "struct nk_command_buffer".} = object
+    ## Internal Nuklear type
+    begin*, `end`*, last*: nk_size
   nk_panel* {.importc: "struct nk_paned", nodecl.} = object
     ## Internal Nuklear type
     `type`*: PanelType
+    clip*: nk_rect
   nk_popup_state* {.importc: "struct nk_popup_state", nodecl.} = object
     ## Internal Nuklear type
     win*: ptr nk_window
     active*: nk_bool
     `type`*: PanelType
     name*: nk_hash
+    buf*: nk_popup_buffer
   nk_window* {.importc: "struct nk_window", nodecl.} = object
     ## Internal Nuklear type
-    layout*: ptr nk_panel
+    layout*: PNkPanel
     popup*: nk_popup_state
     parent*: ptr nk_window
+    bounds*: nk_rect
+    seq*: uint
+    flags*: nk_flags
+    buffer*: nk_command_buffer
+  nk_buffer* {.importc: "struct nk_buffer", nodecl.} = object
+    ## Internal Nuklear type
+    allocated*: nk_size
   nk_context* {.importc: "struct nk_context", nodecl.} = object
     ## Internal Nuklear type
     style*: nk_style
     input*: nk_input
     current*: ptr nk_window
+    seq*: uint
+    memory*: nk_buffer
   nk_rect* {.importc: "struct nk_rect", nodecl.} = object
     ## Internal Nuklear type
     x*, y*, w*, h*: cfloat
@@ -250,6 +271,12 @@ type
     region*: array[4, nk_ushort]
   PNkWindow* = ptr nk_window
     ## Pointer to nk_window structure
+  PNkPanel* = ptr nk_panel
+    ## Pointer to nk_panel structure
+
+const
+  nkNullRect*: nk_rect = nk_rect(x: -8192.0, y: -8192.0, w: -8192.0, h: -8192.0)
+    ## An empty rectangle
 
 # ------------------------------------------------------------------
 # High level bindings. The new version of the binding
@@ -280,10 +307,12 @@ type
     borderColor*: NimColor
     rounding*: float
     padding*: NimVec2
+    imagePadding*: NimVec2
+    touchPadding*: NimVec2
   ButtonStyleTypes* = enum
     ## The types of fields in style's settings for UI buttons
     normal, hover, active, borderColor, textBackground, textNormal, textHover,
-        textActive, rounding, padding, border
+        textActive, rounding, padding, border, imagePadding, touchPadding
   WindowStyleTypes* = enum
     ## The types of fields in style's settings for windows
     spacing
