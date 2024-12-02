@@ -166,6 +166,9 @@ proc nk_tree_element_pop(ctx) {.importc, cdecl, raises: [], tags: [], contractua
 # -------
 # Buttons
 # -------
+proc nk_button_text(ctx; ctitle: cstring; clen: cint): nk_bool {.importc, cdecl,
+    raises: [], tags: [], contractual.}
+  ## A binding to Nuklear's function. Internal use only
 proc nk_button_label(ctx; ctitle: cstring): nk_bool {.importc, cdecl, raises: [
     ], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
@@ -395,24 +398,136 @@ proc addSpacing*(cols: int) {.raises: [], tags: [], contractual.} =
     ## A binding to Nuklear's function. Internal use only
   nk_spacing(ctx = ctx, cols = cols.cint)
 
+# ------
+# Buffer
+# ------
+
+{.push ruleOff: "namedParams".}
+template `+`[T](p: ptr T; off: nk_size): ptr T =
+  ## Pointer artihmetic, adding
+  ##
+  ## * p   - the pointer to modify
+  ## * off - the value to add to the pointer
+  ##
+  ## Returns the new pointer moved by off.
+  cast[ptr type(p[])](cast[nk_size](p) +% off * sizeof(p[]))
+{.pop ruleOn: "namedParams".}
+
+
+{.push ruleOff: "params".}
+
+proc nkBufferAlign(unaligned: pointer; align: nk_size; alignment: var nk_size;
+    `type`: nk_buffer_allocation_type): pointer {.raises: [], tags: [],
+    contractual.} =
+  ## Align the sekected buffer
+  ##
+  ## * unaligned - the pointer to unaligned data
+  ## * align     - the size of data to align
+  ## * alignment - the size of data after alignment
+  ## * `type`    - the allocation type
+  ##
+  ## Returns pointer to aligned buffer
+  var memory: pointer = nil
+  if `type` == NK_BUFFER_BACK:
+    if align == 0:
+      memory = unaligned
+      alignment = 0
+    else:
+      memory = cast[pointer](cast[nk_size](unaligned) and not(align - 1))
+      alignment = (cast[nk_byte](unaligned) - cast[nk_byte](memory)).nk_size
+  else:
+    if align == 0:
+      memory = unaligned
+      alignment = 0
+    else:
+      memory = cast[pointer]((cast[nk_size](unaligned) + (align - 1)) and not(align - 1))
+      alignment = (cast[nk_byte](memory) - cast[nk_byte](unaligned)).nk_size
+  return memory
+
+proc nkBufferAlloc(b: ptr nk_buffer; `type`: nk_buffer_allocation_type; size,
+    align: nk_size): pointer {.raises: [], tags: [], contractual.} =
+  ## Allocate memory for the selected buffer
+  ##
+  ## * b      - the buffer in which the memory will be allocated
+  ## * `type` - the allocation type
+  ## * size   - the size of memory to allocate
+  ## * align  - the align
+  ##
+  ## Returns pointer to allocated memory
+  require:
+    b != nil
+    size != 0
+  body:
+    b.needed += size
+    var unaligned: ptr nk_size = nil
+    if `type` == NK_BUFFER_FRONT:
+      unaligned = b.memory.`ptr` + b.allocated
+    else:
+      unaligned = b.memory.`ptr` + (b.size - size)
+    var alignment: nk_size = 0
+    var memory: pointer = nkBufferAlign(unaligned = unaligned, align = align,
+        alignment = alignment, `type` = `type`)
+    var full: bool = false
+    if `type` == NK_BUFFER_FRONT:
+      full = (b.allocated + size + alignment) > b.size
+    else:
+      full = (b.size - min(x = b.size, y = (size + alignment))) <= b.allocated
+    if full:
+      if b.`type` != NK_BUFFER_DYNAMIC:
+        return nil
+    return memory
+
 # ----
 # Draw
 # ----
-{.push ruleOff: "params".}
-proc nkPushScissor(b: var nk_command_buffer, r: nk_rect) {.raises: [], tags: [], contractual.} =
+
+proc nkCommandBufferPush(b: ptr nk_command_buffer; t: nk_command_type;
+    size: nk_size): pointer {.raises: [], tags: [], contractual.} =
+  ## Add a command to the commands buffer
+  ##
+  ## * b    - the buffer to which to command will be added
+  ## * t    - the type of command
+  ## * size - the size of command to add
+  require:
+    b != nil
+    b.base != nil
+  body:
+    if b == nil:
+      return nil
+    const align: nk_size = alignOf(x = nk_command)
+    let cmd: ptr nk_command = cast[ptr nk_command](nkBufferAlloc(b = b.base,
+        `type` = NK_BUFFER_FRONT, size = size, align = align))
+    if cmd == nil:
+      return nil
+{.pop ruleOn: "params".}
+
+proc nkPushScissor(b: ptr nk_command_buffer; r: nk_rect) {.raises: [], tags: [],
+    contractual.} =
   ## Clear the rectangle. Internal use only
   ##
   ## b - the command buffer in which scissor will be used
   ## r - the rectangle of the scissor
   ##
   ## Returns the modified parameter b
-  discard
-{.pop ruleOn: "params".}
+  body:
+    b.clip = r
+    {.ruleOff: "namedParams".}
+    let cmd: ptr nk_command_scissor = cast[ptr nk_command_scissor](
+        nkCommandBufferPush(b = b, t = NK_COMMAND_SCISSOR, size = sizeOf(
+        nk_command_scissor)))
+    {.ruleOn: "namedParams".}
+    if cmd == nil:
+      return
+    cmd.x = r.x.cshort
+    cmd.y = r.y.cshort
+    cmd.w = max(x = 0.cushort, y = r.w.cushort)
+    cmd.h = max(x = 0.cushort, y = r.h.cushort)
 
 # ------
 # Popups
 # ------
-proc nkStartPopup(ctx; win: var PNkWindow) {.raises: [], tags: [], contractual.} =
+proc nkStartPopup(ctx; win: var PNkWindow) {.raises: [], tags: [],
+    contractual.} =
   ## Start setting a popup window. Internal use only
   ##
   ## * ctx - the Nuklear context
@@ -493,7 +608,7 @@ proc nkPopupBegin(ctx; pType: PopupType; title: string; flags: set[WindowFlags];
     popup.buffer = win.buffer
     nkStartPopup(ctx = ctx, win = win)
     # var allocated: nk_size = ctx.memory.allocated
-    nkPushScissor(b = popup.buffer, r = nkNullRect)
+    nkPushScissor(b = popup.buffer.addr, r = nkNullRect)
     return true
 
 proc createPopup(pType2: PopupType; title2: cstring;
@@ -716,6 +831,16 @@ template colorButton*(r, g, b: int; onPressCode: untyped) =
   if createColorButton(r1 = r.cint, g1 = g.cint, b1 = b.cint):
     onPressCode
 
+template textButton*(title: string; len: Natural; onPressCode: untyped) =
+  ## Draw the button and the selected text with selected length on it. Execute
+  ## the selected code on pressing it.
+  ##
+  ## * title       - the text to shown on the button
+  ## * len         - the maximum length of the text to show on the button
+  ## * onPressCode - the Nim code to execute when the button was pressed
+  if nk_button_text(ctx = ctx, ctitle = title.cstring, clen = len.cint):
+    onPressCode
+
 template labelButton*(title: string; onPressCode: untyped) =
   ## Draw the button with the selected text on it. Execute the selected code
   ## on pressing it.
@@ -770,7 +895,8 @@ proc createStyledButton(bTitle: cstring; bStyle: ButtonStyle): bool {.raises: [
       g = bStyle.borderColor.g.cint, b = bStyle.borderColor.b.cint)
   buttonStyle.rounding = bStyle.rounding.cfloat
   buttonStyle.padding = new_nk_vec2(x = bStyle.padding.x, y = bStyle.padding.y)
-  buttonStyle.image_padding = new_nk_vec2(x = bStyle.imagePadding.x, y = bStyle.imagePadding.y)
+  buttonStyle.image_padding = new_nk_vec2(x = bStyle.imagePadding.x,
+      y = bStyle.imagePadding.y)
   proc nk_button_label_styled(ctx; style: var nk_style_button;
       title: cstring): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
@@ -823,7 +949,8 @@ proc createStyledImageButton(img: PImage; bStyle: ButtonStyle): bool {.raises: [
       g = bStyle.borderColor.g.cint, b = bStyle.borderColor.b.cint)
   buttonStyle.rounding = bStyle.rounding.cfloat
   buttonStyle.padding = new_nk_vec2(x = bStyle.padding.x, y = bStyle.padding.y)
-  buttonStyle.image_padding = new_nk_vec2(x = bStyle.imagePadding.x, y = bStyle.imagePadding.y)
+  buttonStyle.image_padding = new_nk_vec2(x = bStyle.imagePadding.x,
+      y = bStyle.imagePadding.y)
   proc nk_button_image_styled(ctx; style: var nk_style_button;
       image: nk_image): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
@@ -1790,10 +1917,7 @@ proc isMouseHovering*(rect: NimRect): bool {.raises: [], tags: [],
     contractual.} =
   ## Check if mouse is hovering over the selected rectangle
   ##
-  ## * x   - the X coordinate of top left corner of the rectangle
-  ## * y   - the Y coordinate of top left corner of the rectangle
-  ## * w   - the width of the rectangle in pixels
-  ## * h   - the height of the rectangle in pixels
+  ## * rect - the area in which the mouse will be checked for hovering
   ##
   ## Returns true if the mouse is hovering over the rectangle, otherwise false
   proc nk_input_is_mouse_hovering_rect(i: ptr nk_input;
@@ -1834,6 +1958,34 @@ proc getMouseDelta*(): NimVec2 {.raises: [], tags: [], contractual.} =
   ##
   ## Returns vector with information about the mouse movement delta
   return NimVec2(x: ctx.input.mouse.delta.x, y: ctx.input.mouse.delta.y)
+
+proc mouseClicked*(id: Buttons; rect: NimRect): bool {.raises: [], tags: [],
+    contractual.} =
+  ## Check if the selected mouse button was clicked in the selected area
+  ##
+  ## * id  - the mouse button which was pressed
+  ## * rect - the area in which the mouse button was pressed
+  ##
+  ## Returns true if the selected mouse button was clicked in the selected
+  ## area, otherwise false.
+  proc nk_input_mouse_clicked(i: ptr nk_input; id: Buttons;
+      rect: nk_rect): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_input_mouse_clicked(i = ctx.input.addr, id = id, rect = new_nk_rect(
+      x = rect.x, y = rect.y, w = rect.w, h = rect.h))
+
+proc isMouseClicked*(btn: Buttons): bool {.raises: [], tags: [],
+    contractual.} =
+  ## Check if the selected mouse button was clicked in the current widget
+  ##
+  ## * btn  - the mouse button which was pressed
+  ##
+  ## Returns true if the selected mouse button was clicked in the current
+  ## widget, otherwise false.
+  proc nk_widget_is_mouse_clicked(ctx; btn: Buttons): nk_bool {.importc, nodecl,
+      raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_widget_is_mouse_clicked(ctx = ctx, btn = btn)
 
 # ---------
 # Edit text
