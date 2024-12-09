@@ -56,8 +56,15 @@ proc main() =
   while true:
     let started = cpuTime()
     # Input
-    if nuklearInput():
-      break
+    when defined(xlib):
+      if nuklearInput():
+        break
+    else:
+      case nuklearInput()
+      of quitEvent:
+        break
+      else:
+        discard
 
     # GUI
     window(name = "Demo", x = 50, y = 50, w = 200, h = 200, {windowBorder,
