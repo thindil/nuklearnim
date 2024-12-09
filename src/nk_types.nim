@@ -63,6 +63,8 @@ type
     ## Internal Nuklear type
   nk_hash* = cuint
     ## Internal Nuklear type
+  nk_uint* = cuint
+    ## Internal Nuklear type
 
 # ------------
 # Enumerations
@@ -153,6 +155,9 @@ type
   nk_allocation_type* = enum
     ## Internal Nuklear type
     NK_BUFFER_FIXED, NK_BUFFER_DYNAMIC
+  nk_keys* = enum
+    ## Internal Nuklear type
+    NK_KEY_NONE, NK_KEY_SHIFT, NK_KEY_CTRL, NK_KEY_DEL, NK_KEY_ENTER, NK_KEY_TAB, NK_KEY_BACKSPACE, NK_KEY_COPY, NK_KEY_CUT, NK_KEY_PASTE, NK_KEY_UP, NK_KEY_DOWN, NK_KEY_LEFT, NK_KEY_RIGHT, NK_KEY_TEXT_INSERT_MODE, NK_KEY_TEXT_REPLACE_MODE, NK_KEY_TEXT_RESET_MODE, NK_KEY_TEXT_LINE_START, NK_KEY_TEXT_LINE_END, NK_KEY_TEXT_START, NK_KEY_TEXT_END, NK_KEY_TEXT_UNDO, NK_KEY_TEXT_REDO, NK_KEY_TEXT_SELECT_ALL, NK_KEY_TEXT_WORD_LEFT, NK_KEY_TEXT_WORD_RIGHT, NK_KEY_SCROLL_START, NK_KEY_SCROLL_END, NK_KEY_SCROLL_DOWN, NK_KEY_SCROLL_UP, NK_KEY_MAX
 
 # -------
 # Objects
@@ -273,12 +278,23 @@ type
     ## Internal Nuklear type
     `ptr`*: ptr nk_size
     size*: nk_size
+  nk_plugin_alloc* = proc (handle: nk_handle; old: pointer; size: nk_size): pointer
+    ## Internal Nuklear type
+  nk_plugin_free* = proc (handle: nk_handle; old: pointer): pointer
+    ## Internal Nuklear type
+  nk_allocator* {.importc: "struct nk_allocator", nodecl.} = object
+    ## Internal Nuklear type
+    alloc*: nk_plugin_alloc
+    free*: nk_plugin_free
+    userdata*: nk_handle
   nk_buffer* {.importc: "struct nk_buffer", nodecl.} = object
     ## Internal Nuklear type
     allocated*, needed*: nk_size
     memory*: nk_memory
     size*: nk_size
     `type`*: nk_allocation_type
+    pool*: nk_allocator
+    grow_factor*: cfloat
   nk_context* {.importc: "struct nk_context", nodecl.} = object
     ## Internal Nuklear type
     style*: nk_style
@@ -427,6 +443,9 @@ type
         panelTooltip.int,
     panelSetPopup = panelSetNonBlock.int or panelPopup.int,
     panelSetSub = panelSetPopup.int or panelGroup.int
+  UserEvents* = enum
+    ## The UI events caused by the user
+    noEvent, quitEvent, sizeChangedEvent
 {.pop ruleOn: "namedParams".}
 
 # ----------
