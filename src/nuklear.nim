@@ -72,11 +72,19 @@ proc nk_end(ctx) {.importc, cdecl, raises: [], tags: [], contractual.}
 proc nk_zero(`ptr`: pointer; size: nk_size) {.importc, cdecl, raises: [],
     tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
+proc nk_widget_disable_begin(ctx) {.importc, cdecl, raises: [], tags: [], contractual.}
+  ## A binding to Nuklear's function. Internal use only
+proc nk_widget_disable_end(ctx) {.importc, cdecl, raises: [], tags: [], contractual.}
+  ## A binding to Nuklear's function. Internal use only
 
 # -------
 # Windows
 # -------
 proc nk_create_window(ctx): pointer {.importc, cdecl, raises: [], tags: [], contractual.}
+  ## A binding to Nuklear's function. Internal use only
+
+proc nk_window_find(ctx; name: cstring): ptr nk_window {.importc, nodecl,
+    raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
 
 # ------
@@ -417,6 +425,55 @@ proc nkRoundUpPow2(v: nk_uint): nk_uint {.raises: [], tags: [], contractual.} =
   {.ruleOn: "assignments".}
   result.inc
 
+template disabled*(content: untyped) =
+  ## Create disabled widgets list
+  ##
+  ## * content - the content of the list
+  nk_widget_disable_begin(ctx = ctx)
+  content
+  nk_widget_disable_end(ctx = ctx)
+
+# -------
+# Windows
+# -------
+
+proc windowHasFocus*(): bool {.raises: [], tags: [], contractual.} =
+  ## Check if the currently processed window is currently active
+  ##
+  ## Returns true if the window is active, otherwise false
+  proc nk_window_has_focus(ctx): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_window_has_focus(ctx = ctx)
+
+proc windowIsActive*(name: string): bool {.raises: [], tags: [], contractual.} =
+  ## Check if the selected window is active
+  ##
+  ## * name - the neme of the window to check
+  ##
+  ## Returns true if the window is active, otherwise false
+  proc nk_window_is_active(ctx; name: cstring): nk_bool {.importc, nodecl,
+      raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_window_is_active(ctx = ctx, name = name.cstring)
+
+proc windowEditActive*(name: string): bool {.raises: [], tags: [],
+    contractual.} =
+  ## Check if the selected window has active edit widget
+  ##
+  ## * name - the name of the window to check
+  ##
+  ## Returns true if the window has active edit widget, otherwise false
+  return nk_window_find(ctx = ctx, name = name.cstring).edit.active == 1
+
+proc windowPropertyActive*(name: string): bool {.raises: [], tags: [],
+    contractual.} =
+  ## Check if the selected window has active property widget
+  ##
+  ## * name - the name of the window to check
+  ##
+  ## Returns true if the window has active property widget, otherwise false
+  return nk_window_find(ctx = ctx, name = name.cstring).property.active == 1
+
 # ------
 # Buffer
 # ------
@@ -432,7 +489,6 @@ template `+`[T](p: ptr T; off: nk_size): ptr T =
   cast[ptr type(p[])](cast[nk_size](p) +% off * sizeof(p[]))
 {.pop ruleOn: "namedParams".}
 
-{.push ruleOff: "params".}
 proc nkBufferAlign(unaligned: pointer; align: nk_size; alignment: var nk_size;
     `type`: nk_buffer_allocation_type): pointer {.raises: [], tags: [],
     contractual.} =
@@ -463,7 +519,8 @@ proc nkBufferAlign(unaligned: pointer; align: nk_size; alignment: var nk_size;
   return memory
 
 proc nkBufferRealloc(b: ptr nk_buffer; capacity: nk_size;
-    size: nk_size): pointer {.raises: [], tags: [RootEffect], contractual.} =
+    size: var nk_size): pointer {.raises: [], tags: [RootEffect],
+        contractual.} =
   ## Reallocate memory for the selected buffer. Internal use only
   ##
   ## * b        - the buffer which memory will be reallocated
@@ -482,6 +539,28 @@ proc nkBufferRealloc(b: ptr nk_buffer; capacity: nk_size;
             size = capacity)
       except:
         return nil
+
+    size = capacity
+    let bufferSize: nk_size = b.memory.size
+    if temp != b.memory.`ptr`:
+      copyMem(dest = temp, source = b.memory.`ptr`, size = bufferSize)
+      try:
+        discard b.pool.free(handle = b.pool.userdata, old = b.memory.`ptr`)
+      except:
+        discard
+
+    if b.size == bufferSize:
+      # no back buffer so just set correct size
+      b.size = capacity
+      return temp
+
+    # copy back buffer to the end of the new buffer
+    let
+      backSize: nk_size = bufferSize - b.size
+      dst: pointer = cast[pointer](cast[ptr nk_buffer](temp) + (capacity - backSize))
+      src: pointer = cast[pointer](cast[ptr nk_buffer](temp) + b.size)
+    copyMem(dest = dst, source = src, size = backSize)
+    b.size = capacity - backSize
     return temp
 
 proc nkBufferAlloc(b: ptr nk_buffer; `type`: nk_buffer_allocation_type; size,
@@ -515,18 +594,36 @@ proc nkBufferAlloc(b: ptr nk_buffer; `type`: nk_buffer_allocation_type; size,
       full = (b.allocated + size + alignment) > b.size
     else:
       full = (b.size - min(x = b.size, y = (size + alignment))) <= b.allocated
+
     if full:
       if b.`type` != NK_BUFFER_DYNAMIC:
         return nil
       if b.`type` != NK_BUFFER_DYNAMIC or b.pool.alloc == nil or b.pool.free == nil:
         return nil
+
       # buffer is full so allocate bigger buffer if dynamic
       var capacity: nk_size = (b.memory.size.cfloat * b.grow_factor).nk_size
       capacity = max(x = capacity, y = nkRoundUpPow2(v = (b.allocated.nk_uint +
           size.nk_uint)).nk_size)
       b.memory.`ptr` = cast[ptr nk_size](nkBufferRealloc(b = b,
           capacity = capacity, size = b.memory.size))
+      if b.memory.`ptr` == nil:
+        return nil
 
+      # align newly allocated pointer
+      if `type` == NK_BUFFER_FRONT:
+        unaligned = b.memory.`ptr` + b.allocated
+      else:
+        unaligned = b.memory.`ptr` + (b.size - size)
+      memory = nkBufferAlign(unaligned = unaligned, align = align,
+          alignment = alignment, `type` = `type`)
+
+    if `type` == NK_BUFFER_FRONT:
+      unaligned = b.memory.`ptr` + b.allocated
+    else:
+      unaligned = b.memory.`ptr` + (b.size - size)
+    b.needed += alignment
+    b.calls.inc
     return memory
 
 # ----
@@ -551,7 +648,22 @@ proc nkCommandBufferPush(b: ptr nk_command_buffer; t: nk_command_type;
         `type` = NK_BUFFER_FRONT, size = size, align = align))
     if cmd == nil:
       return nil
-{.pop ruleOn: "params".}
+
+    # make sure the offset to the next command is aligned
+    b.last = cast[nk_size](cast[ptr nk_byte](cmd)) - cast[nk_size](cast[
+        ptr nk_byte](b.base.memory.`ptr`))
+    let
+      unaligned: pointer = cast[ptr nk_byte](cmd) + size
+      memory: pointer = cast[pointer]((cast[nk_size](unaligned) + (align -
+          1)) and not(align - 1))
+      alignment: nk_size = cast[nk_size](cast[ptr nk_byte](memory)) - cast[
+          nk_size](cast[ptr nk_byte](unaligned))
+    cmd.`type` = t
+    cmd.next = b.base.allocated + alignment
+    when defined(nkIncludeCommandUserData):
+      cmd.userdata = b.userdata
+    b.`end` = cmd.next
+    return cmd
 
 proc nkPushScissor(b: ptr nk_command_buffer; r: nk_rect) {.raises: [], tags: [
     RootEffect], contractual.} =
@@ -574,6 +686,22 @@ proc nkPushScissor(b: ptr nk_command_buffer; r: nk_rect) {.raises: [], tags: [
     cmd.y = r.y.cshort
     cmd.w = max(x = 0.cushort, y = r.w.cushort)
     cmd.h = max(x = 0.cushort, y = r.h.cushort)
+
+# -----
+# Panel
+# -----
+{.push ruleOff: "params"}
+proc nkPanelBegin(ctx; title: string; panelType: nk_panel_type): bool {.raises: [],
+    tags: [], contractual.} =
+  ## Start drawing a Nuklear panel. Internal use only
+  ##
+  ## * ctx       - the Nuklear context
+  ## * title     - the panel's title
+  ## * panelType - the type of the panel to draw
+  ##
+  ## Returns true if the panel was drawn, otherwise false
+  return true
+{.pop ruleOn: "params"}
 
 # ------
 # Popups
@@ -2038,6 +2166,17 @@ proc isMouseClicked*(btn: Buttons): bool {.raises: [], tags: [],
       raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
   return nk_widget_is_mouse_clicked(ctx = ctx, btn = btn)
+
+proc isKeyPressed*(key: nk_keys): bool {.raises: [], tags: [], contractual.} =
+  ## Check if the selected key is pressed
+  ##
+  ## * key - the key which was pressed
+  ##
+  ## Returns true if the selected key is pressed, otherwise false
+  proc nk_input_is_key_pressed(i: ptr nk_input;
+      key: nk_keys): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_input_is_key_pressed(i = ctx.input.addr, key = key)
 
 # ---------
 # Edit text
