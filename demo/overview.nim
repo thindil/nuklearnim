@@ -277,18 +277,9 @@ proc overview*() =
         checkbox("Inactive", inactive)
         setLayoutRowStatic(30, 80, 1)
         if inactive == 1:
-          saveButtonStyle()
-          setButtonStyle(normal, 40, 40, 40)
-          setButtonStyle(hover, 40, 40, 40)
-          setButtonStyle(active, 40, 40, 40)
-          setButtonStyle(borderColor, 60, 60, 60)
-          setButtonStyle(textBackground, 60, 60, 60)
-          setButtonStyle(textNormal, 60, 60, 60)
-          setButtonStyle(textHover, 60, 60, 60)
-          setButtonStyle(textActive, 60, 60, 60)
-          labelButton("button"):
-            discard
-          restoreButtonStyle()
+          disabled:
+            labelButton("button"):
+              discard
         else:
           labelButton("button"):
             echo "button pressed"
