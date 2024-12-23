@@ -1,4 +1,4 @@
-# Copyright © 2023-2024 Bartek Jasickctx = i
+# Copyright © 2023-2024 Bartek Jasicki
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -486,7 +486,7 @@ template `+`[T](p: ptr T; off: nk_size): ptr T =
   ## * off - the value to add to the pointer
   ##
   ## Returns the new pointer moved by off.
-  cast[ptr type(p[])](cast[nk_size](p) +% off * sizeof(p[]))
+  cast[ptr type(p[])](cast[nk_size](p) +% off * p[].sizeof)
 {.pop ruleOn: "namedParams".}
 
 proc nkBufferAlign(unaligned: pointer; align: nk_size; alignment: var nk_size;
@@ -665,6 +665,10 @@ proc nkCommandBufferPush(b: ptr nk_command_buffer; t: nk_command_type;
     b.`end` = cmd.next
     return cmd
 
+# ----
+# Misc
+# ----
+
 proc nkPushScissor(b: ptr nk_command_buffer; r: nk_rect) {.raises: [], tags: [
     RootEffect], contractual.} =
   ## Clear the rectangle. Internal use only
@@ -675,11 +679,9 @@ proc nkPushScissor(b: ptr nk_command_buffer; r: nk_rect) {.raises: [], tags: [
   ## Returns the modified parameter b
   body:
     b.clip = r
-    {.ruleOff: "namedParams".}
     let cmd: ptr nk_command_scissor = cast[ptr nk_command_scissor](
-        nkCommandBufferPush(b = b, t = NK_COMMAND_SCISSOR, size = sizeOf(
-        nk_command_scissor)))
-    {.ruleOn: "namedParams".}
+        nkCommandBufferPush(b = b, t = NK_COMMAND_SCISSOR,
+            size = nk_command_scissor.sizeof))
     if cmd == nil:
       return
     cmd.x = r.x.cshort
@@ -690,9 +692,9 @@ proc nkPushScissor(b: ptr nk_command_buffer; r: nk_rect) {.raises: [], tags: [
 # -----
 # Panel
 # -----
-{.push ruleOff: "params"}
-proc nkPanelBegin(ctx; title: string; panelType: nk_panel_type): bool {.raises: [],
-    tags: [], contractual.} =
+{.push ruleOff: "params".}
+proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
+    ], tags: [], contractual.} =
   ## Start drawing a Nuklear panel. Internal use only
   ##
   ## * ctx       - the Nuklear context
@@ -700,8 +702,27 @@ proc nkPanelBegin(ctx; title: string; panelType: nk_panel_type): bool {.raises: 
   ## * panelType - the type of the panel to draw
   ##
   ## Returns true if the panel was drawn, otherwise false
-  return true
-{.pop ruleOn: "params"}
+  require:
+    ctx != nil
+    ctx.current != nil
+    ctx.current.layout != nil
+  body:
+    zeroMem(p = ctx.current.layout, size = ctx.current.layout.sizeof)
+    if (ctx.current.flags and NK_WINDOW_HIDDEN.cint) == 1 or (
+        ctx.current.flags and NK_WINDOW_CLOSED.cint) == 1:
+      zeroMem(p = ctx.current.layout, size = nk_panel.sizeof)
+      ctx.current.layout.`type` = panelType
+      return false;
+    # pull state into local stack
+    let
+      style: nk_style = ctx.style
+      font: ptr nk_user_font = style.font
+      win: ptr nk_window = ctx.current
+      layout: PNkPanel = win.layout
+      `out`: nk_command_buffer = win.buffer
+      `in`: nk_input = (if (win.flags and NK_WINDOW_NO_INPUT.cint) == 1: nk_input() else: ctx.input)
+    return true
+{.pop ruleOn: "params".}
 
 # ------
 # Popups
