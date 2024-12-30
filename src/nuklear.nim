@@ -692,6 +692,44 @@ proc nkPushScissor(b: ptr nk_command_buffer; r: nk_rect) {.raises: [], tags: [
 # -----
 # Panel
 # -----
+proc nkPanelGetPadding(style: nk_style; `type`: PanelType): nk_vec2 {.raises: [
+    ], tags: [], contractual.} =
+  ## Get the padding for the selected panel, based on its type. Internal use
+  ## only
+  ##
+  ## * style - the whole style of the application
+  ## * type  - the selected type of the panel
+  ##
+  ## Returns vector with information about padding for the selected panel
+  case `type`
+  of panelWindow:
+    return style.window.padding
+  of panelGroup:
+    return style.window.group_padding
+  of panelPopup:
+    return style.window.popup_padding
+  of panelContextual:
+    return style.window.contextual_padding
+  of panelCombo:
+    return style.window.combo_padding
+  of panelMenu:
+    return style.window.menu_padding
+  of panelTooltip:
+    return style.window.tooltip_padding
+  else:
+    discard
+
+proc nkPanelHasHeader(flags: nk_flags; title: string): bool {.raises: [], tags: [], contractual.} =
+  ## Check if a panel has a header to draw. Internal use only
+  ##
+  ## * flags - the panel's flags
+  ## * title - the panel's  title
+  var active: nk_bool = nkFalse
+  active = (flags and (NK_WINDOW_CLOSABLE.ord.int or NK_WINDOW_MINIMIZABLE.ord.int)).nk_bool
+  active = (active or (flags and NK_WINDOW_TITLE.ord.int).nk_bool).nk_bool
+  active = (active and not(flags and NK_WINDOW_HIDDEN.ord.int).nk_bool and title.len > 0).nk_bool
+  return active
+
 {.push ruleOff: "params".}
 proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     ], tags: [], contractual.} =
@@ -717,10 +755,33 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     let
       style: nk_style = ctx.style
       font: ptr nk_user_font = style.font
-      win: ptr nk_window = ctx.current
+    var win: ptr nk_window = ctx.current
+    let
       layout: PNkPanel = win.layout
       `out`: nk_command_buffer = win.buffer
-      `in`: nk_input = (if (win.flags and NK_WINDOW_NO_INPUT.cint) == 1: nk_input() else: ctx.input)
+      `in`: nk_input = (if (win.flags and NK_WINDOW_NO_INPUT.cint) ==
+          1: nk_input() else: ctx.input)
+    when defined(nkIncludeCommandUserdata):
+      win.buffer.userdata = ctx.userdata
+    # pull style configuration into local stack
+    let
+      scrollbarSize: nk_vec2 = style.window.scrollbar_size
+      panelPadding: nk_vec2 = nkPanelGetPadding(style = style,
+          `type` = panelType)
+
+    # window movement
+    if (win.flags and NK_WINDOW_MOVEABLE.ord.int) == 1 and (win.flags and
+        NK_WINDOW_ROM.ord.int) != 1:
+      # calculate draggable window space
+      var header: nk_rect = nk_rect(x: win.bounds.x, y: win.bounds.y,
+          w: win.bounds.w, h: 0)
+      if nkPanelHasHeader(flags = win.flags, title = title):
+        header.h = font.height + 2.0 * style.window.header.padding.y
+        header.h += 2.0 * style.window.header.label_padding.y
+      else:
+        header.h = panelPadding.y
+      # window movement by dragging
+      let leftMouseDown: bool = `in`.mouse.buttons[NK_BUTTON_LEFT].down
     return true
 {.pop ruleOn: "params".}
 
@@ -2289,14 +2350,25 @@ proc selectableSymbolLabel*(sym: SymbolType; title: string; value: var bool;
 # ------
 # Images
 # ------
-proc image*(image: PImage) {.raises: [], tags: [], contractual.} =
+proc image*(image: PImage; padding: NimVec2 = NimVec2(x: 0, y: 0)) {.raises: [], tags: [], contractual.} =
   ## Draw an image
   ##
-  ## * image - pointer to the image which will be drawn
-  proc nk_new_image(ctx; img: nk_image) {.importc: "nk_image", nodecl, raises: [
+  ## * image   - pointer to the image which will be drawn
+  ## * padding - the padding of the image, can be empty
+  proc nk_draw_image(b: var nk_command_buffer; r: nk_rect; img: var nk_image; col: nk_color) {.importc: "nk_draw_image", nodecl, raises: [
       ], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
-  nk_new_image(ctx = ctx, img = nk_image_ptr(iPtr = image))
+  proc nk_state_widget(bounds: var nk_rect; ctx): int {.importc: "nk_widget", nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  var bounds: nk_rect = nk_rect(x: padding.x, y: 0, w: 0, h: 0)
+  discard nk_state_widget(bounds = bounds, ctx = ctx)
+  if padding != NimVec2(x: 0, y: 0):
+    bounds.x += padding.x
+    bounds.y += padding.y
+    bounds.w -= 2 * padding.x
+    bounds.h -= 2 * padding.y
+  var newImage: nk_image = nk_image_ptr(iPtr = image)
+  nk_draw_image(b = ctx.current.buffer, r = bounds, img = newImage, col = nk_color(r: 255, g: 255, b: 255, a: 255))
 
 # --------
 # Tooltips
@@ -2334,3 +2406,11 @@ proc colorPicker*(color: NimColorF;
       r: color.r, g: color.g, b: color.b, a: color.a), fmt = format)
   result = NimColorF(r: newColor.r, g: newColor.g, b: newColor.b, a: newColor.a)
 
+proc ruleHorizontal*(color: NimColor, rounding: bool) {.raises: [], tags: [], contractual.} =
+  ## Draw a horizontal rule with selected color
+  ##
+  ## * color    - the color of the rule
+  ## * rounding - if true, corners of the rule will be rounded
+  proc nk_rule_horizontal(ctx; color: nk_color; rounding: nk_bool) {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  nk_rule_horizontal(ctx = ctx, color = nk_color(r: color.r.uint8, g: color.g.uint8, b: color.b.uint8), rounding = (if rounding: nkTrue else: nkFalse))

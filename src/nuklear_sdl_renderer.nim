@@ -154,6 +154,7 @@ type
     ## Used to store data about an application's font
     path*: string
     size*: Positive = 14
+    unicodeRange*: array[2, nk_rune] = [0, 0]
 
 var
   win: WindowPtr        ## The main X window of the program
@@ -211,6 +212,7 @@ proc nuklearInput*(): UserEvents =
       if wEvt.event == SDL_WINDOWEVENT_SIZE_CHANGED.cuint:
         return sizeChangedEvent
     of SDL_KEYUP.cuint, SDL_KEYDOWN.cuint:
+      result = keyEvent
       let
         down: nk_bool = (evt.`type` == SDL_KEYDOWN.cuint).nk_bool
         state: ptr array[512, uint8] = SDL_GetKeyboardState()
@@ -274,9 +276,10 @@ proc nuklearInput*(): UserEvents =
       of SDLK_ESCAPE.cuint:
         nk_input_key(ctx, NK_KEY_ESCAPE, down)
       else:
-        discard
+        result = noEvent
     else:
       discard nk_sdl_handle_event(evt)
+      result = anyEvent
   nk_input_end(ctx)
 
 proc nuklearDraw*() =
@@ -324,6 +327,8 @@ proc nuklearLoadFont*(font: FontData): ptr nk_font =
   var
     atlas: ptr nk_font_atlas
     config = new_nk_font_config(0)
+  if font.unicodeRange != [0.nk_rune, 0]:
+    config.`range` = font.unicodeRange
   nk_sdl_font_stash_begin(atlas.unsafeAddr)
   result = nk_font_atlas_add_from_file(atlas, font.path.cstring,
       font.size.cfloat * fontScale, config.unsafeAddr)

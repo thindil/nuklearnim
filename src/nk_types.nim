@@ -26,27 +26,6 @@
 ## Provides types from nuklear library
 import nimalyzer
 
-# ---------
-# Constants
-# ---------
-const
-  nkWindowBorder*: cint = 1 shl 0
-    ## A window has border
-  nkWindowMoveable*: cint = 1 shl 1
-    ## A window is moveable
-  nkWindowScalable*: cint = 1 shl 2
-    ## A window can be resized
-  nkWindowCloseable*: cint = 1 shl 3
-    ## A window can be closed
-  nkWindowMinimizable*: cint = 1 shl 4
-    ## A window can be minimized
-  nkWindowNoScrollbar*: cint = 1 shl 5
-    ## A window has a scrollbar
-  nkWindowScaleLeft*: cint = 1 shl 9
-    ## The resize grip for a window is at bottom left corner
-  nkWindowTitle*: cint = 1 shl 6
-    ## A window has title bar
-
 # ------------
 # Simple types
 # ------------
@@ -141,10 +120,15 @@ type
   nk_window_flags* = enum
     ## Internal Nuklear type
     NK_WINDOW_DYNAMIC = 1 shl 11
+    NK_WINDOW_ROM = 1 shl 12
     NK_WINDOW_HIDDEN = 1 shl 13
     NK_WINDOW_CLOSED = 1 shl 14
   nk_panel_flags* = enum
     ## Internal Nuklear type
+    NK_WINDOW_MOVEABLE = 1 shl 1
+    NK_WINDOW_CLOSABLE = 1 shl 3
+    NK_WINDOW_MINIMIZABLE = 1 shl 4
+    NK_WINDOW_TITLE = 1 shl 6
     NK_WINDOW_NO_INPUT = 1 shl 10
   nk_command_type* = enum
     ## Internal Nuklear type
@@ -171,6 +155,13 @@ type
       NK_KEY_TEXT_SELECT_ALL, NK_KEY_TEXT_WORD_LEFT, NK_KEY_TEXT_WORD_RIGHT,
       NK_KEY_SCROLL_START, NK_KEY_SCROLL_END, NK_KEY_SCROLL_DOWN,
       NK_KEY_SCROLL_UP, NK_KEY_ESCAPE, NK_KEY_MAX
+  nk_buttons* = enum
+    ## Internal Nuklear type
+    NK_BUTTON_LEFT,
+    NK_BUTTON_MIDDLE,
+    NK_BUTTON_RIGHT,
+    NK_BUTTON_DOUBLE,
+    NK_BUTTON_MAX
 
 # -------
 # Objects
@@ -201,10 +192,14 @@ type
   nk_style_window_header* {.importc, nodecl.} = object
     ## Internal Nuklear type
     align*: nk_style_header_align
+    padding*: nk_vec2
+    label_padding*: nk_vec2
   nk_style_window* {.importc, nodecl.} = object
     ## Internal Nuklear type
     header*: nk_style_window_header
-    spacing*: nk_vec2
+    spacing*, scrollbar_size*, padding*, group_padding*, popup_padding*,
+      contextual_padding*, combo_padding*, menu_padding*,
+      tooltip_padding*: nk_vec2
   nk_style_button* {.importc: "struct nk_style_button", nodecl.} = object
     ## Internal Nuklear type
     normal*, hover*, active*: nk_style_item
@@ -231,9 +226,14 @@ type
     window*: nk_style_window
     button*: nk_style_button
     font*: ptr nk_user_font
-  nk_mouse* {.importc, nodecl.} = object
+  nk_mouse_button* = object
+    ## Internal Nuklear type
+    down*: nk_bool
+    clicked*: cuint
+  nk_mouse* {.importc: "struct nk_mouse", nodecl.} = object
     ## Internal Nuklear type
     delta*: nk_vec2
+    buttons*: array[NK_BUTTON_MAX, nk_mouse_button]
   nk_input* {.importc: "struct nk_input", nodecl.} = object
     ## Internal Nuklear type
     mouse*: nk_mouse
@@ -326,6 +326,8 @@ type
     current*: ptr nk_window
     seq*: uint
     memory*: nk_buffer
+    when defined(nkIncludeCommandUserData):
+      userdata*: nk_handle ## Interna Nuklear data
   nk_rect* {.importc: "struct nk_rect", nodecl.} = object
     ## Internal Nuklear type
     x*, y*, w*, h*: cfloat
@@ -338,6 +340,7 @@ type
     ## Internal Nuklear type
   nk_font_config* {.importc: "struct nk_font_config", nodecl.} = object
     ## Internal Nuklear type
+    `range`*: array[2, nk_rune]
   nk_image* {.importc: "struct nk_image", nodecl.} = object
     ## Internal Nuklear type
     handle*: nk_handle
@@ -348,7 +351,26 @@ type
   PNkPanel* = ptr nk_panel
     ## Pointer to nk_panel structure
 
+# ---------
+# Constants
+# ---------
 const
+  nkWindowBorder*: cint = 1 shl 0
+    ## A window has border
+  nkWindowMoveable*: cint = 1 shl 1
+    ## A window is moveable
+  nkWindowScalable*: cint = 1 shl 2
+    ## A window can be resized
+  nkWindowCloseable*: cint = 1 shl 3
+    ## A window can be closed
+  nkWindowMinimizable*: cint = 1 shl 4
+    ## A window can be minimized
+  nkWindowNoScrollbar*: cint = 1 shl 5
+    ## A window has a scrollbar
+  nkWindowScaleLeft*: cint = 1 shl 9
+    ## The resize grip for a window is at bottom left corner
+  nkWindowTitle*: cint = 1 shl 6
+    ## A window has title bar
   nkNullRect*: nk_rect = nk_rect(x: -8192.0, y: -8192.0, w: -8192.0, h: -8192.0)
     ## An empty rectangle
 
@@ -474,7 +496,7 @@ type
     panelSetSub = panelSetPopup.int or panelGroup.int
   UserEvents* = enum
     ## The UI events caused by the user
-    noEvent, quitEvent, sizeChangedEvent
+    noEvent, quitEvent, sizeChangedEvent, keyEvent, anyEvent
 {.pop ruleOn: "namedParams".}
 
 # ----------
