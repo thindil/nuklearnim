@@ -25,7 +25,7 @@
 
 # Nuklear overview demo translated to Nim (for Xlib binding)
 
-import std/[math, strformat, times]
+import std/[colors, math, strformat, times]
 when defined(xlib):
   import nuklear_xlib
 else:
@@ -198,8 +198,8 @@ proc overview*() =
         label("Label aligned left")
         label("Label aligned centered", centered)
         label("Label aligned right", right)
-        colorLabel("Blue text", 0, 0, 255)
-        colorLabel("Yellow text", 255, 255, 0)
+        colorLabel("Blue text", colBlue)
+        colorLabel("Yellow text", colYellow)
         text("Text without /0", alignment = right)
         setLayoutRowStatic(100, 200, 1)
         wrapLabel("This is a very long line to hopefully get this text to be wrapped into multiple lines to show line wrapping")
