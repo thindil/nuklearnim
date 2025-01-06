@@ -1,4 +1,4 @@
-# Copyright © 2023-2024 Bartek Jasicki
+# Copyright © 2023-2025 Bartek Jasicki
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ## Provides types from nuklear library
-import nimalyzer
+import contracts, nimalyzer
 
 # ------------
 # Simple types
@@ -174,7 +174,7 @@ type
   nk_colorf* {.importc: "struct nk_colorf", nodecl.} = object
     ## Internal Nuklear type
     r*, g*, b*, a*: cfloat
-  nk_vec2* {.importc: "struct nk_vec2", nodecl.} = object
+  nk_vec2* {.importc: "struct nk_vec2", nodecl, completeStruct.} = object
     ## Internal Nuklear type
     x*, y*: cfloat
   nk_nine_slice* {.importc: "struct nk_nine_slice", nodecl.} = object
@@ -200,6 +200,7 @@ type
     spacing*, scrollbar_size*, padding*, group_padding*, popup_padding*,
       contextual_padding*, combo_padding*, menu_padding*,
       tooltip_padding*: nk_vec2
+    background*: nk_color
   nk_style_button* {.importc: "struct nk_style_button", nodecl.} = object
     ## Internal Nuklear type
     normal*, hover*, active*: nk_style_item
@@ -221,11 +222,15 @@ type
     userdata*: nk_handle
     height*: cfloat
     width*: nk_text_width_f
+  nk_style_text* {.importc: "struct nk_style_text", nodecl.} = object
+    ## Internal Nuklear type
+    padding*: nk_vec2
   nk_style* {.importc, nodecl.} = object
     ## Internal Nuklear type
     window*: nk_style_window
     button*: nk_style_button
     font*: ptr nk_user_font
+    text*: nk_style_text
   nk_mouse_button* = object
     ## Internal Nuklear type
     down*: nk_bool
@@ -340,7 +345,7 @@ type
     ## Internal Nuklear type
   nk_font_config* {.importc: "struct nk_font_config", nodecl.} = object
     ## Internal Nuklear type
-    `range`*: array[2, nk_rune]
+    `range`*: pointer
   nk_image* {.importc: "struct nk_image", nodecl.} = object
     ## Internal Nuklear type
     handle*: nk_handle
@@ -409,6 +414,9 @@ type
     ## The types of fields in style's settings for UI buttons
     normal, hover, active, borderColor, textBackground, textNormal, textHover,
         textActive, rounding, padding, border, imagePadding, touchPadding
+  ColorStyleTypes* = enum
+    ## The types of fields in style's settings for UI colors
+    background
   WindowStyleTypes* = enum
     ## The types of fields in style's settings for windows
     spacing
@@ -514,4 +522,17 @@ converter toNkFlags*(x: EditTypes): nk_flags =
 converter toCint*(x: bool): cint =
   ## Converts Nim bool type to Nim cint type
   if x: 1 else: 0
+
+# -------------------
+# Creating structures
+# -------------------
+proc new_nk_rect*(x, y, w, h: cfloat): nk_rect {.importc: "nk_rect", nodecl,
+    raises: [], tags: [], contractual.}
+  ## A binding to Nuklear's function. Internal use only
+proc new_nk_vec2*(x, y: cfloat): nk_vec2 {.importc: "nk_vec2", nodecl, raises: [
+    ], tags: [], contractual.}
+  ## A binding to Nuklear's function. Internal use only
+proc new_nk_font_config*(pixelHeight: cfloat): nk_font_config {.importc: "nk_font_config",
+    nodecl, raises: [], tags: [], contractual.}
+  ## A binding to Nuklear's function. Internal use only
 
