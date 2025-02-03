@@ -3693,6 +3693,8 @@ enum nk_style_colors {
     NK_COLOR_GROUP_TEXT,
     NK_COLOR_SELECT_ACTIVE_TEXT,
     NK_COLOR_PROPERTY_TEXT,
+    NK_COLOR_POPUP,
+    NK_COLOR_POPUP_BORDER,
     NK_COLOR_COUNT
 };
 enum nk_style_cursor {
@@ -5379,6 +5381,7 @@ struct nk_style_window {
 
     struct nk_color border_color;
     struct nk_color popup_border_color;
+    struct nk_color popup_background;
     struct nk_color combo_border_color;
     struct nk_color contextual_border_color;
     struct nk_color menu_border_color;
@@ -18381,7 +18384,9 @@ NK_API void nk_style_default(struct nk_context *ctx){nk_style_from_table(ctx, 0)
     NK_COLOR(NK_COLOR_HEADER_TEXT,              175,175,175,255) \
     NK_COLOR(NK_COLOR_GROUP_TEXT,               175,175,175,255) \
     NK_COLOR(NK_COLOR_SELECT_ACTIVE_TEXT,       175,175,175,255) \
-    NK_COLOR(NK_COLOR_PROPERTY_TEXT,            175,175,175,255)
+    NK_COLOR(NK_COLOR_PROPERTY_TEXT,            175,175,175,255) \
+    NK_COLOR(NK_COLOR_POPUP,                    45, 45, 45, 255) \
+    NK_COLOR(NK_COLOR_POPUP_BORDER,             65, 65, 65, 255)
 
 NK_GLOBAL const struct nk_color
 nk_default_color_style[NK_COLOR_COUNT] = {
@@ -19033,7 +19038,8 @@ nk_style_from_table(struct nk_context *ctx, const struct nk_color *table)
     win->background = table[NK_COLOR_WINDOW];
     win->fixed_background = nk_style_item_color(table[NK_COLOR_WINDOW]);
     win->border_color = table[NK_COLOR_BORDER];
-    win->popup_border_color = table[NK_COLOR_BORDER];
+    win->popup_border_color = table[NK_COLOR_POPUP_BORDER];
+    win->popup_background = table[NK_COLOR_POPUP];
     win->combo_border_color = table[NK_COLOR_BORDER];
     win->contextual_border_color = table[NK_COLOR_BORDER];
     win->menu_border_color = table[NK_COLOR_BORDER];
@@ -21960,6 +21966,8 @@ nk_panel_layout(const struct nk_context *ctx, struct nk_window *win,
     out = &win->buffer;
     if (layout->type == NK_PANEL_TOOLTIP) {
        color = style->window.tooltip_background;
+    } else if (layout->type == NK_PANEL_POPUP) {
+       color = style->window.popup_background;
     } else {
        color = style->window.background;
     }
@@ -30483,6 +30491,45 @@ nk_tooltip_begin(struct nk_context *ctx, float width)
     return ret;
 }
 
+NK_API nk_bool
+nk_tooltip_begin2(struct nk_context *ctx, float width, float startx, float starty)
+{
+    int x,y,w,h;
+    struct nk_window *win;
+    const struct nk_input *in;
+    struct nk_rect bounds;
+    int ret;
+
+    NK_ASSERT(ctx);
+    NK_ASSERT(ctx->current);
+    NK_ASSERT(ctx->current->layout);
+    if (!ctx || !ctx->current || !ctx->current->layout)
+        return 0;
+
+    /* make sure that no nonblocking popup is currently active */
+    win = ctx->current;
+    in = &ctx->input;
+    if (win->popup.win && ((int)win->popup.type & (int)NK_PANEL_SET_NONBLOCK))
+        return 0;
+
+    w = nk_iceilf(width);
+    h = nk_iceilf(nk_null_rect.h);
+    x = nk_ifloorf(startx) - (int)win->layout->clip.x;
+    y = nk_ifloorf(starty) - (int)win->layout->clip.y;
+
+    bounds.x = (float)x;
+    bounds.y = (float)y;
+    bounds.w = (float)w;
+    bounds.h = (float)h;
+
+    ret = nk_popup_begin(ctx, NK_POPUP_DYNAMIC,
+        "__##Tooltip##__", NK_WINDOW_NO_SCROLLBAR|NK_WINDOW_BORDER, bounds);
+    if (ret) win->layout->flags &= ~(nk_flags)NK_WINDOW_ROM;
+    win->popup.type = NK_PANEL_TOOLTIP;
+    ctx->current->layout->type = NK_PANEL_TOOLTIP;
+    return ret;
+}
+
 NK_API void
 nk_tooltip_end(struct nk_context *ctx)
 {
@@ -30523,6 +30570,41 @@ nk_tooltip(struct nk_context *ctx, const char *text)
 
     /* execute tooltip and fill with text */
     if (nk_tooltip_begin(ctx, (float)text_width)) {
+        nk_layout_row_dynamic(ctx, (float)text_height, 1);
+        nk_text(ctx, text, text_len, NK_TEXT_LEFT);
+        nk_tooltip_end(ctx);
+    }
+}
+NK_API void
+nk_tooltip2(struct nk_context *ctx, const char *text, float startx, float starty)
+{
+    const struct nk_style *style;
+    struct nk_vec2 padding;
+
+    int text_len;
+    float text_width;
+    float text_height;
+
+    NK_ASSERT(ctx);
+    NK_ASSERT(ctx->current);
+    NK_ASSERT(ctx->current->layout);
+    NK_ASSERT(text);
+    if (!ctx || !ctx->current || !ctx->current->layout || !text)
+        return;
+
+    /* fetch configuration data */
+    style = &ctx->style;
+    padding = style->window.padding;
+
+    /* calculate size of the text and tooltip */
+    text_len = nk_strlen(text);
+    text_width = style->font->width(style->font->userdata,
+                    style->font->height, text, text_len);
+    text_width += (4 * padding.x);
+    text_height = (style->font->height + 2 * padding.y);
+
+    /* execute tooltip and fill with text */
+    if (nk_tooltip_begin2(ctx, (float)text_width, startx, starty)) {
         nk_layout_row_dynamic(ctx, (float)text_height, 1);
         nk_text(ctx, text, text_len, NK_TEXT_LEFT);
         nk_tooltip_end(ctx);

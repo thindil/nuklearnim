@@ -25,8 +25,8 @@
 
 import std/[colors, hashes, macros]
 import contracts, nimalyzer
-import nk_button, nk_colors, nk_context, nk_tooltip, nk_types, nk_widget
-export nk_button, nk_colors, nk_context, nk_tooltip, nk_types, nk_widget
+import nk_button, nk_colors, nk_context, nk_layout, nk_tooltip, nk_types, nk_widget
+export nk_button, nk_colors, nk_context, nk_layout, nk_tooltip, nk_types, nk_widget
 
 # Temporary disable unused warnings
 {.push hint[XDeclaredButNotUsed]: off.}
@@ -42,17 +42,6 @@ type PImage* = pointer ## A pointer to the image type
 # Procedures parameters
 # ---------------------
 using ctx: PContext
-
-# -----
-# Input
-# -----
-proc nk_input_begin*(ctx) {.importc, nodecl, raises: [], tags: [], contractual.}
-  ## A binding to Nuklear's function. Internal use only
-proc nk_input_end*(ctx) {.importc, nodecl, raises: [], tags: [], contractual.}
-  ## A binding to Nuklear's function. Internal use only
-proc nk_input_key*(ctx; key: nk_keys; down: nk_bool) {.importc, nodecl,
-    raises: [], tags: [], contractual.}
-  ## A binding to Nuklear's function. Internal use only
 
 # -------
 # General
@@ -77,6 +66,17 @@ proc nk_window_find(ctx; name: cstring): ptr nk_window {.importc, nodecl,
     raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
 
+# -----
+# Input
+# -----
+proc nk_input_begin*(ctx) {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## A binding to Nuklear's function. Internal use only
+proc nk_input_end*(ctx) {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## A binding to Nuklear's function. Internal use only
+proc nk_input_key*(ctx; key: nk_keys; down: nk_bool) {.importc, nodecl,
+    raises: [], tags: [], contractual.}
+  ## A binding to Nuklear's function. Internal use only
+
 # ------
 # Panels
 # ------
@@ -93,22 +93,6 @@ proc nk_labelf(ctx; flags: nk_flags; fmt: cstring) {.importc,
 # -------
 # Layouts
 # -------
-proc nk_layout_row_end(ctx) {.importc, cdecl, raises: [], tags: [], contractual.}
-  ## A binding to Nuklear's function. Internal use only
-proc nk_layout_row_begin(ctx; fmt: nk_layout_format;
-    rowHeight: cfloat; ccols: cint) {.importc, cdecl, raises: [], tags: [], contractual.}
-  ## A binding to Nuklear's function. Internal use only
-proc nk_layout_row_push(ctx; cwidth: cfloat) {.importc, cdecl, raises: [],
-    tags: [], contractual.}
-  ## A binding to Nuklear's function. Internal use only
-proc nk_layout_row(ctx; fmt: nk_layout_format; height: cfloat;
-    cols: cint; ratio: pointer) {.importc, nodecl, raises: [], tags: [], contractual.}
-  ## A binding to Nuklear's function. Internal use only
-proc nk_layout_space_begin(ctx; fmt: nk_layout_format;
-    cheight: cfloat; widgetCount: cint) {.importc, cdecl, raises: [], tags: [], contractual.}
-  ## A binding to Nuklear's function. Internal use only
-proc nk_layout_space_end(ctx) {.importc, cdecl, raises: [], tags: [], contractual.}
-  ## A binding to Nuklear's function. Internal use only
 proc nk_layout_row_template_begin(ctx; cheight: cfloat) {.importc, cdecl,
     raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
@@ -141,6 +125,8 @@ proc nk_chart_end(ctx) {.importc, cdecl, raises: [], tags: [], contractual.}
 # Popups
 # ------
 proc nk_popup_end(ctx) {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## A binding to Nuklear's function. Internal use only
+proc nk_tooltip_end(ctx) {.importc, nodecl, raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
 
 # -----
@@ -409,6 +395,15 @@ proc windowHasFocus*(): bool {.raises: [], tags: [], contractual.} =
     ## A binding to Nuklear's function. Internal use only
   return nk_window_has_focus(ctx = ctx)
 
+proc windowSetFocus*(name: string) {.raises: [], tags: [], contractual.} =
+  ## Set the selected window as an active window
+  ##
+  ## * name - the name of the window to set as active
+  proc nk_window_set_focus(ctx; name: cstring) {.importc, nodecl,
+      raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  nk_window_set_focus(ctx = ctx, name = name.cstring)
+
 proc windowIsActive*(name: string): bool {.raises: [], tags: [], contractual.} =
   ## Check if the selected window is active
   ##
@@ -441,7 +436,6 @@ proc windowPropertyActive*(name: string): bool {.raises: [], tags: [],
 # ------
 # Buffer
 # ------
-
 {.push ruleOff: "namedParams".}
 template `+`[T](p: ptr T; off: nk_size): ptr T =
   ## Pointer artihmetic, adding
@@ -593,7 +587,6 @@ proc nkBufferAlloc(b: ptr nk_buffer; `type`: nk_buffer_allocation_type; size,
 # ----
 # Draw
 # ----
-
 proc nkCommandBufferPush(b: ptr nk_command_buffer; t: nk_command_type;
     size: nk_size): pointer {.raises: [], tags: [RootEffect], contractual.} =
   ## Add a command to the commands buffer. Internal use only
@@ -632,7 +625,6 @@ proc nkCommandBufferPush(b: ptr nk_command_buffer; t: nk_command_type;
 # ----
 # Misc
 # ----
-
 proc nkPushScissor(b: ptr nk_command_buffer; r: nk_rect) {.raises: [], tags: [
     RootEffect], contractual.} =
   ## Clear the rectangle. Internal use only
@@ -652,6 +644,107 @@ proc nkPushScissor(b: ptr nk_command_buffer; r: nk_rect) {.raises: [], tags: [
     cmd.y = r.y.cshort
     cmd.w = max(x = 0.cushort, y = r.w.cushort)
     cmd.h = max(x = 0.cushort, y = r.h.cushort)
+
+# -----
+# Input
+# -----
+proc isMouseHovering*(rect: NimRect): bool {.raises: [], tags: [],
+    contractual.} =
+  ## Check if mouse is hovering over the selected rectangle
+  ##
+  ## * rect - the area in which the mouse will be checked for hovering
+  ##
+  ## Returns true if the mouse is hovering over the rectangle, otherwise false
+  proc nk_input_is_mouse_hovering_rect(i: ptr nk_input;
+      rect: nk_rect): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_input_is_mouse_hovering_rect(i = ctx.input.addr, rect = new_nk_rect(
+      x = rect.x, y = rect.y, w = rect.w, h = rect.h))
+
+proc isMousePrevHovering*(x, y, w, h: float): bool {.raises: [], tags: [],
+    contractual.} =
+  ## Check if the mouse was previously hovering over the selected rectangle
+  ##
+  ## * x   - the X coordinate of top left corner of the rectangle
+  ## * y   - the Y coordinate of top left corner of the rectangle
+  ## * w   - the width of the rectangle in pixels
+  ## * h   - the height of the rectangle in pixels
+  ##
+  ## Returns true if the mouse was hovering over the rectangle, otherwise false
+  proc nk_input_is_mouse_prev_hovering_rect(i: ptr nk_input;
+      rect: nk_rect): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_input_is_mouse_prev_hovering_rect(i = ctx.input.addr,
+      rect = new_nk_rect(x = x, y = y, w = w, h = h))
+
+proc isMouseDown*(id: Buttons): bool {.raises: [], tags: [], contractual.} =
+  ## Check if mouse is pressed
+  ##
+  ## * id  - the mouse button which is pressed
+  ##
+  ## Returns true if the selected mouse button is pressed, otherwise false
+  proc nk_input_is_mouse_down(i: ptr nk_input; id: Buttons): nk_bool {.importc,
+      nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_input_is_mouse_down(i = ctx.input.addr, id = id)
+
+proc getMouseDelta*(): NimVec2 {.raises: [], tags: [], contractual.} =
+  ## Get the mouse vector between last check and current position of the mouse
+  ##
+  ## Returns vector with information about the mouse movement delta
+  return NimVec2(x: ctx.input.mouse.delta.x, y: ctx.input.mouse.delta.y)
+
+proc mouseClicked*(id: Buttons; rect: NimRect): bool {.raises: [], tags: [],
+    contractual.} =
+  ## Check if the selected mouse button was clicked in the selected area
+  ##
+  ## * id  - the mouse button which was pressed
+  ## * rect - the area in which the mouse button was pressed
+  ##
+  ## Returns true if the selected mouse button was clicked in the selected
+  ## area, otherwise false.
+  proc nk_input_mouse_clicked(i: ptr nk_input; id: Buttons;
+      rect: nk_rect): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_input_mouse_clicked(i = ctx.input.addr, id = id, rect = new_nk_rect(
+      x = rect.x, y = rect.y, w = rect.w, h = rect.h))
+
+proc isMouseClicked*(btn: Buttons): bool {.raises: [], tags: [],
+    contractual.} =
+  ## Check if the selected mouse button was clicked in the current widget
+  ##
+  ## * btn  - the mouse button which was pressed
+  ##
+  ## Returns true if the selected mouse button was clicked in the current
+  ## widget, otherwise false.
+  proc nk_widget_is_mouse_clicked(ctx; btn: Buttons): nk_bool {.importc, nodecl,
+      raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_widget_is_mouse_clicked(ctx = ctx, btn = btn)
+
+proc isKeyPressed*(key: nk_keys): bool {.raises: [], tags: [], contractual.} =
+  ## Check if the selected key is pressed
+  ##
+  ## * key - the key which was pressed
+  ##
+  ## Returns true if the selected key is pressed, otherwise false
+  proc nk_input_is_key_pressed(i: ptr nk_input;
+      key: nk_keys): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_input_is_key_pressed(i = ctx.input.addr, key = key)
+
+proc hasMouseClickDownInRect(id: Buttons; rect: nk_rect; down: nk_bool): bool {.raises: [], tags: [], contractual.} =
+  ## Check if the mouse button is clicked down in the selected rectangle
+  ##
+  ## * id   - the mouse button which will be checked
+  ## * rect - the rectangle in which the mouse button will be checked
+  ## * down - if true, the button is clicked down
+  ##
+  ## Returns true if the mouse button was checked in the selected rectangle, otherwise false
+  proc nk_input_has_mouse_click_down_in_rect(i: ptr nk_input; id: Buttons; rect: nk_rect; down: nk_bool): nk_bool
+    {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_input_has_mouse_click_down_in_rect(i = ctx.input.addr, id = id, rect = rect, down = down)
 
 # -----
 # Panel
@@ -723,7 +816,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     let
       layout: PNkPanel = win.layout
       `out`: nk_command_buffer = win.buffer
-      `in`: nk_input = (if (win.flags and NK_WINDOW_NO_INPUT.cint) ==
+    var `in`: nk_input = (if (win.flags and NK_WINDOW_NO_INPUT.cint) ==
           1: nk_input() else: ctx.input)
     when defined(nkIncludeCommandUserdata):
       win.buffer.userdata = ctx.userdata
@@ -745,9 +838,26 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
       else:
         header.h = panelPadding.y
       # window movement by dragging
+      var buttons: ButtonsArray = cast[ButtonsArray](`in`.mouse.buttons)
       let
-        leftMouseDown: bool = `in`.mouse.buttons[NK_BUTTON_LEFT].down
-        leftMouseClicked: bool = `in`.mouse.buttons[NK_BUTTON_LEFT].clicked == 1
+        leftMouseDown: bool = buttons[NK_BUTTON_LEFT].down
+        leftMouseClicked: bool = buttons[NK_BUTTON_LEFT].clicked == 1
+        leftMouseClickInCursor: bool = hasMouseClickDownInRect(id = left, rect = header, down = nkTrue)
+        cursors: CursorsArray = cast[CursorsArray](ctx.style.cursors)
+      if leftMouseDown and leftMouseClickInCursor and not leftMouseClicked:
+        win.bounds.x += `in`.mouse.delta.x
+        win.bounds.y += `in`.mouse.delta.y
+        buttons[NK_BUTTON_LEFT].clicked_pos.x += `in`.mouse.delta.x
+        buttons[NK_BUTTON_LEFT].clicked_pos.y += `in`.mouse.delta.y
+        ctx.style.cursor_active = cursors[NK_CURSOR_MOVE]
+      `in`.mouse.buttons = buttons.addr
+
+    # setup panel
+    layout.`type` = panelType
+    layout.flags = win.flags
+    layout.bounds = win.bounds
+    layout.bounds.x += panelPadding.x
+    layout.bounds.w -= (2 * panelPadding.x)
     return true
 {.pop ruleOn: "params".}
 
@@ -852,6 +962,17 @@ proc createPopup(pType2: PopupType; title2: cstring;
   return nk_popup_begin(ctx = ctx, pType = pType2, title = title2,
       flags = flags2, rect = new_nk_rect(x = x2, y = y2, w = w2, h = h2))
 
+proc createNonBlocking(flags2: nk_flags; x2, y2, w2, h2: cfloat): bool {.raises: [], tags: [], contractual, discardable.} =
+  ## Create a new Nuklear non-blocking popup window, internal use only,
+  ## temporary code
+  ##
+  ## Returns true if the popup is active, otherwise false.
+  proc nk_nonblock_begin(ctx; flags: nk_flags; body, header: nk_rect, panelType: PanelType): nk_bool
+    {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_nonblock_begin(ctx = ctx, flags = flags2, body = new_nk_rect(x = x2, y = y2, w = w2, h = h2),
+    header = new_nk_rect(x = 0, y = 0, w = 0, h = 0), panel_type = panelPopup)
+
 template popup*(pType: PopupType; title: string; flags: set[WindowFlags]; x,
     y, w, h: float; content: untyped) =
   ## Create a new Nuklear popup window with the selected content
@@ -868,6 +989,20 @@ template popup*(pType: PopupType; title: string; flags: set[WindowFlags]; x,
       flags2 = winSetToInt(nimFlags = flags), x2 = x.cfloat, y2 = y, w2 = w, h2 = h):
     raise newException(exceptn = NuklearException,
         message = "Can't create the popup window with title: '" & title & "'.")
+  content
+  ctx.nk_popup_end
+
+template nonBlocking*(flags: set[WindowFlags]; x, y, w, h: float; content: untyped) =
+  ## Create a new Nuklear non-blocking popup window with the selected content
+  ##
+  ## * flags   - the flags for the popup
+  ## * x       - the X position of the top left corner of the popup
+  ## * y       - the Y position of the top left corner of the popup
+  ## * w       - the width of the popup
+  ## * h       - the height of the popup
+  ## * content - the code executed when the button is pressed
+  discard createNonBlocking(flags2 = winSetToInt(nimFlags = flags),
+    x2 = x.cfloat, y2 = y, w2 = w, h2 = h)
   content
   ctx.nk_popup_end
 
@@ -1019,6 +1154,16 @@ proc wrapLabel*(str: string) {.raises: [], tags: [], contractual.} =
     ## A binding to Nuklear's function. Internal use only
   nk_label_wrap(ctx = ctx, str = str.cstring)
 
+proc colorWrapLabel*(str: string; color: Color) {.raises: [], tags: [], contractual.} =
+  ## Draw a text and wrap it if its lentgh is bigger than the width of its
+  ## container
+  ##
+  ## * str - the text to draw
+  proc nk_label_colored_wrap(ctx; str: cstring; color: nk_color) {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  var (r, g, b) = color.extractRGB
+  nk_label_colored_wrap(ctx = ctx, str = str.cstring, color = nk_rgb(r = r.cint, g = g.cint, b = b.cint))
+
 {.push ruleOff: "namedParams".}
 macro fmtLabel*(alignment: TextAlignment; args: varargs[untyped]): untyped =
   ## Draw a text formatted in the same way like the C function printf
@@ -1149,116 +1294,6 @@ proc layoutSpacePush(ctx; x1, y1, w1, h1: cfloat) {.raises: [], tags: [],
     ## A binding to Nuklear's function. Internal use only
   nk_layout_space_push(ctx = ctx, rect = new_nk_rect(x = x1, y = y1, w = w1, h = h1))
 
-proc setLayoutRowDynamic*(height: float; cols: int) {.raises: [], tags: [],
-    contractual.} =
-  ## Set the current widgets layout to divide it into selected amount of
-  ## columns with the selected height in rows and grows in width when the
-  ## parent window resizes
-  ##
-  ## * height - the height in pixels of each row
-  ## * cols   - the amount of columns in each row
-  proc nk_layout_row_dynamic(ctx; height: cfloat; cols: cint) {.importc, cdecl,
-      raises: [], tags: [], contractual.}
-    ## A binding to Nuklear's function. Internal use only
-  nk_layout_row_dynamic(ctx = ctx, height = height.cfloat, cols = cols.cint)
-
-proc setLayoutRowStatic*(height: float; width, cols: int) {.raises: [], tags: [
-    ], contractual.} =
-  ## Set the current widgets layout to divide it into selected amount of
-  ## columns with the selected height in rows but it will not grow in width
-  ## when the parent window resizes
-  ##
-  ## * height - the height in pixels of each row
-  ## * width  - the width in pixels of each column
-  ## * cols   - the amount of columns in each row
-  proc nk_layout_row_static(ctx; height: cfloat; itemWidth,
-      cols: cint) {.importc, cdecl, raises: [], tags: [], contractual.}
-    ## A binding to Nuklear's function. Internal use only
-  nk_layout_row_static(ctx = ctx, height = height.cfloat,
-      itemWidth = width.cint, cols = cols.cint)
-
-template layoutStatic*(height: float; cols: int; content: untyped) =
-  ## Start setting manualy each row of the current widgets layout. The layout
-  ## will not resize when the parent window change its size
-  ##
-  ## * height  - the width in pixels or window's ratio of each row
-  ## * cols    - the amount of columns in each row
-  ## * content - the content of the layout
-  nk_layout_row_begin(ctx = ctx, fmt = NK_STATIC, rowHeight = height.cfloat,
-      ccols = cols.cint)
-  content
-  nk_layout_row_end(ctx = ctx)
-
-template layoutDynamic*(height: float; cols: int; content: untyped) =
-  ## Start setting manualy each row of the current widgets layout. The layout
-  ## will resize when the parent window change its size
-  ##
-  ## * height   - the width in pixels or window's ratio of each row
-  ## * cols    - the amount of columns in each row
-  ## * content - the content of the layout
-  nk_layout_row_begin(ctx = ctx, fmt = NK_DYNAMIC, rowHeight = height.cfloat,
-      ccols = cols.cint)
-  content
-  nk_layout_row_end(ctx = ctx)
-
-template row*(width: float; content: untyped) =
-  ## Set the content of the row in the current widgets layout
-  ##
-  ## * width   - the width in the pixels or window's ratio of each column
-  ## * content - the content of the row
-  nk_layout_row_push(ctx = ctx, cwidth = width.cfloat)
-  content
-
-proc setLayoutRowStatic*(height: float; cols: int; ratio: openArray[
-    cfloat]) {.raises: [], tags: [], contractual.} =
-  ## Set the current widgets layout to divide it into selected amount of
-  ## columns with the selected height in rows but it will not grow in width
-  ## when the parent window resizes
-  ##
-  ## * height - the height in pixels of each row
-  ## * cols   - the amount of columns in each row
-  ## * ratio  - the array or sequence of cfloat with width of the colums
-  nk_layout_row(ctx = ctx, fmt = NK_STATIC, height = height.cfloat,
-      cols = cols.cint, ratio = ratio.addr)
-
-proc setLayoutRowDynamic*(height: float; cols: int; ratio: openArray[
-    cfloat]) {.raises: [], tags: [], contractual.} =
-  ## Set the current widgets layout to divide it into selected amount of
-  ## columns with the selected height in rows but it will grow in width
-  ## when the parent window resizes
-  ##
-  ## * height - the height in pixels of each row
-  ## * cols   - the amount of columns in each row
-  ## * ratio  - the array or sequence of cfloat with width of the colums
-  nk_layout_row(ctx = ctx, fmt = NK_DYNAMIC, height = height.cfloat,
-      cols = cols.cint, ratio = ratio.addr)
-
-template layoutSpaceStatic*(height: float; widgetsCount: int;
-    content: untyped) =
-  ## Start setting manualy each row of the current widgets layout. The layout
-  ## will not resize when the parent window change its size
-  ##
-  ## * height       - the width in pixels or window's ratio of each row
-  ## * widgetsCount - the amount of widgets in each row.
-  ## * content      - the content of the layout
-  nk_layout_space_begin(ctx = ctx, fmt = NK_STATIC, cheight = height.cfloat,
-      widgetCount = widgetsCount.cint)
-  content
-  nk_layout_space_end(ctx = ctx)
-
-template layoutSpaceDynamic*(height: float; widgetsCount: int;
-    content: untyped) =
-  ## Start setting manualy each row of the current widgets layout. The layout
-  ## will resize when the parent window change its size
-  ##
-  ## * height       - the width in pixels or window's ratio of each row
-  ## * widgetsCount - the amount of widgets in each row.
-  ## * content      - the content of the layout
-  nk_layout_space_begin(ctx = ctx, fmt = NK_DYNAMIC, cheight = height.cfloat,
-      widgetCount = widgetsCount.cint)
-  content
-  nk_layout_space_end(ctx = ctx)
-
 template row*(x, y, w, h: float; content: untyped) =
   ## Set the content of the row in the current widgets layout, used in space
   ## layout
@@ -1308,33 +1343,6 @@ proc rowTemplateStatic*(width: float) {.raises: [], tags: [], contractual.} =
       raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
   nk_layout_row_template_push_static(ctx = ctx, width = width.cfloat)
-
-proc layoutWidgetBounds*(): NimRect {.raises: [], tags: [], contractual.} =
-  ## Get the rectangle of the current widget in the layout
-  ##
-  ## Returns NimRect with the data for the current widget
-  proc nk_layout_widget_bounds(ctx): nk_rect {.importc, nodecl, raises: [],
-      tags: [], contractual.}
-    ## A binding to Nuklear's function. Internal use only
-  let rect: nk_rect = nk_layout_widget_bounds(ctx = ctx)
-  result = NimRect(x: rect.x, y: rect.y, w: rect.w, h: rect.h)
-
-proc layoutSetMinRowHeight*(height: float) {.raises: [], tags: [],
-    contractual.} =
-  ## Set the currently used minimum row height. Must contains also paddings size.
-  ##
-  ## * height - the new minimum row height for auto generating the row height
-  proc nk_layout_set_min_row_height(ctx; height: cfloat) {.importc, nodecl,
-      raises: [], tags: [], contractual.}
-    ## A binding to Nuklear's function. Internal use only
-  nk_layout_set_min_row_height(ctx = ctx, height = height.cfloat)
-
-proc lyoutResetMinRowHeight*() {.raises: [], tags: [], contractual.} =
-  ## Reset the currently used minimum row height.
-  proc nk_layout_reset_min_row_height(ctx) {.importc, nodecl, raises: [],
-      tags: [], contractual.}
-    ## A binding to Nuklear's function. Internal use only
-  nk_layout_reset_min_row_height(ctx = ctx)
 
 # -----
 # Menus
@@ -1617,6 +1625,10 @@ proc setButtonStyle*(field: ButtonStyleTypes; value: float) {.raises: [],
     ctx.style.button.rounding = value.cfloat
   of border:
     ctx.style.button.border = value.cfloat
+  of colorFactorBackground:
+    ctx.style.button.color_factor_background = value.cfloat
+  of colorFactorText:
+    ctx.style.button.color_factor_text = value.cfloat
   else:
     discard
 
@@ -1655,6 +1667,9 @@ proc stylePushVec2*(field: WindowStyleTypes; x,
     ## A binding to Nuklear's function. Internal use only
   if field == spacing:
     return nk_style_push_vec2(ctx = ctx, dest = ctx.style.window.spacing,
+        source = new_nk_vec2(x = x, y = y))
+  elif field == padding:
+    return nk_style_push_vec2(ctx = ctx, dest = ctx.style.window.padding,
         source = new_nk_vec2(x = x, y = y))
 
 proc stylePushFloat*(field: ButtonStyleTypes;
@@ -2043,105 +2058,6 @@ template group*(title: string; flags: set[WindowFlags]; content: untyped) =
     content
     nk_group_end(ctx = ctx)
 
-# -----
-# Input
-# -----
-proc nkInBox(px, py, x, y, w, h: float): bool {.raises: [], tags: [], contractual.} =
-  ## Check if the selected coordinates are in the selected box
-  ##
-  ## * px - the X coordinate to check
-  ## * py - the Y coordinate to check
-  ## * x  - the starting X value
-  ## * y  - the starting Y value
-  ## * w  - the width of the box
-  ## * h  - the height of the box
-  return px in x..x+w and py in y..y+h
-
-proc isMouseHovering*(rect: NimRect): bool {.raises: [], tags: [],
-    contractual.} =
-  ## Check if mouse is hovering over the selected rectangle
-  ##
-  ## * rect - the area in which the mouse will be checked for hovering
-  ##
-  ## Returns true if the mouse is hovering over the rectangle, otherwise false
-  proc nk_input_is_mouse_hovering_rect(i: ptr nk_input;
-      rect: nk_rect): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
-    ## A binding to Nuklear's function. Internal use only
-  return nk_input_is_mouse_hovering_rect(i = ctx.input.addr, rect = new_nk_rect(
-      x = rect.x, y = rect.y, w = rect.w, h = rect.h))
-
-proc isMousePrevHovering*(x, y, w, h: float): bool {.raises: [], tags: [],
-    contractual.} =
-  ## Check if the mouse was previously hovering over the selected rectangle
-  ##
-  ## * x   - the X coordinate of top left corner of the rectangle
-  ## * y   - the Y coordinate of top left corner of the rectangle
-  ## * w   - the width of the rectangle in pixels
-  ## * h   - the height of the rectangle in pixels
-  ##
-  ## Returns true if the mouse was hovering over the rectangle, otherwise false
-  proc nk_input_is_mouse_prev_hovering_rect(i: ptr nk_input;
-      rect: nk_rect): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
-    ## A binding to Nuklear's function. Internal use only
-  return nk_input_is_mouse_prev_hovering_rect(i = ctx.input.addr,
-      rect = new_nk_rect(x = x, y = y, w = w, h = h))
-
-proc isMouseDown*(id: Buttons): bool {.raises: [], tags: [], contractual.} =
-  ## Check if mouse is pressed
-  ##
-  ## * id  - the mouse button which is pressed
-  ##
-  ## Returns true if the selected mouse button is pressed, otherwise false
-  proc nk_input_is_mouse_down(i: ptr nk_input; id: Buttons): nk_bool {.importc,
-      nodecl, raises: [], tags: [], contractual.}
-    ## A binding to Nuklear's function. Internal use only
-  return nk_input_is_mouse_down(i = ctx.input.addr, id = id)
-
-proc getMouseDelta*(): NimVec2 {.raises: [], tags: [], contractual.} =
-  ## Get the mouse vector between last check and current position of the mouse
-  ##
-  ## Returns vector with information about the mouse movement delta
-  return NimVec2(x: ctx.input.mouse.delta.x, y: ctx.input.mouse.delta.y)
-
-proc mouseClicked*(id: Buttons; rect: NimRect): bool {.raises: [], tags: [],
-    contractual.} =
-  ## Check if the selected mouse button was clicked in the selected area
-  ##
-  ## * id  - the mouse button which was pressed
-  ## * rect - the area in which the mouse button was pressed
-  ##
-  ## Returns true if the selected mouse button was clicked in the selected
-  ## area, otherwise false.
-  proc nk_input_mouse_clicked(i: ptr nk_input; id: Buttons;
-      rect: nk_rect): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
-    ## A binding to Nuklear's function. Internal use only
-  return nk_input_mouse_clicked(i = ctx.input.addr, id = id, rect = new_nk_rect(
-      x = rect.x, y = rect.y, w = rect.w, h = rect.h))
-
-proc isMouseClicked*(btn: Buttons): bool {.raises: [], tags: [],
-    contractual.} =
-  ## Check if the selected mouse button was clicked in the current widget
-  ##
-  ## * btn  - the mouse button which was pressed
-  ##
-  ## Returns true if the selected mouse button was clicked in the current
-  ## widget, otherwise false.
-  proc nk_widget_is_mouse_clicked(ctx; btn: Buttons): nk_bool {.importc, nodecl,
-      raises: [], tags: [], contractual.}
-    ## A binding to Nuklear's function. Internal use only
-  return nk_widget_is_mouse_clicked(ctx = ctx, btn = btn)
-
-proc isKeyPressed*(key: nk_keys): bool {.raises: [], tags: [], contractual.} =
-  ## Check if the selected key is pressed
-  ##
-  ## * key - the key which was pressed
-  ##
-  ## Returns true if the selected key is pressed, otherwise false
-  proc nk_input_is_key_pressed(i: ptr nk_input;
-      key: nk_keys): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
-    ## A binding to Nuklear's function. Internal use only
-  return nk_input_is_key_pressed(i = ctx.input.addr, key = key)
-
 # ---------
 # Edit text
 # ---------
@@ -2270,6 +2186,26 @@ proc showTooltips*() {.raises: [], tags: [], contractual.} =
   if not inBounds:
     delay = tooltipDelay
 
+proc createTooltip(width2, x2, y2: float): bool {.raises: [], tags: [], contractual.} =
+  ## Create a new Nuklear tooltip window, internal use only, temporary code
+  ## temporary code
+  ##
+  ## Returns true if the popup is active, otherwise false.
+  proc nk_tooltip_begin2(ctx; width, startx, starty: cfloat): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_tooltip_begin2(ctx = ctx, width = width2.cfloat, startx = x2, starty = y2)
+
+template tooltip*(x, y, width: float; content: untyped) =
+  ## Create a new tooltip window with the selected content
+  ##
+  ## * x       - the X coordinate of the tooltip window
+  ## * y       - the Y coordinate of the tooltip window
+  ## * width   - the width of the tooltip window
+  ## * content - the content of the window
+  if createTooltip(width2 = width, x2 = x, y2 = y):
+    content
+    ctx.nk_tooltip_end
+
 # -------
 # Widgets
 # -------
@@ -2288,14 +2224,15 @@ proc colorPicker*(color: NimColorF;
       r: color.r, g: color.g, b: color.b, a: color.a), fmt = format)
   result = NimColorF(r: newColor.r, g: newColor.g, b: newColor.b, a: newColor.a)
 
-proc ruleHorizontal*(color: NimColor, rounding: bool) {.raises: [], tags: [], contractual.} =
+proc ruleHorizontal*(color: Color, rounding: bool) {.raises: [], tags: [], contractual.} =
   ## Draw a horizontal rule with selected color
   ##
   ## * color    - the color of the rule
   ## * rounding - if true, corners of the rule will be rounded
   proc nk_rule_horizontal(ctx; color: nk_color; rounding: nk_bool) {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
-  nk_rule_horizontal(ctx = ctx, color = nk_color(r: color.r.uint8, g: color.g.uint8, b: color.b.uint8), rounding = (if rounding: nkTrue else: nkFalse))
+  let (r, g, b) = color.extractRGB
+  nk_rule_horizontal(ctx = ctx, color = nk_color(r: r.uint8, g: g.uint8, b: b.uint8), rounding = (if rounding: nkTrue else: nkFalse))
 
 # ------
 # Colors

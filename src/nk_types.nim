@@ -162,6 +162,16 @@ type
     NK_BUTTON_RIGHT,
     NK_BUTTON_DOUBLE,
     NK_BUTTON_MAX
+  nk_style_cursor* = enum
+    ## Internal Nuklear type
+    NK_CURSOR_ARROW,
+    NK_CURSOR_TEXT,
+    NK_CURSOR_MOVE,
+    NK_CURSOR_RESIZE_VERTICAL,
+    NK_CURSOR_RESIZE_HORIZONTAL,
+    NK_CURSOR_RESIZE_TOP_LEFT_DOWN_RIGHT,
+    NK_CURSOR_RESIZE_TOP_RIGHT_DOWN_LEFT,
+    NK_CURSOR_COUNT
 
 # -------
 # Objects
@@ -206,7 +216,7 @@ type
     normal*, hover*, active*: nk_style_item
     border_color*, text_background*, text_normal*, text_hover*,
       text_active*: nk_color
-    rounding*, border*: cfloat
+    rounding*, border*, color_factor_background*, color_factor_text*: cfloat
     padding*: nk_vec2
     image_padding*: nk_vec2
     touch_padding*: nk_vec2
@@ -225,20 +235,25 @@ type
   nk_style_text* {.importc: "struct nk_style_text", nodecl.} = object
     ## Internal Nuklear type
     padding*: nk_vec2
+  nk_cursor* {.importc: "struct nk_cursor", nodecl.} = object
+    ## Internal Nuklear type
   nk_style* {.importc, nodecl.} = object
     ## Internal Nuklear type
     window*: nk_style_window
     button*: nk_style_button
     font*: ptr nk_user_font
     text*: nk_style_text
-  nk_mouse_button* = object
+    cursor_active*: nk_cursor
+    cursors*: pointer
+  nk_mouse_button* {.importc: "struct nk_mouse_button", nodecl.} = object
     ## Internal Nuklear type
     down*: nk_bool
     clicked*: cuint
+    clicked_pos*: nk_vec2
   nk_mouse* {.importc: "struct nk_mouse", nodecl.} = object
     ## Internal Nuklear type
     delta*: nk_vec2
-    buttons*: array[NK_BUTTON_MAX, nk_mouse_button]
+    buttons*: pointer
   nk_input* {.importc: "struct nk_input", nodecl.} = object
     ## Internal Nuklear type
     mouse*: nk_mouse
@@ -277,6 +292,7 @@ type
     `type`*: PanelType
     clip*: nk_rect
     flags*: nk_flags
+    bounds*: nk_rect
   nk_popup_state* {.importc: "struct nk_popup_state", nodecl.} = object
     ## Internal Nuklear type
     win*: ptr nk_window
@@ -355,6 +371,10 @@ type
     ## Pointer to nk_window structure
   PNkPanel* = ptr nk_panel
     ## Pointer to nk_panel structure
+  ButtonsArray* = array[NK_BUTTON_MAX, nk_mouse_button]
+    ## The array of mouse buttons
+  CursorsArray* = array[NK_CURSOR_COUNT, nk_cursor]
+    ## The array of mouse buttons
 
 # ---------
 # Constants
@@ -413,13 +433,14 @@ type
   ButtonStyleTypes* = enum
     ## The types of fields in style's settings for UI buttons
     normal, hover, active, borderColor, textBackground, textNormal, textHover,
-        textActive, rounding, padding, border, imagePadding, touchPadding
+      textActive, rounding, padding, border, imagePadding, touchPadding,
+      colorFactorBackground, colorFactorText
   ColorStyleTypes* = enum
     ## The types of fields in style's settings for UI colors
     background
   WindowStyleTypes* = enum
     ## The types of fields in style's settings for windows
-    spacing
+    spacing, padding
   WindowFlags* {.size: sizeof(cint).} = enum
     ## The settings for windows
     windowNoFlags = 0,
@@ -489,7 +510,7 @@ type
       buttonHoverTextColor, buttonActiveTextColor, editTextColor,
       comboTextColor, tooltipColor, tooltipBorderColor, groupBorderColor,
       headerTextColor, groupTextColor, selectActiveTextColor, propertyTextColor,
-      countColors
+      popupColor, popupBorderColor, countColors
   StyleHeaderAlign* = enum
     ## The styles of the window's header
     headerLeft, headerRight
