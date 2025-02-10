@@ -415,6 +415,15 @@ proc windowIsActive*(name: string): bool {.raises: [], tags: [], contractual.} =
     ## A binding to Nuklear's function. Internal use only
   return nk_window_is_active(ctx = ctx, name = name.cstring)
 
+proc windowIsHovered*(): bool {.raises: [], tags: [], contractual.} =
+  ## Check if the currently processed window is hovered by mouse
+  ##
+  ## Returns true if the window is hovered by mouse, otherwise false
+  proc nk_window_is_hovered(ctx): nk_bool {.importc, nodecl, raises: [],
+    tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_window_is_hovered(ctx = ctx)
+
 proc windowEditActive*(name: string): bool {.raises: [], tags: [],
     contractual.} =
   ## Check if the selected window has active edit widget
@@ -645,6 +654,21 @@ proc nkPushScissor(b: ptr nk_command_buffer; r: nk_rect) {.raises: [], tags: [
     cmd.w = max(x = 0.cushort, y = r.w.cushort)
     cmd.h = max(x = 0.cushort, y = r.h.cushort)
 
+proc nkShrinkRect(r: nk_rect; amount: cfloat): nk_rect {.raises: [], tags: [], contractual.} =
+  ## Shrink the selected rectangle. Internal use only
+  ##
+  ## * r      - the rectangle to shrink
+  ## * amount - the size of which the rectangle will be shrinked
+  ##
+  ## Returns the shrinked rectangle
+  let
+    w = max(r.w, 2 * amount)
+    h = max(r.h, 2 * amount)
+  result.x = r.x + amount
+  result.y = r.y + amount
+  result.w = w - 2 * amount
+  result.h = h - 2 * amount
+
 # -----
 # Input
 # -----
@@ -776,6 +800,35 @@ proc nkPanelGetPadding(style: nk_style; `type`: PanelType): nk_vec2 {.raises: [
   else:
     discard
 
+proc nkPanelGetBorder(style: nk_style; flags: nk_flags; `type`: PanelType): cfloat {.raises: [], tags: [], contractual.} =
+  ## Get the border size for the selected panel, based on its type. Internal use
+  ## only
+  ##
+  ## * style - the whole style of the application
+  ## * type  - the selected type of the panel
+  ##
+  ## Returns size of the border of the selected panel
+  if (flags and NK_WINDOW_BORDER.ord.int).nk_bool:
+    case `type`
+    of panelWindow:
+      return style.window.border
+    of panelGroup:
+      return style.window.group_border
+    of panelPopup:
+      return style.window.popup_border
+    of panelContextual:
+      return style.window.contextual_border
+    of panelCombo:
+      return style.window.combo_border
+    of panelMenu:
+      return style.window.menu_border
+    of panelTooltip:
+      return style.window.tooltip_border
+    else:
+      return 0
+  else:
+    return 0
+
 proc nkPanelHasHeader(flags: nk_flags; title: string): bool {.raises: [], tags: [], contractual.} =
   ## Check if a panel has a header to draw. Internal use only
   ##
@@ -858,6 +911,20 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     layout.bounds = win.bounds
     layout.bounds.x += panelPadding.x
     layout.bounds.w -= (2 * panelPadding.x)
+    if (win.flags and NK_WINDOW_BORDER.ord.int).nk_bool:
+      layout.border = nkPanelGetBorder(style = style, flags = win.flags, `type` = panelType)
+      layout.bounds = nkShrinkRect(r = layout.bounds, amount = layout.border)
+    else:
+      layout.border = 0
+    layout.at_y = layout.bounds.y
+    layout.at_x = layout.bounds.x
+    layout.max_x = 0
+    layout.header_height = 0
+    layout.footer_height = 0
+    layoutResetMinRowHeight()
+    layout.row.index = 0
+    layout.row.columns = 0
+    layout.row.ratio = 0
     return true
 {.pop ruleOn: "params".}
 
@@ -1225,6 +1292,29 @@ template imageButton*(image: PImage; onPressCode: untyped) =
   if createImageButton(img = image):
     onPressCode
 
+proc createImageButtonCentered(img: PImage): bool {.raises: [], tags: [],
+    contractual.} =
+  ## Draw the button with the selected image, internal use only, temporary code
+  ##
+  ## * image - the image to shown on the button
+  ##
+  ## Returns true if button was created, otherwise false
+  proc nk_button_image_centered(ctx; image: nk_image): nk_bool {.importc, nodecl,
+      raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_button_image_centered(ctx = ctx, image = nk_image_ptr(iPtr = img))
+
+template imageButtonCentered*(image: PImage; onPressCode: untyped) =
+  ## Draw the button with the selected image. Execute the selected code
+  ## on pressing it.
+  ##
+  ## * image       - the image to shown on the button
+  ## * onPressCode - the Nim code to execute when the button was pressed
+  ##
+  ## Returns true if button was pressed
+  if createImageButtonCentered(img = image):
+    onPressCode
+
 proc createStyledImageButton(img: PImage; bStyle: ButtonStyle): bool {.raises: [
     ], tags: [], contractual.} =
   ## Draw the button with the selected image, internal use only, temporary code
@@ -1255,6 +1345,33 @@ template imageButtonStyled*(image: PImage; style: ButtonStyle;
   ## * style       - the style used to draw the button
   ## * onPressCode - the Nim code to execute when the button was pressed
   if createStyledImageButton(img = image, bStyle = style):
+    onPressCode
+
+proc createImageLabelButton(img: PImage; txt: string; align: TextAlignment): bool {.raises: [], tags: [],
+    contractual.} =
+  ## Draw the button with the selected image and text, internal use only, temporary code
+  ##
+  ## * image - the image to show on the button
+  ## * text  - the text to show on the button
+  ## * align - the alignment of the text to show
+  ##
+  ## Returns true if button was created, otherwise false
+  proc nk_button_image_label(ctx; image: nk_image; text: cstring; textAlignment: nk_flags): nk_bool {.importc, nodecl,
+      raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_button_image_label(ctx = ctx, image = nk_image_ptr(iPtr = img), text = txt.cstring, text_alignment = align.nk_flags)
+
+template imageLabelButton*(image: PImage; text: string; alignment: TextAlignment; onPressCode: untyped) =
+  ## Draw the button with the selected image and text. Execute the selected code
+  ## on pressing it.
+  ##
+  ## * image       - the image to shown on the button
+  ## * text        - the text to show on the button
+  ## * align       - the alignment of the text to show
+  ## * onPressCode - the Nim code to execute when the button was pressed
+  ##
+  ## Returns true if button was pressed
+  if createImageLabelButton(img = image, txt = text, align = alignment):
     onPressCode
 
 # -------
@@ -1672,7 +1789,7 @@ proc stylePushVec2*(field: WindowStyleTypes; x,
     return nk_style_push_vec2(ctx = ctx, dest = ctx.style.window.padding,
         source = new_nk_vec2(x = x, y = y))
 
-proc stylePushFloat*(field: ButtonStyleTypes;
+proc stylePushFloat*(field: FloatStyleTypes;
     value: cfloat): bool {.discardable, raises: [], tags: [], contractual.} =
   ## Push the float value for the selected Nuklear buttons style on a
   ## temporary stack
@@ -1685,8 +1802,11 @@ proc stylePushFloat*(field: ButtonStyleTypes;
   proc nk_style_push_float(ctx; dest: var cfloat;
       source: cfloat): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
-  if field == rounding:
+  if field == buttonRounding:
     return nk_style_push_float(ctx = ctx, dest = ctx.style.button.rounding,
+        source = value)
+  elif field == popupBorder:
+    return nk_style_push_float(ctx = ctx, dest = ctx.style.window.popup_border,
         source = value)
   return false
 

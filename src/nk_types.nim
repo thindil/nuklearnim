@@ -125,6 +125,7 @@ type
     NK_WINDOW_CLOSED = 1 shl 14
   nk_panel_flags* = enum
     ## Internal Nuklear type
+    NK_WINDOW_BORDER = 1 shl 0
     NK_WINDOW_MOVEABLE = 1 shl 1
     NK_WINDOW_CLOSABLE = 1 shl 3
     NK_WINDOW_MINIMIZABLE = 1 shl 4
@@ -211,6 +212,8 @@ type
       contextual_padding*, combo_padding*, menu_padding*,
       tooltip_padding*: nk_vec2
     background*: nk_color
+    border*, combo_border*, contextual_border*, menu_border*, group_border*,
+      tooltip_border*, popup_border*: cfloat
   nk_style_button* {.importc: "struct nk_style_button", nodecl.} = object
     ## Internal Nuklear type
     normal*, hover*, active*: nk_style_item
@@ -287,12 +290,18 @@ type
     begin*, `end`*, last*: nk_size
     clip*: nk_rect
     base*: ptr nk_buffer
+  nk_row_layout*  {.importc: "struct nk_row_layout".} = object
+    ## Internal Nuklear type
+    index*, columns*: cint
+    ratio*: cfloat
   nk_panel* {.importc: "struct nk_panel", nodecl.} = object
     ## Internal Nuklear type
     `type`*: PanelType
     clip*: nk_rect
     flags*: nk_flags
     bounds*: nk_rect
+    border*, at_y*, at_x*, max_x*, header_height*, footer_height*: cfloat
+    row*: nk_row_layout
   nk_popup_state* {.importc: "struct nk_popup_state", nodecl.} = object
     ## Internal Nuklear type
     win*: ptr nk_window
@@ -435,6 +444,9 @@ type
     normal, hover, active, borderColor, textBackground, textNormal, textHover,
       textActive, rounding, padding, border, imagePadding, touchPadding,
       colorFactorBackground, colorFactorText
+  FloatStyleTypes* = enum
+    ## The types of fields in style's settings with float values
+    buttonRounding, popupBorder
   ColorStyleTypes* = enum
     ## The types of fields in style's settings for UI colors
     background
