@@ -716,7 +716,7 @@ proc overview*() =
                 selected3[i], right)
       treeNode("Notebook", minimized, 18):
         stylePushVec2(spacing, 0, 0)
-        stylePushFloat(rounding, 0)
+        stylePushFloat(buttonRounding, 0)
         layoutStatic(20, 3):
           for i in 0 .. 2:
             let
