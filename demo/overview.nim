@@ -198,8 +198,8 @@ proc overview*() =
         label("Label aligned left")
         label("Label aligned centered", centered)
         label("Label aligned right", right)
-        colorLabel("Blue text", colBlue)
-        colorLabel("Yellow text", colYellow)
+        colorLabel("Blue text", color = colBlue)
+        colorLabel("Yellow text", color = colYellow)
         text("Text without /0", alignment = right)
         setLayoutRowStatic(100, 200, 1)
         wrapLabel("This is a very long line to hopefully get this text to be wrapped into multiple lines to show line wrapping")
@@ -528,7 +528,7 @@ proc overview*() =
       setLayoutRowStatic(30, 160, 1)
       var bounds = getWidgetBounds()
       label("Right click me for menu")
-      contextualMenu({windowNoFlags}, 100, 300, bounds):
+      contextualMenu({windowNoFlags}, 100, 300, bounds, right):
         setLayoutRowDynamic(25, 1);
         checkbox("Menu", showMenu)
         progressBar(prog, 100)
@@ -546,7 +546,7 @@ proc overview*() =
           bounds = getWidgetBounds()
           colorButton(popupColor.r, popupColor.g, popupColor.b):
             discard
-      contextualMenu({windowNoFlags}, 350, 60, bounds):
+      contextualMenu({windowNoFlags}, 350, 60, bounds, right):
         setLayoutRowDynamic(30, 4);
         popupColor.r = property2("#r", 0, popupColor.r, 255, 1, 1)
         popupColor.g = property2("#g", 0, popupColor.g, 255, 1, 1)
