@@ -424,6 +424,14 @@ proc windowIsHovered*(): bool {.raises: [], tags: [], contractual.} =
     ## A binding to Nuklear's function. Internal use only
   return nk_window_is_hovered(ctx = ctx)
 
+proc windowFind*(name: string): ptr nk_window {.raises: [], tags: [], contractual.} =
+  ## Find the window with the selected name
+  ##
+  ## * name - the name of the window to find
+  ##
+  ## Returns the pointer to the selected window
+  return nk_window_find(ctx = ctx, name = name.cstring)
+
 proc windowEditActive*(name: string): bool {.raises: [], tags: [],
     contractual.} =
   ## Check if the selected window has active edit widget
@@ -431,7 +439,7 @@ proc windowEditActive*(name: string): bool {.raises: [], tags: [],
   ## * name - the name of the window to check
   ##
   ## Returns true if the window has active edit widget, otherwise false
-  return nk_window_find(ctx = ctx, name = name.cstring).edit.active == 1
+  return windowFind(name = name).edit.active == 1
 
 proc windowPropertyActive*(name: string): bool {.raises: [], tags: [],
     contractual.} =
@@ -440,7 +448,22 @@ proc windowPropertyActive*(name: string): bool {.raises: [], tags: [],
   ## * name - the name of the window to check
   ##
   ## Returns true if the window has active property widget, otherwise false
-  return nk_window_find(ctx = ctx, name = name.cstring).property.active == 1
+  return windowFind(name = name).property.active == 1
+
+proc windowInput*(name: string; disable: bool = true) {.raises: [], tags: [], contractual.} =
+  ## Enable or disable input in the selected window
+  ##
+  ## * name - the name of the window in which input will be enabled or disabled
+  var root: PNkPanel = windowFind(name = name).layout
+  if disable:
+    while root != nil:
+      root.flags = root.flags or NK_WINDOW_ROM.ord.cint
+      root.flags = root.flags and not NK_WINDOW_REMOVE_ROM.ord.cint
+      root = root.parent
+  else:
+    while root != nil:
+      root.flags = root.flags or NK_WINDOW_REMOVE_ROM.ord.cint
+      root = root.parent
 
 # ------
 # Buffer
@@ -757,6 +780,18 @@ proc isKeyPressed*(key: nk_keys): bool {.raises: [], tags: [], contractual.} =
     ## A binding to Nuklear's function. Internal use only
   return nk_input_is_key_pressed(i = ctx.input.addr, key = key)
 
+proc hasMouseClickInRect*(id: Buttons; rect: NimRect): bool {.raises: [], tags: [], contractual.} =
+  ## Check if the mouse button was clicked in the selected rectangle
+  ##
+  ## * id   - the mouse button which will be checked
+  ## * rect - the rectangle in which the mouse button will be checked
+  ##
+  ## Returns true if the mouse button was checked in the selected rectangle, otherwise false
+  proc nk_input_has_mouse_click_in_rect(i: ptr nk_input; id: Buttons; rect: nk_rect): nk_bool
+    {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_input_has_mouse_click_in_rect(i = ctx.input.addr, id = id, rect = nk_rect(x: rect.x, y: rect.y, w: rect.w, h: rect.h))
+
 proc hasMouseClickDownInRect(id: Buttons; rect: nk_rect; down: nk_bool): bool {.raises: [], tags: [], contractual.} =
   ## Check if the mouse button is clicked down in the selected rectangle
   ##
@@ -840,6 +875,14 @@ proc nkPanelHasHeader(flags: nk_flags; title: string): bool {.raises: [], tags: 
   active = (active and not(flags and NK_WINDOW_HIDDEN.ord.int).nk_bool and title.len > 0).nk_bool
   return active
 
+proc nkPanelIsNonblock(`type`: PanelType): bool {.raises: [], tags: [], contractual.} =
+  ## Check if the selected panel's type is non-blocking panel
+  ##
+  ## * type - the type of panel to check
+  ##
+  ## Returns true if the panel's type is non-blocking, otherwise false.
+  return (`type`.cint and panelSetNonBlock.cint).bool
+
 {.push ruleOff: "params".}
 proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     ], tags: [], contractual.} =
@@ -880,8 +923,8 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
           `type` = panelType)
 
     # window movement
-    if (win.flags and NK_WINDOW_MOVEABLE.ord.int) == 1 and (win.flags and
-        NK_WINDOW_ROM.ord.int) != 1:
+    if (win.flags and NK_WINDOW_MOVABLE.cint) == 1 and (win.flags and
+        NK_WINDOW_ROM.cint) != 1:
       # calculate draggable window space
       var header: nk_rect = nk_rect(x: win.bounds.x, y: win.bounds.y,
           w: win.bounds.w, h: 0)
@@ -911,7 +954,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     layout.bounds = win.bounds
     layout.bounds.x += panelPadding.x
     layout.bounds.w -= (2 * panelPadding.x)
-    if (win.flags and NK_WINDOW_BORDER.ord.int).nk_bool:
+    if (win.flags and NK_WINDOW_BORDER.cint).nk_bool:
       layout.border = nkPanelGetBorder(style = style, flags = win.flags, `type` = panelType)
       layout.bounds = nkShrinkRect(r = layout.bounds, amount = layout.border)
     else:
@@ -925,6 +968,40 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     layout.row.index = 0
     layout.row.columns = 0
     layout.row.ratio = 0
+    layout.row.item_width = 0
+    layout.row.tree_depth = 0
+    layout.row.height = panelPadding.y
+    layout.has_scrolling = nkTrue.cuint
+    if not(win.flags and NK_WINDOW_NO_SCROLLBAR.cint).nk_bool:
+      layout.bounds.w -= scrollbarSize.x
+    if nkPanelIsNonblock(`type` = panelType):
+      layout.footer_height = 0
+      if not(win.flags and NK_WINDOW_NO_SCROLLBAR.cint).nk_bool or (win.flags and NK_WINDOW_SCALABLE.cint).nk_bool:
+        layout.footer_height = scrollbarSize.y
+      layout.bounds.h -= layout.footer_height
+
+    # panel header
+    if nkPanelHasHeader(flags = win.flags, title):
+      var
+        header: NimRect
+        background: nk_style_item
+
+      # calculate header bounds
+      header.x = win.bounds.x
+      header.y = win.bounds.y
+      header.w = win.bounds.w
+      header.h = font.height + 2.0 + style.window.header.padding.y
+      header.h += (2.0 + style.window.header.label_padding.y)
+
+      # shrink panel by header
+      layout.header_height = header.h
+      layout.bounds.y += header.h
+      layout.bounds.h -= header.h
+      layout.at_y += header.h
+
+      # select correct header background and text color
+      if ctx.active == win:
+        background = style.window.header.active
     return true
 {.pop ruleOn: "params".}
 
@@ -1185,6 +1262,36 @@ proc colorLabel*(str: string; color: Color; align: TextAlignment = left) {.raise
     ## A binding to Nuklear's function. Internal use only
   var (r, g, b) = color.extractRGB
   nk_label_colored(ctx = ctx, str = str.cstring, align = align.nk_flags,
+      color = nk_rgb(r = r.cint, g = g.cint, b = b.cint))
+
+proc colorLabel*(str: string; color, background: Color; align: TextAlignment = left) {.raises: [], tags: [], contractual.} =
+  ## Draw a text with the selected color and background
+  ##
+  ## * str        - the text to display
+  ## * color       - the color of the text
+  ## * background - the color of the text's background
+  ## * align      - the text aligmnent flags
+  proc nk_label_colored2(ctx; str: cstring; align: nk_flags;
+      color, color2: nk_color) {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  var
+    (r, g, b) = color.extractRGB
+    (r2, g2, b2) = background.extractRGB
+  nk_label_colored2(ctx = ctx, str = str.cstring, align = align.nk_flags,
+      color = nk_rgb(r = r.cint, g = g.cint, b = b.cint),
+      color2 = nk_rgb(r = r2.cint, g = g2.cint, b = b2.cint))
+
+proc colorLabel*(str: string; background: Color; align: TextAlignment = left) {.raises: [], tags: [], contractual.} =
+  ## Draw a text with the selected background color
+  ##
+  ## * str        - the text to display
+  ## * background - the color of the text's background
+  ## * align      - the text aligmnent flags
+  proc nk_label_colored3(ctx; str: cstring; align: nk_flags;
+      color: nk_color) {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  var (r, g, b) = background.extractRGB
+  nk_label_colored3(ctx = ctx, str = str.cstring, align = align.nk_flags,
       color = nk_rgb(r = r.cint, g = g.cint, b = b.cint))
 
 proc label*(str: string; alignment: TextAlignment = left) {.raises: [], tags: [
@@ -2118,7 +2225,7 @@ proc chartPushSlot*(value: float; slot: int): ChartEvent {.discardable,
 # Contextual
 # ----------
 proc createContextual(ctx; flags1: nk_flags; x1, y1: cfloat;
-    triggerBounds1: NimRect): bool {.raises: [], tags: [], contractual.} =
+    triggerBounds1: NimRect; btn: Buttons): bool {.raises: [], tags: [], contractual.} =
   ## Create a contextual menu, internal use only, temporary code
   ##
   ## * ctx            - the Nuklear context
@@ -2127,18 +2234,20 @@ proc createContextual(ctx; flags1: nk_flags; x1, y1: cfloat;
   ## * y1             - the height of the menu
   ## * triggerBounds1 - the rectange of coordinates in the window where clicking
   ##                    cause the menu to appear
+  ## * btn            - the mouse button which must be pressed to show the menu
   ##
   ## Return true if the contextual menu was created successfully, otherwise
   ## false
   proc nk_contextual_begin(ctx; flags: nk_flags; size: nk_vec2;
-      triggerBounds: nk_rect): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
+      triggerBounds: nk_rect; cButton: nk_buttons): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
   return nk_contextual_begin(ctx = ctx, flags = flags1, size = new_nk_vec2(
       x = x1, y = y1), triggerBounds = new_nk_rect(x = triggerBounds1.x,
-      y = triggerBounds1.y, w = triggerBounds1.w, h = triggerBounds1.h))
+      y = triggerBounds1.y, w = triggerBounds1.w, h = triggerBounds1.h),
+      cButton = btn.cint.nk_buttons)
 
 template contextualMenu*(flags: set[WindowFlags]; x, y;
-    triggerBounds: NimRect; content: untyped) =
+    triggerBounds: NimRect; button: Buttons; content: untyped) =
   ## Create a contextual menu
   ##
   ## * flags         - the flags for the menu
@@ -2146,9 +2255,10 @@ template contextualMenu*(flags: set[WindowFlags]; x, y;
   ## * y             - the height of the menu
   ## * triggerBounds - the rectange of coordinates in the window where clicking
   ##                   cause the menu to appear
+  ## * button        - the mouse button which must be pressed to show the menu
   ## * content       - the content of the menu
   if createContextual(ctx = ctx, flags1 = winSetToInt(nimFlags = flags), x1 = x,
-      y1 = y, triggerBounds1 = triggerBounds):
+      y1 = y, triggerBounds1 = triggerBounds, btn = button):
     content
     nk_contextual_end(ctx = ctx)
 
