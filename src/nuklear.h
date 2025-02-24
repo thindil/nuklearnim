@@ -3605,6 +3605,7 @@ NK_API nk_bool nk_contextual_item_image_label(struct nk_context*, struct nk_imag
 NK_API nk_bool nk_contextual_item_image_text(struct nk_context*, struct nk_image, const char*, int len, nk_flags alignment);
 NK_API nk_bool nk_contextual_item_symbol_label(struct nk_context*, enum nk_symbol_type, const char*, nk_flags alignment);
 NK_API nk_bool nk_contextual_item_symbol_text(struct nk_context*, enum nk_symbol_type, const char*, int, nk_flags alignment);
+NK_API nk_bool nk_contextual_item_image(struct nk_context*, struct nk_image);
 NK_API void nk_contextual_close(struct nk_context*);
 NK_API void nk_contextual_end(struct nk_context*);
 /* =============================================================================
@@ -21538,6 +21539,35 @@ nk_contextual_item_symbol_label(struct nk_context *ctx, enum nk_symbol_type symb
     const char *text, nk_flags align)
 {
     return nk_contextual_item_symbol_text(ctx, symbol, text, nk_strlen(text), align);
+}
+NK_API nk_bool
+nk_contextual_item_image(struct nk_context *ctx, struct nk_image img)
+{
+    struct nk_window *win;
+    const struct nk_input *in;
+    const struct nk_style *style;
+
+    struct nk_rect bounds;
+    enum nk_widget_layout_states state;
+
+    NK_ASSERT(ctx);
+    NK_ASSERT(ctx->current);
+    NK_ASSERT(ctx->current->layout);
+    if (!ctx || !ctx->current || !ctx->current->layout)
+        return 0;
+
+    win = ctx->current;
+    style = &ctx->style;
+    state = nk_widget_fitting(&bounds, ctx, style->contextual_button.padding);
+    if (!state) return nk_false;
+
+    in = (state == NK_WIDGET_ROM || win->layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
+    if (nk_do_button_image(&ctx->last_widget_state, &win->buffer, bounds,
+        img, NK_BUTTON_DEFAULT, &style->contextual_button, in)) {
+        nk_contextual_close(ctx);
+        return nk_true;
+    }
+    return nk_false;
 }
 NK_API void
 nk_contextual_close(struct nk_context *ctx)

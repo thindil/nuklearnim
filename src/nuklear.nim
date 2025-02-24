@@ -76,6 +76,9 @@ proc nk_input_end*(ctx) {.importc, nodecl, raises: [], tags: [], contractual.}
 proc nk_input_key*(ctx; key: nk_keys; down: nk_bool) {.importc, nodecl,
     raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
+proc nk_input_button*(ctx; id: nk_buttons; x, y: cint; down: nk_bool) {.importc, nodecl,
+    raises: [], tags: [], contractual.}
+  ## A binding to Nuklear's function. Internal use only
 
 # ------
 # Panels
@@ -201,6 +204,9 @@ proc nk_contextual_end(ctx) {.importc, cdecl, raises: [], tags: [], contractual.
   ## A binding to Nuklear's function. Internal use only
 proc nk_contextual_item_label(ctx; clabel: cstring;
     calign: nk_flags): nk_bool {.importc, cdecl, raises: [], tags: [], contractual.}
+  ## A binding to Nuklear's function. Internal use only
+proc nk_contextual_item_image(ctx; img: PImage;): nk_bool {.importc, cdecl,
+  raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
 
 # ------
@@ -382,6 +388,20 @@ template disabled*(content: untyped) =
   nk_widget_disable_begin(ctx = ctx)
   content
   nk_widget_disable_end(ctx = ctx)
+
+# ----
+# Math
+# ----
+
+proc nkIntersect(x0, y0, w0, h0, x1, y1, w1, h1: cfloat): bool {.raises: [], tags: [], contractual.} =
+  ## Check if the rectangle is inside the second rectangle
+  ##
+  ## * x0, y0, w0, h0 - the coordinates of the rectangle to check
+  ## * x1, y1, w1, h1 - the coordinates of the second rectangle
+  ##
+  ## Returns true if the rectangle is inside the second rectangle, otherwise
+  ## false.
+  return ((x1 < (x0 + w0)) and (x0 < (x1 + w1)) and (y1 < (y0 + h0)) and (y0 < (y1 + h1)))
 
 # -------
 # Windows
@@ -692,6 +712,33 @@ proc nkShrinkRect(r: nk_rect; amount: cfloat): nk_rect {.raises: [], tags: [], c
   result.w = w - 2 * amount
   result.h = h - 2 * amount
 
+proc nkDrawImage(b: ptr nk_command_buffer, r: NimRect, img: PImage, col: nk_color)
+  {.raises: [], tags: [RootEffect], contractual.} =
+  ## Draw the selected image
+  ##
+  ## * b   - the command buffer in which the image will be drawn
+  ## * r   - the rectangle in which the image will be drawn
+  ## * img - the image to draw
+  ## * col - the color used as a background for the image
+  if b == nil:
+    return
+  if b.use_clipping != 0:
+    let c: nk_rect = b.clip
+    if c.w == 0 or c.h == 0 or not nkIntersect(x0 = r.x, y0 = r.y, w0 = r.w,
+      h0 = r.h, x1 = c.x, y1 = c.y, w1 = c.w, h1 = c.h):
+      return
+
+  var cmd: ptr nk_command_image
+  cmd = cast[ptr nk_command_image](nkCommandBufferPush(b = b, t = NK_COMMAND_IMAGE, cmd.sizeof))
+  if cmd == nil:
+    return
+  cmd.x = r.x.cshort
+  cmd.y = r.y.cshort
+  cmd.w = max(x = 0.cushort, y = r.w.cushort)
+  cmd.h = max(x = 0.cushort, y = r.h.cushort)
+  cmd.img = cast[nk_image](img)
+  cmd.col = col
+
 # -----
 # Input
 # -----
@@ -883,9 +930,8 @@ proc nkPanelIsNonblock(`type`: PanelType): bool {.raises: [], tags: [], contract
   ## Returns true if the panel's type is non-blocking, otherwise false.
   return (`type`.cint and panelSetNonBlock.cint).bool
 
-{.push ruleOff: "params".}
 proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
-    ], tags: [], contractual.} =
+    ], tags: [RootEffect], contractual.} =
   ## Start drawing a Nuklear panel. Internal use only
   ##
   ## * ctx       - the Nuklear context
@@ -985,6 +1031,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
       var
         header: NimRect
         background: nk_style_item
+        text: nk_text
 
       # calculate header bounds
       header.x = win.bounds.x
@@ -1002,8 +1049,33 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
       # select correct header background and text color
       if ctx.active == win:
         background = style.window.header.active
+        if layout.`type` == panelGroup:
+          text.text = style.window.group_text_color
+        else:
+          text.text = style.window.header.label_active
+      elif isMouseHovering(rect = header):
+        background = style.window.header.hover
+        if layout.`type` == panelGroup:
+          text.text = style.window.group_text_color
+        else:
+          text.text = style.window.header.label_hover
+      else:
+        background = style.window.header.normal
+        if layout.`type` == panelGroup:
+          text.text = style.window.group_text_color
+        else:
+          text.text = style.window.header.label_normal
+
+      # draw header background
+      header.h += 1.0
+      case background.`type`
+      of NK_STYLE_ITEM_IMAGE:
+        text.background = nk_rgba(r = 0, g = 0, b = 0, a = 0)
+        let bg: nk_style_item_data = cast[nk_style_item_data](background.data)
+        nkDrawImage(b = win.buffer.addr, r = header, img = bg.image.addr, col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
+      else:
+        discard
     return true
-{.pop ruleOn: "params".}
 
 # ------
 # Popups
@@ -2271,6 +2343,14 @@ template contextualItemLabel*(label: string; align: TextAlignment;
   ## * onPressCode - the Nim code to execute when the label was pressed
   if nk_contextual_item_label(ctx = ctx, clabel = label.cstring,
       calign = align.nk_flags):
+    onPressCode
+
+template contextualItemImage*(image: PImage; onPressCode: untyped) =
+  ## Add a clickable image to a contextual menu
+  ##
+  ## * image       - the image to show in the menu
+  ## * onPressCode - the Nim code to execute when the image was pressed
+  if nk_contextual_item_image(ctx = ctx, img = image):
     onPressCode
 
 # ------

@@ -203,19 +203,21 @@ type
   nk_style_item* {.importc: "struct nk_style_item", nodecl.} = object
     ## Internal Nuklear type
     `type`*: nk_style_item_type
+    data*: pointer
   nk_style_window_header* {.importc, nodecl.} = object
     ## Internal Nuklear type
     align*: nk_style_header_align
     padding*: nk_vec2
     label_padding*: nk_vec2
-    active*: nk_style_item
+    active*, hover*, normal*: nk_style_item
+    label_active*, label_hover*, label_normal*: nk_color
   nk_style_window* {.importc, nodecl.} = object
     ## Internal Nuklear type
     header*: nk_style_window_header
     spacing*, scrollbar_size*, padding*, group_padding*, popup_padding*,
       contextual_padding*, combo_padding*, menu_padding*,
       tooltip_padding*: nk_vec2
-    background*: nk_color
+    background*, group_text_color*: nk_color
     border*, combo_border*, contextual_border*, menu_border*, group_border*,
       tooltip_border*, popup_border*: cfloat
   nk_style_button* {.importc: "struct nk_style_button", nodecl.} = object
@@ -294,6 +296,14 @@ type
     begin*, `end`*, last*: nk_size
     clip*: nk_rect
     base*: ptr nk_buffer
+    use_clipping*: cint
+  nk_command_image* {.importc: "struct nk_command_image".} = object
+    ## Internal Nuklear type
+    header*: nk_command
+    x*, y*: cshort
+    w*, h*: cushort
+    img*: nk_image
+    col*: nk_color
   nk_row_layout* {.importc: "struct nk_row_layout".} = object
     ## Internal Nuklear type
     index*, columns*, tree_depth*: cint
@@ -382,6 +392,10 @@ type
     handle*: nk_handle
     w*, h*: nk_ushort
     region*: array[4, nk_ushort]
+  nk_text* {.importc: "struct nk_text", nodecl.} = object
+    ## Internal Nuklear type
+    padding*: nk_vec2
+    background*, text*: nk_color
   PNkWindow* = ptr nk_window
     ## Pointer to nk_window structure
   PNkPanel* = ptr nk_panel
@@ -543,7 +557,7 @@ type
     panelSetSub = panelSetPopup.int or panelGroup.int
   UserEvents* = enum
     ## The UI events caused by the user
-    noEvent, quitEvent, sizeChangedEvent, keyEvent, anyEvent
+    noEvent, quitEvent, sizeChangedEvent, keyEvent, mouseButtonEvent, anyEvent
 {.pop ruleOn: "namedParams".}
 
 # ----------
