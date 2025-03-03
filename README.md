@@ -1,5 +1,8 @@
 NuklearNim is Nim binding for [Nuklear](https://github.com/Immediate-Mode-UI/Nuklear/)
-GUI library. At the moment it is in the alpha stage and generally, it is
+GUI library. The version of the library used in the project is incompatible
+with the original one, it has added some features (like support for new lines
+in wrap labels, or the option to select which mouse button trigger a context
+menu). At the moment it is in the alpha stage and generally, it is
 a WYSIWYG (or DIY) type of the project. ;)
 
 I created the project because I needed a GUI library for my other projects in
@@ -39,7 +42,7 @@ itself. For example, `import nuklear_sdl_renderer`.
 To build the demo, enter *demo* directory and run *build.nims* script. You will
 need to set paths in *config.nims* file too. To see all available backends,
 just run *build.nims* without any argument. For example, to build the demo with
-Xlib backend, type `./build.nims sdl2`.
+SDL2 backend, type `./build.nims sdl2`.
 
 ### Documentation
 
