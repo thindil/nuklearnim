@@ -712,7 +712,7 @@ proc nkShrinkRect(r: nk_rect; amount: cfloat): nk_rect {.raises: [], tags: [], c
   result.w = w - 2 * amount
   result.h = h - 2 * amount
 
-proc nkDrawImage(b: ptr nk_command_buffer, r: NimRect, img: PImage, col: nk_color)
+proc nkDrawImage(b: ptr nk_command_buffer; r: NimRect; img: PImage; col: nk_color)
   {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw the selected image
   ##
@@ -738,6 +738,63 @@ proc nkDrawImage(b: ptr nk_command_buffer, r: NimRect, img: PImage, col: nk_colo
   cmd.h = max(x = 0.cushort, y = r.h.cushort)
   cmd.img = cast[nk_image](img)
   cmd.col = col
+
+proc nkDrawNineSlice(b: ptr nk_command_buffer; r: NimRect; slc: ptr nk_nine_slice; col: nk_color)
+  {.raises: [], tags: [RootEffect], contractual.} =
+  ## Draw the selected fragments of an image
+  ##
+  ## * b   - the command buffer in which the slice will be drawn
+  ## * r   - the rectangle in which the slice will be drawn
+  ## * slc - the image's slice to draw
+  ## * col - the color used as a background for the slice
+  let slcImg: ptr nk_image = cast[ptr nk_image](slc)
+  var rgnX, rgnY, rgnW, rgnH: nk_ushort;
+  rgnX = slcImg.region[0]
+  rgnY = slcImg.region[1]
+  rgnW = slcImg.region[2]
+  rgnH = slcImg.region[3]
+
+  var img: nk_image;
+
+  # top-left
+  img.handle = slcImg.handle
+  img.w = slcImg.w
+  img.h = slcImg.h
+  img.region = [rgnX, rgnY, slc.l, slc.t]
+
+  nkDrawImage(b = b, r = NimRect(x: r.x, y: r.y, w: slc.l.float, h: slc.t.float), img = img.addr, col = col)
+
+  # top-center
+  img.region = [rgnX + slc.l, rgnY, rgnW - slc.l - slc.r, slc.t]
+  nkDrawImage(b = b, r = NimRect(x: r.x + slc.l.float, y: r.y, w: r.w - slc.l.float - slc.r.float, h: slc.t.float), img = img.addr, col = col)
+
+  # top-right
+  img.region = [rgnX + rgnW - slc.r, rgnY, slc.r, slc.t]
+  nkDrawImage(b = b, r = NimRect(x: r.x + r.w - slc.r.float, y: r.y, w: slc.r.float, h: slc.t.float), img = img.addr, col = col)
+
+  # center-left
+  img.region = [rgnX, rgnY + slc.t, slc.l, rgnH - slc.t - slc.b]
+  nkDrawImage(b = b, r = NimRect(x: r.x, y: r.y + slc.t.float, w: slc.l.float, h: r.h - slc.t.float - slc.b.float), img = img.addr, col = col)
+
+  # center
+  img.region = [rgnX + slc.l, rgnY + slc.t, rgnW - slc.l - slc.r, rgnH - slc.t - slc.b]
+  nkDrawImage(b = b, r = NimRect(x: r.x + slc.l.float, y: r.y + slc.t.float, w: r.w - slc.l.float - slc.r.float, h: r.h - slc.t.float - slc.b.float), img = img.addr, col = col)
+
+  # center-right
+  img.region = [rgnX + rgnW - slc.r, rgnY + slc.t, slc.r, rgnH - slc.t - slc.b]
+  nkDrawImage(b = b, r = NimRect(x: r.x + r.w - slc.r.float, y: r.y - slc.t.float, w: slc.r.float, h: r.h - slc.t.float - slc.b.float), img = img.addr, col = col)
+
+  # bottom-left
+  img.region = [rgnX, rgnY + rgnH - slc.b, slc.l, slc.b]
+  nkDrawImage(b = b, r = NimRect(x: r.x, y: r.y + r.h - slc.b.float, w: slc.l.float, h: slc.b.float), img = img.addr, col = col)
+
+  # bottom-center
+  img.region = [rgnX + slc.l, rgnY + rgnH - slc.b, rgnW - slc.l - slc.r, slc.b]
+  nkDrawImage(b = b, r = NimRect(x: r.x + slc.l.float, y: r.y + r.h - slc.b.float, w: r.w - slc.l.float - slc.r.float, h: slc.b.float), img = img.addr, col = col)
+
+  # bottom-right
+  img.region = [rgnX + rgnW - slc.r, rgnY + rgnH - slc.b, slc.r, slc.b]
+  nkDrawImage(b = b, r = NimRect(x: r.x + r.w - slc.r.float, y: r.y + r.h - slc.b.float, w: slc.r.float, h: slc.b.float), img = img.addr, col = col)
 
 # -----
 # Input
@@ -1068,13 +1125,16 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
 
       # draw header background
       header.h += 1.0
+      let bg: nk_style_item_data = cast[nk_style_item_data](background.data)
       case background.`type`
       of NK_STYLE_ITEM_IMAGE:
         text.background = nk_rgba(r = 0, g = 0, b = 0, a = 0)
-        let bg: nk_style_item_data = cast[nk_style_item_data](background.data)
         nkDrawImage(b = win.buffer.addr, r = header, img = bg.image.addr, col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
-      else:
-        discard
+      of NK_STYLE_ITEM_NINE_SLICE:
+        text.background = nk_rgba(r = 0, g = 0, b = 0, a = 0)
+        nkDrawNineSlice(b = win.buffer.addr, r = header, slc = bg.slice.addr, col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
+      of NK_STYLE_ITEM_COLOR:
+        text.background = bg.color
     return true
 
 # ------
