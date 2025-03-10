@@ -712,6 +712,31 @@ proc nkShrinkRect(r: nk_rect; amount: cfloat): nk_rect {.raises: [], tags: [], c
   result.w = w - 2 * amount
   result.h = h - 2 * amount
 
+proc nkFillRect(b: ptr nk_command_buffer; rect: NimRect; rounding: float; c: nk_color) {.raises: [], tags: [RootEffect], contractual.} =
+  ## Fill the rectangle with the selected color
+  ##
+  ## * b        - the command buffer in which the rectangle will be drawn
+  ## * rect     - the rectangle which will be filled with color
+  ## * rounding - if bigger than zero, round the corners of the rectangle
+  ## * c        - the color to fill the rectangle
+  if b == nil or rect.w == 0 or rect.h == 0:
+    return
+  if b.use_clipping == 1:
+    let clip: nk_rect = b.clip
+    if not nkIntersect(x0 = rect.x, y0 = rect.y, w0 = rect.w, h0 = rect.h, x1 = clip.x, y1 = clip.y, w1 = clip.w, h1 = clip.h):
+      return
+
+  var cmd: ptr nk_command_rect_filled
+  cmd = cast[ptr nk_command_rect_filled](nkCommandBufferPush(b = b, t = NK_COMMAND_RECT_FILLED, cmd.sizeof))
+  if cmd == nil:
+    return
+  cmd.rounding = rounding.cushort
+  cmd.x = rect.x.cshort
+  cmd.y = rect.y.cshort
+  cmd.w = max(0, rect.w).cushort
+  cmd.h = max(0, rect.h).cushort
+  cmd.color = c
+
 proc nkDrawImage(b: ptr nk_command_buffer; r: NimRect; img: PImage; col: nk_color)
   {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw the selected image
@@ -908,6 +933,74 @@ proc hasMouseClickDownInRect(id: Buttons; rect: nk_rect; down: nk_bool): bool {.
     {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
   return nk_input_has_mouse_click_down_in_rect(i = ctx.input.addr, id = id, rect = rect, down = down)
+
+# -------
+# Buttons
+# -------
+proc nkButtonBehavior(state: ptr nk_flags; r: NimRect; i: ptr nk_input;
+  behavior: nk_button_behavior): bool {.raises: [], tags: [], contractual.} =
+  ## Set the button's behavior. Internal use only
+  return true
+
+
+proc nkDoButton(state: ptr nk_flags; `out`: ptr nk_command_buffer; r: NimRect;
+  style: ptr nk_style_button; `in`: ptr nk_input; behavior: nk_button_behavior;
+  content: var NimRect): bool {.raises: [], tags: [], contractual.} =
+  ## Draw a button. Internal use only
+  ##
+  ## * state    - the state of the button
+  ## * out      - the command buffer in which the button will be drawn
+  ## * r        - the bounds of the button
+  ## * style    - the style of the button
+  ## * in       - the user input
+  ## * behavior - the behavior of the button, normal or repeater
+  ## * content  - the space of the button's content
+  ##
+  ## Returns true if button was properly drawn, otherwise false
+  require:
+    style != nil
+    state != nil
+  body:
+    if `out` == nil or style == nil:
+      return false
+
+    # calculate button content space
+    content.x = r.x + style.padding.x + style.border + style.rounding
+    content.y = r.y + style.padding.y + style.border + style.rounding
+    content.w = r.w - (2 * (style.padding.x + style.border + style.rounding))
+    content.h = r.h - (2 * (style.padding.y + style.border + style.rounding))
+
+    # execute button behavior
+    var bounds: NimRect = NimRect()
+    bounds.x = r.x - style.touch_padding.x
+    bounds.y = r.y - style.touch_padding.y
+    bounds.w = r.w + 2 * style.touch_padding.x
+    bounds.h = r.h + 2 * style.touch_padding.y
+    return nkButtonBehavior(state = state, r = bounds, i = `in`, behavior = behavior)
+
+proc nkDoButtonSymbol(state: ptr nk_flags; `out`: ptr nk_command_buffer; bounds: NimRect,
+  symbol: SymbolType; behavior: nk_button_behavior; style: ptr nk_style_button;
+  `in`: ptr nk_input; font: ptr nk_user_font): bool {.raises: [], tags: [], contractual.} =
+  ## Draw a button with the selected symbol on it. Internal use only
+  ##
+  ## * state    - the state of the button
+  ## * out      - the command buffer in which the button will be drawn
+  ## * bounds   - the bounds of the button
+  ## * symbol   - the symbol to draw on the button
+  ## * behavior - the behavior of the button, normal or repeater
+  ## * style    - the style of the button
+  ## * in       - the user input
+  ## * font     - the font used to draw on the button
+  ##
+  ## Returns true if button was properly drawn, otherwise false
+  require:
+    state != nil
+    style != nil
+    font != nil
+  body:
+    var content: NimRect = NimRect()
+    result = nkDoButton(state = state, `out` = `out`, r = bounds, style = style,
+      `in` = `in`, behavior = behavior, content = content)
 
 # -----
 # Panel
@@ -1135,6 +1228,21 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
         nkDrawNineSlice(b = win.buffer.addr, r = header, slc = bg.slice.addr, col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
       of NK_STYLE_ITEM_COLOR:
         text.background = bg.color
+        nkFillRect(b = `out`.addr, rect = header, rounding = 0, c = bg.color)
+
+      # window close button
+      var button: NimRect = NimRect()
+      button.y = header.y + style.window.header.padding.y
+      button.h = header.h - 2 * style.window.header.padding.y
+      button.w = button.h
+      if (win.flags and NK_WINDOW_CLOSABLE.cint).nk_bool:
+        var ws: nk_flags = 0
+        if style.window.header.align == NK_HEADER_RIGHT:
+          button.x = (header.w + header.x) - (button.w + style.window.header.padding.x)
+          header.w -= button.w + style.window.header.spacing.x + style.window.header.padding.x
+        else:
+          button.x = header.x + style.window.header.padding.x
+          header.x += button.w + style.window.header.spacing.x + style.window.header.padding.x
     return true
 
 # ------

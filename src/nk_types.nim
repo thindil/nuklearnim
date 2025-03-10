@@ -176,6 +176,10 @@ type
     NK_CURSOR_RESIZE_TOP_LEFT_DOWN_RIGHT,
     NK_CURSOR_RESIZE_TOP_RIGHT_DOWN_LEFT,
     NK_CURSOR_COUNT
+  nk_button_behavior* = enum
+    ## Internal Nuklear type
+    NK_BUTTON_DEFAULT,
+    NK_BUTTON_REPEATER
 
 # -------
 # Objects
@@ -207,8 +211,7 @@ type
   nk_style_window_header* {.importc, nodecl.} = object
     ## Internal Nuklear type
     align*: nk_style_header_align
-    padding*: nk_vec2
-    label_padding*: nk_vec2
+    padding*, label_padding*, spacing*: nk_vec2
     active*, hover*, normal*: nk_style_item
     label_active*, label_hover*, label_normal*: nk_color
   nk_style_window* {.importc, nodecl.} = object
@@ -304,6 +307,12 @@ type
     w*, h*: cushort
     img*: nk_image
     col*: nk_color
+  nk_command_rect_filled* {.importc: "struct nk_command_rect_filled".} = object
+    ## Internal Nuklear type
+    header*: nk_command
+    rounding*, w*, h*: cushort
+    x*, y*: cshort
+    color*: nk_color
   nk_row_layout* {.importc: "struct nk_row_layout".} = object
     ## Internal Nuklear type
     index*, columns*, tree_depth*: cint
