@@ -180,6 +180,18 @@ type
     ## Internal Nuklear type
     NK_BUTTON_DEFAULT,
     NK_BUTTON_REPEATER
+  nk_widget_states* = enum
+    ## Internal Nuklear type
+    NK_WIDGET_STATE_MODIFIED = 1 shl 1
+    NK_WIDGET_STATE_INACTIVE = 1 shl 2
+    NK_WIDGET_STATE_ENTERED = 1 shl 3
+    NK_WIDGET_STATE_HOVER = 1 shl 4
+    NK_WIDGET_STATE_ACTIVED = 1 shl 5
+    NK_WIDGET_STATE_LEFT = 1 shl 6
+    NK_WIDGET_STATE_HOVERED = NK_WIDGET_STATE_HOVER.int or
+        NK_WIDGET_STATE_MODIFIED.int
+    NK_WIDGET_STATE_ACTIVE = NK_WIDGET_STATE_ACTIVED.int or
+        NK_WIDGET_STATE_MODIFIED.int
 
 # -------
 # Objects
@@ -223,6 +235,12 @@ type
     background*, group_text_color*: nk_color
     border*, combo_border*, contextual_border*, menu_border*, group_border*,
       tooltip_border*, popup_border*: cfloat
+  # FIXME: check nuklear.h needs return type
+  nk_draw_begin* = proc(b: ptr nk_command_buffer; userData: nk_handle) {.cdecl.}
+    ## Internal Nuklear type
+  # FIXME: check nuklear.h needs return type
+  nk_draw_end* = proc(b: ptr nk_command_buffer; userData: nk_handle) {.cdecl.}
+    ## Internal Nuklear type
   nk_style_button* {.importc: "struct nk_style_button", nodecl.} = object
     ## Internal Nuklear type
     normal*, hover*, active*: nk_style_item
@@ -232,6 +250,10 @@ type
     padding*: nk_vec2
     image_padding*: nk_vec2
     touch_padding*: nk_vec2
+    # TODO
+    # draw_begin*: nk_draw_begin
+    # draw_end*: nk_draw_end
+    # userdata*: nk_handle
   nk_handle* {.bycopy, union.} = object
     ## Internal Nuklear type
     `ptr`*: pointer

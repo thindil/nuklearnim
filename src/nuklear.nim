@@ -389,6 +389,21 @@ template disabled*(content: untyped) =
   content
   nk_widget_disable_end(ctx = ctx)
 
+# ------
+# Widget
+# ------
+
+proc nkWidgetStateReset(s: var nk_flags) {.raises: [], tags: [], contractual.} =
+  ## Reset the state of a widget. Internal use only
+  ##
+  ## * s - the state to reset
+  ##
+  ## Returns the modified parameter s
+  if (s and NK_WIDGET_STATE_MODIFIED.int).bool:
+    s = NK_WIDGET_STATE_INACTIVE.int or NK_WIDGET_STATE_MODIFIED.int
+  else:
+    s = NK_WIDGET_STATE_INACTIVE.ord
+
 # ----
 # Math
 # ----
@@ -837,21 +852,18 @@ proc isMouseHovering*(rect: NimRect): bool {.raises: [], tags: [],
   return nk_input_is_mouse_hovering_rect(i = ctx.input.addr, rect = new_nk_rect(
       x = rect.x, y = rect.y, w = rect.w, h = rect.h))
 
-proc isMousePrevHovering*(x, y, w, h: float): bool {.raises: [], tags: [],
+proc isMousePrevHovering*(rect: NimRect): bool {.raises: [], tags: [],
     contractual.} =
   ## Check if the mouse was previously hovering over the selected rectangle
   ##
-  ## * x   - the X coordinate of top left corner of the rectangle
-  ## * y   - the Y coordinate of top left corner of the rectangle
-  ## * w   - the width of the rectangle in pixels
-  ## * h   - the height of the rectangle in pixels
+  ## * rect - the area in which the mouse will be checked for hovering
   ##
   ## Returns true if the mouse was hovering over the rectangle, otherwise false
   proc nk_input_is_mouse_prev_hovering_rect(i: ptr nk_input;
       rect: nk_rect): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
   return nk_input_is_mouse_prev_hovering_rect(i = ctx.input.addr,
-      rect = new_nk_rect(x = x, y = y, w = w, h = h))
+      rect = new_nk_rect(x = rect.x, y = rect.y, w = rect.w, h = rect.h))
 
 proc isMouseDown*(id: Buttons): bool {.raises: [], tags: [], contractual.} =
   ## Check if mouse is pressed
@@ -921,7 +933,7 @@ proc hasMouseClickInRect*(id: Buttons; rect: NimRect): bool {.raises: [], tags: 
     ## A binding to Nuklear's function. Internal use only
   return nk_input_has_mouse_click_in_rect(i = ctx.input.addr, id = id, rect = nk_rect(x: rect.x, y: rect.y, w: rect.w, h: rect.h))
 
-proc hasMouseClickDownInRect(id: Buttons; rect: nk_rect; down: nk_bool): bool {.raises: [], tags: [], contractual.} =
+proc hasMouseClickDownInRect*(id: Buttons; rect: nk_rect; down: nk_bool): bool {.raises: [], tags: [], contractual.} =
   ## Check if the mouse button is clicked down in the selected rectangle
   ##
   ## * id   - the mouse button which will be checked
@@ -934,16 +946,63 @@ proc hasMouseClickDownInRect(id: Buttons; rect: nk_rect; down: nk_bool): bool {.
     ## A binding to Nuklear's function. Internal use only
   return nk_input_has_mouse_click_down_in_rect(i = ctx.input.addr, id = id, rect = rect, down = down)
 
+proc isMousePressed*(id: Buttons): bool {.raises: [], tags: [], contractual.} =
+  ## Check if the selected mouse button is pressed now
+  ##
+  ## * id   - the mouse button which will be checked
+  ##
+  ## Returns true if the mouse button is pressed, otherwise false
+  proc nk_input_is_mouse_pressed(i: ptr nk_input; id: Buttons): nk_bool
+    {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_input_is_mouse_pressed(i = ctx.input.addr, id = id)
+
+proc isMouseReleased*(id: Buttons): bool {.raises: [], tags: [], contractual.} =
+  ## Check if the selected mouse button was released
+  ##
+  ## * id   - the mouse button which will be checked
+  ##
+  ## Returns true if the mouse button was released, otherwise false
+  proc nk_input_is_mouse_released(i: ptr nk_input; id: Buttons): nk_bool
+    {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_input_is_mouse_released(i = ctx.input.addr, id = id)
+
 # -------
 # Buttons
 # -------
-proc nkButtonBehavior(state: ptr nk_flags; r: NimRect; i: ptr nk_input;
+proc nkButtonBehavior(state: var nk_flags; r: NimRect; i: ptr nk_input;
   behavior: nk_button_behavior): bool {.raises: [], tags: [], contractual.} =
   ## Set the button's behavior. Internal use only
-  return true
+  ##
+  ## * state    - the state of the button
+  ## * r        - the bounds of the button
+  ## * i        - the user input
+  ## * behavior - the behavior of the button, normal or repeater
+  ##
+  ## Returns true if button's behavior was properly set, otherwise false
+  nkWidgetStateReset(s = state)
+  result = false
+  if i == nil:
+    return
+  if isMouseHovering(rect = r):
+    state = NK_WIDGET_STATE_HOVERED.nk_flags
+    if isMouseDown(id = left):
+      state = NK_WIDGET_STATE_ACTIVE.nk_flags
+      if hasMouseClickDownInRect(id = left, rect = nk_rect(x: r.x, y: r.y, w: r.w, h: r.h), down = nkTrue):
+        if behavior != NK_BUTTON_DEFAULT:
+          result = isMouseDown(id = left)
+        else:
+          when defined(nkButtonTriggerOnRelease):
+            result = isMouseReleased(id = left)
+          else:
+            result = isMousePressed(id = left)
+  if (state and NK_WIDGET_STATE_HOVER.ord).nk_bool and not isMousePrevHovering(rect = r):
+    state = state or NK_WIDGET_STATE_ENTERED.ord
+  elif isMousePrevHovering(rect = r):
+    state = state or NK_WIDGET_STATE_LEFT.ord
 
-
-proc nkDoButton(state: ptr nk_flags; `out`: ptr nk_command_buffer; r: NimRect;
+proc nkDoButton(state: var nk_flags; `out`: ptr nk_command_buffer; r: NimRect;
   style: ptr nk_style_button; `in`: ptr nk_input; behavior: nk_button_behavior;
   content: var NimRect): bool {.raises: [], tags: [], contractual.} =
   ## Draw a button. Internal use only
@@ -959,7 +1018,6 @@ proc nkDoButton(state: ptr nk_flags; `out`: ptr nk_command_buffer; r: NimRect;
   ## Returns true if button was properly drawn, otherwise false
   require:
     style != nil
-    state != nil
   body:
     if `out` == nil or style == nil:
       return false
@@ -978,7 +1036,33 @@ proc nkDoButton(state: ptr nk_flags; `out`: ptr nk_command_buffer; r: NimRect;
     bounds.h = r.h + 2 * style.touch_padding.y
     return nkButtonBehavior(state = state, r = bounds, i = `in`, behavior = behavior)
 
-proc nkDoButtonSymbol(state: ptr nk_flags; `out`: ptr nk_command_buffer; bounds: NimRect,
+proc nkDrawButton(`out`: ptr nk_command_buffer; bounds: NimRect;
+  state: nk_flags; style: ptr nk_style_button): nk_style_item {.raises: [],
+  tags: [], contractual.} =
+  ## Draw a button. Internal use only
+  ## * out      - the command buffer in which the button will be drawn
+  ## * bounds   - the bounds of the button
+  ## * state    - the state of the button
+  ## * style    - the style of the button
+  return
+
+proc nkDrawButtonSymbol(`out`: ptr nk_command_buffer; bounds, content: NimRect;
+  state: nk_flags; style: ptr nk_style_button; `type`: SymbolType;
+  font: ptr nk_user_font) {.raises: [], tags: [], contractual.} =
+  ## Draw a button with the selected symbol on it. Internal use only
+  ##
+  ## * out      - the command buffer in which the button will be drawn
+  ## * bounds   - the bounds of the button
+  ## * content  - the bounds of the button's content
+  ## * state    - the state of the button
+  ## * style    - the style of the button
+  ## * type     - the type of symbol to draw
+  ## * font     - the font used to draw on the button
+  # select correct colors/images
+  let background: nk_style_item = nkDrawButton(`out` = `out`, bounds = bounds,
+    state = state, style = style)
+
+proc nkDoButtonSymbol(state: var nk_flags; `out`: ptr nk_command_buffer; bounds: NimRect,
   symbol: SymbolType; behavior: nk_button_behavior; style: ptr nk_style_button;
   `in`: ptr nk_input; font: ptr nk_user_font): bool {.raises: [], tags: [], contractual.} =
   ## Draw a button with the selected symbol on it. Internal use only
@@ -994,13 +1078,20 @@ proc nkDoButtonSymbol(state: ptr nk_flags; `out`: ptr nk_command_buffer; bounds:
   ##
   ## Returns true if button was properly drawn, otherwise false
   require:
-    state != nil
     style != nil
     font != nil
   body:
     var content: NimRect = NimRect()
     result = nkDoButton(state = state, `out` = `out`, r = bounds, style = style,
       `in` = `in`, behavior = behavior, content = content)
+    # TODO
+    # if style.draw_begin != nil:
+    #   style.draw_begin(b = `out`, style.userdata)
+    nkDrawButtonSymbol(`out` = `out`, bounds = bounds, content = content,
+      state = state, style = style, `type` = symbol, font = font)
+    # TODO
+    # if style.draw_end != nil:
+    #   style.draw_end(b = `out`, style.userdata)
 
 # -----
 # Panel
