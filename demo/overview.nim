@@ -1,4 +1,4 @@
-# Copyright © 2023-2024 Bartek Jasicki
+# Copyright © 2023-2025 Bartek Jasicki
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -876,8 +876,7 @@ proc overview*() =
           var bounds = getWidgetBounds()
           addSpacing(1)
           if (isMouseHovering(bounds) or
-              isMousePrevHovering(bounds.x, bounds.y, bounds.w,
-              bounds.h)) and isMouseDown(left):
+              isMousePrevHovering(bounds)) and isMouseDown(left):
             a = rowLayout[0] + getMouseDelta().x
             b = rowLayout[2] - getMouseDelta().x
           group("center", {windowBorder, windowNoScrollbar}):
@@ -897,8 +896,7 @@ proc overview*() =
           bounds = getWidgetBounds()
           addSpacing(1)
           if (isMouseHovering(bounds) or
-              isMousePrevHovering(bounds.x, bounds.y, bounds.w,
-              bounds.h)) and isMouseDown(left):
+              isMousePrevHovering(bounds)) and isMouseDown(left):
             b = rowLayout[2] + getMouseDelta().x
             c = rowLayout[4] - getMouseDelta().x
           group("right", {windowBorder, windowNoScrollbar}):
@@ -942,8 +940,7 @@ proc overview*() =
           var bounds = getWidgetBounds()
           addSpacing(1)
           if (isMouseHovering(bounds) or
-              isMousePrevHovering(bounds.x, bounds.y, bounds.w,
-              bounds.h)) and isMouseDown(left):
+              isMousePrevHovering(bounds)) and isMouseDown(left):
             a = a + getMouseDelta().y
             b = b - getMouseDelta().y
           setLayoutRowDynamic(b, 1)
@@ -964,8 +961,7 @@ proc overview*() =
           setLayoutRowDynamic(8, 1)
           bounds = getWidgetBounds()
           if (isMouseHovering(bounds) or
-              isMousePrevHovering(bounds.x, bounds.y, bounds.w,
-              bounds.h)) and isMouseDown(left):
+              isMousePrevHovering(bounds)) and isMouseDown(left):
             b = b + getMouseDelta().y
             c = c - getMouseDelta().y
           setLayoutRowDynamic(c, 1)
