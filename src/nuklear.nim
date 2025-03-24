@@ -712,6 +712,35 @@ proc nkPushScissor(b: ptr nk_command_buffer; r: nk_rect) {.raises: [], tags: [
     cmd.w = max(x = 0.cushort, y = r.w.cushort)
     cmd.h = max(x = 0.cushort, y = r.h.cushort)
 
+proc nkStrokeRect(b: ptr nk_command_buffer, rect: NimRect, rounding,
+  lineThickness: float, c: nk_color) {.raises: [], tags: [RootEffect],
+  contractual.} =
+  ## Draw a rectangle. Internal use only
+  ##
+  ## * b             - the command buffer in which the rectangle will be drawn
+  ## * r             - the rectangle to draw
+  ## * rounding      - the rouding of the rectangle's corners
+  ## * lineThickness - the thinckness of the rectangle's border
+  ## * c             - the color used to draw the rectangle
+  if b == nil or c.a == 0 or rect.w == 0 or lineThickness <= 0:
+    return
+  if b.use_clipping == 1:
+    let clip: nk_rect = b.clip
+    if not nkIntersect(x0 = rect.x, y0 = rect.y, w0 = rect.w, h0 = rect.h,
+      x1 = clip.x, y1 = clip.y, w1 = clip.w, h1 = clip.h):
+      return
+  var cmd: ptr nk_command_rect
+  cmd = cast[ptr nk_command_rect](nkCommandBufferPush(b = b, t = NK_COMMAND_RECT, cmd.sizeof))
+  if cmd == nil:
+    return
+  cmd.rounding = rounding.cushort
+  cmd.lineThickness = lineThickness.cushort
+  cmd.x = rect.x.cshort
+  cmd.y = rect.y.cshort
+  cmd.w = max(x = 0.cushort, y = rect.w.cushort)
+  cmd.h = max(x = 0.cushort, y = rect.h.cushort)
+  cmd.color = c
+
 proc nkShrinkRect(r: nk_rect; amount: cfloat): nk_rect {.raises: [], tags: [], contractual.} =
   ## Shrink the selected rectangle. Internal use only
   ##
@@ -1038,17 +1067,55 @@ proc nkDoButton(state: var nk_flags; `out`: ptr nk_command_buffer; r: NimRect;
 
 proc nkDrawButton(`out`: ptr nk_command_buffer; bounds: NimRect;
   state: nk_flags; style: ptr nk_style_button): nk_style_item {.raises: [],
-  tags: [], contractual.} =
+  tags: [RootEffect], contractual.} =
   ## Draw a button. Internal use only
   ## * out      - the command buffer in which the button will be drawn
   ## * bounds   - the bounds of the button
   ## * state    - the state of the button
   ## * style    - the style of the button
-  return
+  ##
+  ## Returns the style of the button
+  if (state and NK_WIDGET_STATE_HOVER.ord).nk_bool:
+    result = style.hover
+  elif (state and NK_WIDGET_STATE_ACTIVED.ord).nk_bool:
+    result = style.active
+  else:
+    result = style.normal
+
+  let bg: nk_style_item_data = cast[nk_style_item_data](result.data)
+  case result.`type`
+  of NK_STYLE_ITEM_IMAGE:
+    nkDrawImage(b = `out`, r = bounds, img = bg.image.addr, col =
+      nk_rgb_factor(col = nk_rgba(r = 255, g = 255, b = 255, a = 255),
+      factor = style.color_factor_background))
+  of NK_STYLE_ITEM_NINE_SLICE:
+    nkDrawNineSlice(b = `out`, r = bounds, slc = bg.slice.addr, col =
+      nk_rgb_factor(col = nk_rgba(r = 255, g = 255, b = 255, a = 255),
+      factor = style.color_factor_background))
+  of NK_STYLE_ITEM_COLOR:
+    nkFillRect(b = `out`, rect = bounds, rounding = style.rounding, c =
+      nk_rgb_factor(col = bg.color, factor = style.color_factor_background))
+    nkStrokeRect(b = `out`, rect = bounds, rounding = style.rounding,
+      lineThickness = style.border, c = nk_rgb_factor(col = bg.color,
+      factor = style.color_factor_background))
+
+proc nkDrawSymbol(`out`: ptr nk_command_buffer; `type`: SymbolType;
+  content: NimRect; background, foreground: nk_color; borderWidth: float;
+  font: ptr nk_user_font) {.raises: [], tags: [], contractual.} =
+  ## Draw the selected symbol
+  ##
+  ## * out         - the command buffer in which the symbol will be drawn
+  ## * type        - the type of symbol to draw
+  ## * content     - the bounds of the symbol's content
+  ## * background  - the background color of the symbol
+  ## * foreground  - the foreground color of the symbol
+  ## * borderWidth - the width of border of the symbol
+  ## * font        - the font used to draw on the symbol
+  discard
 
 proc nkDrawButtonSymbol(`out`: ptr nk_command_buffer; bounds, content: NimRect;
   state: nk_flags; style: ptr nk_style_button; `type`: SymbolType;
-  font: ptr nk_user_font) {.raises: [], tags: [], contractual.} =
+  font: ptr nk_user_font) {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw a button with the selected symbol on it. Internal use only
   ##
   ## * out      - the command buffer in which the button will be drawn
@@ -1061,10 +1128,20 @@ proc nkDrawButtonSymbol(`out`: ptr nk_command_buffer; bounds, content: NimRect;
   # select correct colors/images
   let background: nk_style_item = nkDrawButton(`out` = `out`, bounds = bounds,
     state = state, style = style)
+  let bg: nk_color = (if background.`type` == NK_STYLE_ITEM_COLOR:
+    cast[nk_style_item_data](background.data).color else: style.text_background)
+
+  var sym: nk_color = (if (state and NK_WIDGET_STATE_HOVER.ord).bool:
+    style.text_hover elif (state and NK_WIDGET_STATE_ACTIVE.ord).bool:
+      style.text_active else: style.text_normal)
+
+  sym = nk_rgb_factor(col = sym, factor = style.color_factor_text)
+  nkDrawSymbol(`out` = `out`, `type` = `type`, content = content,
+    background = bg, foreground = sym, borderWidth = 1, font = font)
 
 proc nkDoButtonSymbol(state: var nk_flags; `out`: ptr nk_command_buffer; bounds: NimRect,
   symbol: SymbolType; behavior: nk_button_behavior; style: ptr nk_style_button;
-  `in`: ptr nk_input; font: ptr nk_user_font): bool {.raises: [], tags: [], contractual.} =
+  `in`: ptr nk_input; font: ptr nk_user_font): bool {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw a button with the selected symbol on it. Internal use only
   ##
   ## * state    - the state of the button
@@ -1334,6 +1411,12 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
         else:
           button.x = header.x + style.window.header.padding.x
           header.x += button.w + style.window.header.spacing.x + style.window.header.padding.x
+        if nkDoButtonSymbol(state = ws, `out` = win.buffer.addr, bounds = button,
+          symbol = style.window.header.close_symbol, behavior = NK_BUTTON_DEFAULT,
+          style = style.window.header.close_button.addr, `in` = `in`.addr,
+          font = style.font) and not(win.flags and NK_WINDOW_ROM.cint).nk_bool:
+          layout.flags = layout.flags or NK_WINDOW_HIDDEN.cint
+          layout.flags = layout.flags and not NK_WINDOW_MINIMIZED.cint
     return true
 
 # ------
