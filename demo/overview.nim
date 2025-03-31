@@ -50,7 +50,7 @@ const
 var
   showMenu, titlebar, border, resize, movable, noScrollbar, scaleLeft,
     minimizable, check, mcheck, checkbox, inactive, groupBorder: bool = true
-  windowFlags: set[WindowFlags]
+  windowFlags: set[PanelFlags]
   showAppAbout, groupTitlebar, groupNoScrollbar: bool = false
   prog, progValue = 40
   slider, mslider: int = 10
@@ -109,7 +109,7 @@ proc overview*() =
   if resize:
     windowFlags.incl(windowScalable)
   if movable:
-    windowFlags.incl(windowMoveable)
+    windowFlags.incl(windowMovable)
   if noScrollbar:
     windowFlags.incl(windowNoScrollbar)
   if scaleLeft:
@@ -174,7 +174,7 @@ proc overview*() =
             checkbox("check", mcheck)
     if showAppAbout:
       try:
-        popup(staticPopup, "About", {windowCloseable}, 20, 100,
+        popup(staticPopup, "About", {windowClosable}, 20, 100,
             300, 190):
           setLayoutRowDynamic(20, 1)
           label("Nuklear")
@@ -667,7 +667,7 @@ proc overview*() =
         labelButton("button"):
           discard
       treeNode("Group", minimized, 16):
-        var groupFlags: set[WindowFlags]
+        var groupFlags: set[PanelFlags]
         if groupBorder:
           groupFlags.incl(windowBorder)
         if groupNoScrollbar:

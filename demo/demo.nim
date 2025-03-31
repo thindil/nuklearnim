@@ -1,4 +1,4 @@
-# Copyright © 2023 Bartek Jasicki
+# Copyright © 2023-2025 Bartek Jasicki
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -68,7 +68,7 @@ proc main() =
 
     # GUI
     window(name = "Demo", x = 50, y = 50, w = 200, h = 200, {windowBorder,
-        windowMoveable, windowScalable, windowCloseable,
+        windowMovable, windowScalable, windowClosable,
         windowMinimizable, windowTitle}):
       setLayoutRowStatic(30.0, 80, 1)
       labelButton("button"):
