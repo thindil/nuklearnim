@@ -296,7 +296,7 @@ proc createWin(title: cstring; wx, wy, ww, wh: cfloat;
   return nk_begin(ctx = ctx, title = title, bounds = new_nk_rect(x = wx, y = wy,
       w = ww, h = wh), flags = wFlags)
 
-proc winSetToInt(nimFlags: set[WindowFlags]): cint {.raises: [], tags: [],
+proc winSetToInt(nimFlags: set[PanelFlags]): cint {.raises: [], tags: [],
     contractual.} =
   ## Convert Nim flags related to windows to C
   ##
@@ -311,7 +311,7 @@ proc winSetToInt(nimFlags: set[WindowFlags]): cint {.raises: [], tags: [],
   {.ruleOn: "assignments".}
   {.warning[HoleEnumConv]: on.}
 
-template window*(name: string; x, y, w, h: float; flags: set[WindowFlags];
+template window*(name: string; x, y, w, h: float; flags: set[PanelFlags];
     content: untyped) =
   ## Create a new Nuklear window/widget with the content
   ##
@@ -865,6 +865,57 @@ proc nkDrawNineSlice(b: ptr nk_command_buffer; r: NimRect; slc: ptr nk_nine_slic
   img.region = [rgnX + rgnW - slc.r, rgnY + rgnH - slc.b, slc.r, slc.b]
   nkDrawImage(b = b, r = NimRect(x: r.x + r.w - slc.r.float, y: r.y + r.h - slc.b.float, w: slc.r.float, h: slc.b.float), img = img.addr, col = col)
 
+proc nkTextClamp(font: ptr nk_user_font; text: string; textLen: int;
+  space: float; glyphs: var int; textWidth: var float; sepList: nk_rune;
+  sepCount: int): int {.raises: [], tags: [], contractual.} =
+  ## Clamp the selected text
+  ##
+  ## * font      - font used to draw the text
+  ## * text      - the text to clamp
+  ## * textLen   - the lenght of the text
+  ## * space     - the amount of pixels used as space between letters
+  ## * glyphs    - the amount of glyphs in the text
+  ## * textWidth - the width of the text in pixels
+  ## * sepList   - the list of separators
+  ## * sepCount  - the amount of separators
+  ##
+  ## Returns the new length of the text
+  discard
+
+proc nkDrawText(b: ptr nk_command_buffer; r: NimRect; str: string; length: var int;
+  font: ptr nk_user_font; bg, fg: nk_color) {.raises: [], tags: [RootEffect],
+  contractual.} =
+  ## Draw the selected text
+  ##
+  ## * b    - the command buffer in which the text will be drawn
+  ## * r    - the rectangle in which the text will be drawn
+  ## * str  - the text to draw
+  ## * len  - the length of the text to draw
+  ## * font - the font used to draw the text
+  ## * bg   - the background color of the text
+  ## * fg   - the foreground color of the text
+  require:
+    b != nil
+    font != nil
+  body:
+    if b == nil or str == "" or length == 0 or (bg.a == 0 and fg.a == 0):
+      return
+    if b.use_clipping == 1:
+      let c: nk_rect = b.clip
+      if (c.w == 0 or c.h == 0 or not nkIntersect(x0 = r.x, y0 = r.y, w0 = r.w, h0 = r.h, x1 = c.x, y1 = c.y, w1 = c.w, h1 = c.h)):
+        return
+
+    # make sure text fits inside bounds
+    let textWidth: float = try:
+        font.width(arg1 = font.userdata, h = font.height, arg3 = str.cstring, len = length.cint)
+      except:
+        return
+    if textWidth > r.w:
+      var
+        glyphs: int = 0
+        txtWidth: float = textWidth
+      length = nkTextClamp(font, str, length, r.w, glyphs, txtWidth, 0, 0)
+
 # -----
 # Input
 # -----
@@ -997,6 +1048,67 @@ proc isMouseReleased*(id: Buttons): bool {.raises: [], tags: [], contractual.} =
     ## A binding to Nuklear's function. Internal use only
   return nk_input_is_mouse_released(i = ctx.input.addr, id = id)
 
+# ----
+# Text
+# ----
+proc nkWidgetText(o: ptr nk_command_buffer; b: var NimRect; str: string; len: var int;
+  t: ptr nk_text; a: nk_flags; f: ptr nk_user_font) {.raises: [], tags: [RootEffect],
+  contractual.} =
+  ## Draw a text widget. Internal use only
+  ##
+  ## * o   - the command buffer in which the widget will be draw
+  ## * b   - the bounds of the widget
+  ## * str - the text to draw in the widget
+  ## * len - the length of the text to draw
+  ## * t   - the text style
+  ## * a   - the flags related to the widget
+  ## * f   - the font used to draw the widget
+  require:
+    o != nil and t != nil
+  body:
+    if o == nil or t == nil:
+      return
+    b.h = max(b.h, 2 * t.padding.y)
+    var label: NimRect = NimRect()
+    label.x = 0
+    label.w = 0
+    label.y = b.y + t.padding.y
+    label.h = min(f.height, b.h - 2 * t.padding.y)
+    var textWidth: float = 0.0
+    textWidth = try:
+        f.width(f.userdata, f.height, str.cstring, len.cint)
+      except:
+        return
+    textWidth += (2.0 * t.padding.x)
+
+    # align in x-axis
+    if (a and NK_TEXT_ALIGN_LEFT.ord).bool:
+      label.x = b.x + t.padding.x
+      label.w = max(0, b.w - 2 * t.padding.x)
+    elif (a and NK_TEXT_ALIGN_CENTERED.ord).bool:
+      label.w = max(1, 2 * t.padding.x + textWidth.float)
+      label.x = (b.x + t.padding.x + ((b.w - 2 * t.padding.x) - label.w) / 2)
+      label.x = max(b.x + t.padding.x, label.x)
+      label.w = min(b.x + b.w, label.x + label.w)
+      if label.w >= label.x:
+        label.w -= label.x
+    elif (a and NK_TEXT_ALIGN_RIGHT.ord).bool:
+      label.x = max(b.x + t.padding.x, (b.x + b.w) - (2 * t.padding.x + textWidth.float))
+      label.w = textWidth.float + 2 * t.padding.x
+    else:
+      return
+
+    # align in y-axis
+    if (a and NK_TEXT_ALIGN_MIDDLE.ord).bool:
+      label.y = b.y + b.h / 2.0 - f.height.float / 2.0
+      label.h = max(b.h / 2.0, b.h - (b.h / 2.0 + f.height / 2.0))
+    elif (a and NK_TEXT_ALIGN_BOTTOM.ord).bool:
+      label.y = b.y + b.h - f.height
+      label.h = f.height
+
+    nkDrawText(b = o, r = label, str = str, length = len, font = f,
+      bg = t.background, fg = t.text)
+
 # -------
 # Buttons
 # -------
@@ -1100,8 +1212,8 @@ proc nkDrawButton(`out`: ptr nk_command_buffer; bounds: NimRect;
       factor = style.color_factor_background))
 
 proc nkDrawSymbol(`out`: ptr nk_command_buffer; `type`: SymbolType;
-  content: NimRect; background, foreground: nk_color; borderWidth: float;
-  font: ptr nk_user_font) {.raises: [], tags: [], contractual.} =
+  content: var NimRect; background, foreground: nk_color; borderWidth: float;
+  font: ptr nk_user_font) {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw the selected symbol
   ##
   ## * out         - the command buffer in which the symbol will be drawn
@@ -1111,9 +1223,31 @@ proc nkDrawSymbol(`out`: ptr nk_command_buffer; `type`: SymbolType;
   ## * foreground  - the foreground color of the symbol
   ## * borderWidth - the width of border of the symbol
   ## * font        - the font used to draw on the symbol
-  discard
+  case `type`
+  of x, underscore, plus, minus:
+    # single character text symbol
+    let ch: char = case `type`
+      of x:
+        'x'
+      of underscore:
+        '_'
+      of plus:
+        '+'
+      of minus:
+        '-'
+      else:
+        ' '
+    var text: nk_text
+    text.padding = nk_vec2(x: 0, y: 0)
+    text.background = background
+    text.text = foreground
+    var length: Positive = 1
+    nkWidgetText(o = `out`, b = content, str = $ch, len = length, t = text.addr,
+      a = NK_TEXT_CENTERED, f = font)
+  else:
+    discard
 
-proc nkDrawButtonSymbol(`out`: ptr nk_command_buffer; bounds, content: NimRect;
+proc nkDrawButtonSymbol(`out`: ptr nk_command_buffer; bounds, content: var NimRect;
   state: nk_flags; style: ptr nk_style_button; `type`: SymbolType;
   font: ptr nk_user_font) {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw a button with the selected symbol on it. Internal use only
@@ -1139,7 +1273,7 @@ proc nkDrawButtonSymbol(`out`: ptr nk_command_buffer; bounds, content: NimRect;
   nkDrawSymbol(`out` = `out`, `type` = `type`, content = content,
     background = bg, foreground = sym, borderWidth = 1, font = font)
 
-proc nkDoButtonSymbol(state: var nk_flags; `out`: ptr nk_command_buffer; bounds: NimRect,
+proc nkDoButtonSymbol(state: var nk_flags; `out`: ptr nk_command_buffer; bounds: var NimRect,
   symbol: SymbolType; behavior: nk_button_behavior; style: ptr nk_style_button;
   `in`: ptr nk_input; font: ptr nk_user_font): bool {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw a button with the selected symbol on it. Internal use only
@@ -1208,7 +1342,7 @@ proc nkPanelGetBorder(style: nk_style; flags: nk_flags; `type`: PanelType): cflo
   ## * type  - the selected type of the panel
   ##
   ## Returns size of the border of the selected panel
-  if (flags and NK_WINDOW_BORDER.ord.int).nk_bool:
+  if (flags and windowBorder.ord.int).nk_bool:
     case `type`
     of panelWindow:
       return style.window.border
@@ -1235,8 +1369,8 @@ proc nkPanelHasHeader(flags: nk_flags; title: string): bool {.raises: [], tags: 
   ## * flags - the panel's flags
   ## * title - the panel's  title
   var active: nk_bool = nkFalse
-  active = (flags and (NK_WINDOW_CLOSABLE.ord.int or NK_WINDOW_MINIMIZABLE.ord.int)).nk_bool
-  active = (active or (flags and NK_WINDOW_TITLE.ord.int).nk_bool).nk_bool
+  active = (flags and (windowClosable.ord.int or windowMinimizable.ord.int)).nk_bool
+  active = (active or (flags and windowTitle.ord.int).nk_bool).nk_bool
   active = (active and not(flags and NK_WINDOW_HIDDEN.ord.int).nk_bool and title.len > 0).nk_bool
   return active
 
@@ -1276,7 +1410,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     let
       layout: PNkPanel = win.layout
       `out`: nk_command_buffer = win.buffer
-    var `in`: nk_input = (if (win.flags and NK_WINDOW_NO_INPUT.cint) ==
+    var `in`: nk_input = (if (win.flags and windowNoInput.cint) ==
           1: nk_input() else: ctx.input)
     when defined(nkIncludeCommandUserdata):
       win.buffer.userdata = ctx.userdata
@@ -1287,7 +1421,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
           `type` = panelType)
 
     # window movement
-    if (win.flags and NK_WINDOW_MOVABLE.cint) == 1 and (win.flags and
+    if (win.flags and windowMovable.cint) == 1 and (win.flags and
         NK_WINDOW_ROM.cint) != 1:
       # calculate draggable window space
       var header: nk_rect = nk_rect(x: win.bounds.x, y: win.bounds.y,
@@ -1318,7 +1452,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     layout.bounds = win.bounds
     layout.bounds.x += panelPadding.x
     layout.bounds.w -= (2 * panelPadding.x)
-    if (win.flags and NK_WINDOW_BORDER.cint).nk_bool:
+    if (win.flags and windowBorder.cint).nk_bool:
       layout.border = nkPanelGetBorder(style = style, flags = win.flags, `type` = panelType)
       layout.bounds = nkShrinkRect(r = layout.bounds, amount = layout.border)
     else:
@@ -1336,11 +1470,11 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     layout.row.tree_depth = 0
     layout.row.height = panelPadding.y
     layout.has_scrolling = nkTrue.cuint
-    if not(win.flags and NK_WINDOW_NO_SCROLLBAR.cint).nk_bool:
+    if not(win.flags and windowNoScrollbar.cint).nk_bool:
       layout.bounds.w -= scrollbarSize.x
     if nkPanelIsNonblock(`type` = panelType):
       layout.footer_height = 0
-      if not(win.flags and NK_WINDOW_NO_SCROLLBAR.cint).nk_bool or (win.flags and NK_WINDOW_SCALABLE.cint).nk_bool:
+      if not(win.flags and windowNoScrollbar.cint).nk_bool or (win.flags and windowScalable.cint).nk_bool:
         layout.footer_height = scrollbarSize.y
       layout.bounds.h -= layout.footer_height
 
@@ -1403,7 +1537,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
       button.y = header.y + style.window.header.padding.y
       button.h = header.h - 2 * style.window.header.padding.y
       button.w = button.h
-      if (win.flags and NK_WINDOW_CLOSABLE.cint).nk_bool:
+      if (win.flags and windowClosable.cint).nk_bool:
         var ws: nk_flags = 0
         if style.window.header.align == NK_HEADER_RIGHT:
           button.x = (header.w + header.x) - (button.w + style.window.header.padding.x)
@@ -1440,7 +1574,7 @@ proc nkStartPopup(ctx; win: var PNkWindow) {.raises: [], tags: [],
     buf.active = nkTrue
     win.popup.buf = buf
 
-proc nkPopupBegin(ctx; pType: PopupType; title: string; flags: set[WindowFlags];
+proc nkPopupBegin(ctx; pType: PopupType; title: string; flags: set[PanelFlags];
     x, y, w, h: var float): bool {.raises: [NuklearException], tags: [
         RootEffect], contractual.} =
   ## Try to create a new popup window. Internal use only.
@@ -1531,7 +1665,7 @@ proc createNonBlocking(flags2: nk_flags; x2, y2, w2, h2: cfloat): bool {.raises:
   return nk_nonblock_begin(ctx = ctx, flags = flags2, body = new_nk_rect(x = x2, y = y2, w = w2, h = h2),
     header = new_nk_rect(x = 0, y = 0, w = 0, h = 0), panel_type = panelPopup)
 
-template popup*(pType: PopupType; title: string; flags: set[WindowFlags]; x,
+template popup*(pType: PopupType; title: string; flags: set[PanelFlags]; x,
     y, w, h: float; content: untyped) =
   ## Create a new Nuklear popup window with the selected content
   ##
@@ -1550,7 +1684,7 @@ template popup*(pType: PopupType; title: string; flags: set[WindowFlags]; x,
   content
   ctx.nk_popup_end
 
-template nonBlocking*(flags: set[WindowFlags]; x, y, w, h: float; content: untyped) =
+template nonBlocking*(flags: set[PanelFlags]; x, y, w, h: float; content: untyped) =
   ## Create a new Nuklear non-blocking popup window with the selected content
   ##
   ## * flags   - the flags for the popup
@@ -2660,7 +2794,7 @@ proc createContextual(ctx; flags1: nk_flags; x1, y1: cfloat;
       y = triggerBounds1.y, w = triggerBounds1.w, h = triggerBounds1.h),
       cButton = btn.cint.nk_buttons)
 
-template contextualMenu*(flags: set[WindowFlags]; x, y;
+template contextualMenu*(flags: set[PanelFlags]; x, y;
     triggerBounds: NimRect; button: Buttons; content: untyped) =
   ## Create a contextual menu
   ##
@@ -2699,11 +2833,11 @@ template contextualItemImage*(image: PImage; onPressCode: untyped) =
 # Groups
 # ------
 
-template group*(title: string; flags: set[WindowFlags]; content: untyped) =
+template group*(title: string; flags: set[PanelFlags]; content: untyped) =
   ## Set a group of widgets inside the parent
   ##
   ## * title   - the title of the group
-  ## * flags   - the set of WindowFlags for the group
+  ## * flags   - the set of PanelFlags for the group
   ## * content - the content of the group
   if nk_group_begin(ctx = ctx, ctitle = title.cstring, cflags = winSetToInt(
       nimFlags = flags)):
