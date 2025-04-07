@@ -715,27 +715,25 @@ proc overview*() =
                 if selected3[i]: "Selected" else: "Unselected"),
                 selected3[i], right)
       treeNode("Notebook", minimized, 18):
-        stylePushVec2(spacing, 0, 0)
-        stylePushFloat(buttonRounding, 0)
-        layoutStatic(20, 3):
-          for i in 0 .. 2:
-            let
-              textWidth = getTextWidth(names[i])
-              widgetWidth = textWidth + 3 * getButtonStyle(padding).x;
-            row(widgetWidth):
-              if currentTab == i:
-                saveButtonStyle()
-                setButtonStyle2(active, normal)
-                currentTab = current_tab
-                labelButton(names[i]):
-                  currentTab = i.cint
-                restoreButtonStyle()
-              else:
-                currentTab = current_tab
-                labelButton(names[i]):
-                  currentTab = i.cint
-        stylePopFloat()
-        stylePopVec2()
+        changeStyle(field = spacing, x = 0, y = 0):
+          changeStyle(field = buttonRounding, value = 0):
+            layoutStatic(20, 3):
+              for i in 0 .. 2:
+                let
+                  textWidth = getTextWidth(names[i])
+                  widgetWidth = textWidth + 3 * getButtonStyle(padding).x;
+                row(widgetWidth):
+                  if currentTab == i:
+                    saveButtonStyle()
+                    setButtonStyle2(active, normal)
+                    currentTab = current_tab
+                    labelButton(names[i]):
+                      currentTab = i.cint
+                    restoreButtonStyle()
+                  else:
+                    currentTab = current_tab
+                    labelButton(names[i]):
+                      currentTab = i.cint
         setLayoutRowDynamic(140, 1)
         group("Notebook", {windowBorder}):
           var id: cfloat

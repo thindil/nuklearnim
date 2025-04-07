@@ -1,4 +1,4 @@
-# Copyright © 2023-2024 Bartek Jasicki
+# Copyright © 2023-2025 Bartek Jasicki
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -78,6 +78,7 @@ proc setStyle*(theme: Theme) =
     table[tooltipBorderColor] = NimColor(r: 0, g: 0, b: 0, a: 255)
     table[groupBorderColor] = NimColor(r: 0, g: 0, b: 0, a: 255)
     table[groupTextColor] = NimColor(r: 70, g: 70, b: 70, a: 255)
+    table[progressbarColor] = NimColor(r: 80, g: 80, b: 80, a: 255)
     styleFromTable(table)
   of themeRed:
     table[textColor] = NimColor(r: 190, g: 190, b: 190, a: 255)
@@ -120,6 +121,7 @@ proc setStyle*(theme: Theme) =
     table[tooltipBorderColor] = NimColor(r: 51, g: 55, b: 67, a: 255)
     table[groupBorderColor] = NimColor(r: 51, g: 55, b: 67, a: 255)
     table[groupTextColor] = NimColor(r: 190, g: 190, b: 190, a: 255)
+    table[progressbarColor] = NimColor(r: 181, g: 45, b: 69, a: 255)
     styleFromTable(table)
   of themeBlue:
     table[textColor] = NimColor(r: 20, g: 20, b: 20, a: 255)
@@ -162,6 +164,7 @@ proc setStyle*(theme: Theme) =
     table[tooltipBorderColor] = NimColor(r: 140, g: 159, b: 173, a: 255)
     table[groupBorderColor] = NimColor(r: 140, g: 159, b: 173, a: 255)
     table[groupTextColor] = NimColor(r: 20, g: 20, b: 20, a: 255)
+    table[progressbarColor] = NimColor(r: 137, g: 182, b: 224, a: 245)
     styleFromTable(table)
   of themeDark:
     table[textColor] = NimColor(r: 210, g: 210, b: 210, a: 255)
@@ -204,6 +207,7 @@ proc setStyle*(theme: Theme) =
     table[tooltipBorderColor] = NimColor(r: 46, g: 46, b: 46, a: 255)
     table[groupBorderColor] = NimColor(r: 46, g: 46, b: 46, a: 255)
     table[groupTextColor] = NimColor(r: 210, g: 210, b: 210, a: 255)
+    table[progressbarColor] = NimColor(r: 48, g: 83, b: 111, a: 245)
     styleFromTable(table)
   of themeBlack:
     defaultStyle()
