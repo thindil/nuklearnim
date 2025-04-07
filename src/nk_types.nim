@@ -55,19 +55,14 @@ type
   nk_layout_format* = enum
     ## Internal Nuklear type
     NK_DYNAMIC, NK_STATIC
-  nk_text_align* = enum
-    ## Internal Nuklear type
-    NK_TEXT_ALIGN_LEFT = 0x01,
-    NK_TEXT_ALIGN_CENTERED = 0x02,
-    NK_TEXT_ALIGN_RIGHT = 0x04,
-    NK_TEXT_ALIGN_TOP = 0x08,
-    NK_TEXT_ALIGN_MIDDLE = 0x10,
-    NK_TEXT_ALIGN_BOTTOM = 0x20
-  nk_text_alignment* = enum
-    ## Internal Nuklear type
-    NK_TEXT_LEFT = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_LEFT.int,
-    NK_TEXT_CENTERED = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_CENTERED.int,
-    NK_TEXT_RIGHT = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_RIGHT.int
+  TextAlign* = enum
+    ## The alignment of a text
+    textLeft = 0x01,
+    textCentered = 0x02,
+    textRight = 0x04,
+    textTop = 0x08,
+    textMiddle = 0x10,
+    textBottom = 0x20
   TreeType* = enum
     ## The types of tree widget
     node, tab
@@ -101,19 +96,6 @@ type
   Buttons* = enum
     ## Types of buttoons
     left, middle, right, double, max
-  nk_style_colors* = enum
-    ## Internal Nuklear type
-    NK_COLOR_TEXT, NK_COLOR_WINDOW, NK_COLOR_HEADER, NK_COLOR_BORDER,
-    NK_COLOR_BUTTON, NK_COLOR_BUTTON_HOVER, NK_COLOR_BUTTON_ACTIVE,
-    NK_COLOR_TOGGLE, NK_COLOR_TOGGLE_HOVER, NK_COLOR_TOGGLE_CURSOR,
-    NK_COLOR_SELECT, NK_COLOR_SELECT_ACTIVE, NK_COLOR_SLIDER,
-    NK_COLOR_SLIDER_CURSOR, NK_COLOR_SLIDER_CURSOR_HOVER,
-    NK_COLOR_SLIDER_CURSOR_ACTIVE, NK_COLOR_PROPERTY, NK_COLOR_EDIT,
-    NK_COLOR_EDIT_CURSOR, NK_COLOR_COMBO, NK_COLOR_CHART,
-    NK_COLOR_CHART_COLOR, NK_COLOR_CHART_COLOR_HIGHLIGHT,
-    NK_COLOR_SCROLLBAR, NK_COLOR_SCROLLBAR_CURSOR,
-    NK_COLOR_SCROLLBAR_CURSOR_HOVER, NK_COLOR_SCROLLBAR_CURSOR_ACTIVE,
-    NK_COLOR_TAB_HEADER, NK_COLOR_COUNT
   nk_anti_aliasing* = enum
     ## Internal Nuklear type
     NK_ANTI_ALIASING_OFF, NK_ANTI_ALIASING_ON
@@ -150,13 +132,6 @@ type
       NK_KEY_TEXT_SELECT_ALL, NK_KEY_TEXT_WORD_LEFT, NK_KEY_TEXT_WORD_RIGHT,
       NK_KEY_SCROLL_START, NK_KEY_SCROLL_END, NK_KEY_SCROLL_DOWN,
       NK_KEY_SCROLL_UP, NK_KEY_ESCAPE, NK_KEY_MAX
-  nk_buttons* = enum
-    ## Internal Nuklear type
-    NK_BUTTON_LEFT,
-    NK_BUTTON_MIDDLE,
-    NK_BUTTON_RIGHT,
-    NK_BUTTON_DOUBLE,
-    NK_BUTTON_MAX
   nk_style_cursor* = enum
     ## Internal Nuklear type
     NK_CURSOR_ARROW,
@@ -247,6 +222,9 @@ type
     # draw_begin*: nk_draw_begin
     # draw_end*: nk_draw_end
     # userdata*: nk_handle
+  nk_style_progress* {.importc: "struct nk_style_progress", nodecl.} = object
+    cursor_normal*: nk_style_item
+    ## Internal Nuklear type
   nk_handle* {.bycopy, union.} = object
     ## Internal Nuklear type
     `ptr`*: pointer
@@ -268,6 +246,7 @@ type
     ## Internal Nuklear type
     window*: nk_style_window
     button*: nk_style_button
+    progress*: nk_style_progress
     font*: ptr nk_user_font
     text*: nk_style_text
     cursor_active*: nk_cursor
@@ -430,7 +409,7 @@ type
     ## Pointer to nk_window structure
   PNkPanel* = ptr nk_panel
     ## Pointer to nk_panel structure
-  ButtonsArray* = array[NK_BUTTON_MAX, nk_mouse_button]
+  ButtonsArray* = array[Buttons.max, nk_mouse_button]
     ## The array of mouse buttons
   CursorsArray* = array[NK_CURSOR_COUNT, nk_cursor]
     ## The array of mouse buttons
@@ -438,24 +417,7 @@ type
 # ---------
 # Constants
 # ---------
-const
-  nkWindowBorder*: cint = 1 shl 0
-    ## A window has border
-  nkWindowMoveable*: cint = 1 shl 1
-    ## A window is moveable
-  nkWindowScalable*: cint = 1 shl 2
-    ## A window can be resized
-  nkWindowCloseable*: cint = 1 shl 3
-    ## A window can be closed
-  nkWindowMinimizable*: cint = 1 shl 4
-    ## A window can be minimized
-  nkWindowNoScrollbar*: cint = 1 shl 5
-    ## A window has a scrollbar
-  nkWindowScaleLeft*: cint = 1 shl 9
-    ## The resize grip for a window is at bottom left corner
-  nkWindowTitle*: cint = 1 shl 6
-    ## A window has title bar
-  nkNullRect*: nk_rect = nk_rect(x: -8192.0, y: -8192.0, w: -8192.0, h: -8192.0)
+const nkNullRect*: nk_rect = nk_rect(x: -8192.0, y: -8192.0, w: -8192.0, h: -8192.0)
     ## An empty rectangle
 
 # ------------------------------------------------------------------
@@ -500,6 +462,9 @@ type
   ColorStyleTypes* = enum
     ## The types of fields in style's settings for UI colors
     background
+  StyleStyleTypes* = enum
+    ## The types of fields in style's settings for UI colors
+    progressbar
   WindowStyleTypes* = enum
     ## The types of fields in style's settings for windows
     spacing, padding
@@ -522,9 +487,9 @@ type
     staticPopup, dynamicPopup
   TextAlignment* {.size: sizeof(cint).} = enum
     ## The alignments of a text
-    left = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_LEFT.int,
-    centered = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_CENTERED.int,
-    right = NK_TEXT_ALIGN_MIDDLE.int or NK_TEXT_ALIGN_RIGHT.int
+    left = textMiddle.int or textLeft.int,
+    centered = textMiddle.int or textCentered.int,
+    right = textMiddle.int or textRight.int
   EditFlags* {.size: sizeof(cint).} = enum
     ## The edit fields' flags
     default = 0,
@@ -573,7 +538,8 @@ type
       buttonHoverTextColor, buttonActiveTextColor, editTextColor,
       comboTextColor, tooltipColor, tooltipBorderColor, groupBorderColor,
       headerTextColor, groupTextColor, selectActiveTextColor, propertyTextColor,
-      popupColor, popupBorderColor, countColors
+      popupColor, popupBorderColor, progressbarColor, progressbarBorderColor,
+      countColors
   StyleHeaderAlign* = enum
     ## The styles of the window's header
     headerLeft, headerRight
@@ -597,8 +563,8 @@ type
 converter toBool*(x: nk_bool): bool =
   ## Converts Nuklear nk_bool enum to Nim bool
   x == nkTrue
-converter toNkFlags*(x: nk_text_alignment): nk_flags =
-  ## Converts Nuklear nk_text_alignment enum to Nuklear nk_flags type
+converter toNkFlags*(x: TextAlignment): nk_flags =
+  ## Converts Nuklear TextAlignment enum to Nuklear nk_flags type
   x.ord.cint
 converter toNkFlags*(x: EditTypes): nk_flags =
   ## Converts EditTypes enum to Nuklear nk_flags type

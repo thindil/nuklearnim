@@ -76,7 +76,7 @@ proc nk_input_end*(ctx) {.importc, nodecl, raises: [], tags: [], contractual.}
 proc nk_input_key*(ctx; key: nk_keys; down: nk_bool) {.importc, nodecl,
     raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
-proc nk_input_button*(ctx; id: nk_buttons; x, y: cint; down: nk_bool) {.importc, nodecl,
+proc nk_input_button*(ctx; id: Buttons; x, y: cint; down: nk_bool) {.importc, nodecl,
     raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
 
@@ -1082,27 +1082,27 @@ proc nkWidgetText(o: ptr nk_command_buffer; b: var NimRect; str: string; len: va
     textWidth += (2.0 * t.padding.x)
 
     # align in x-axis
-    if (a and NK_TEXT_ALIGN_LEFT.ord).bool:
+    if (a and textLeft.ord).bool:
       label.x = b.x + t.padding.x
       label.w = max(0, b.w - 2 * t.padding.x)
-    elif (a and NK_TEXT_ALIGN_CENTERED.ord).bool:
+    elif (a and textCentered.ord).bool:
       label.w = max(1, 2 * t.padding.x + textWidth.float)
       label.x = (b.x + t.padding.x + ((b.w - 2 * t.padding.x) - label.w) / 2)
       label.x = max(b.x + t.padding.x, label.x)
       label.w = min(b.x + b.w, label.x + label.w)
       if label.w >= label.x:
         label.w -= label.x
-    elif (a and NK_TEXT_ALIGN_RIGHT.ord).bool:
+    elif (a and textRight.ord).bool:
       label.x = max(b.x + t.padding.x, (b.x + b.w) - (2 * t.padding.x + textWidth.float))
       label.w = textWidth.float + 2 * t.padding.x
     else:
       return
 
     # align in y-axis
-    if (a and NK_TEXT_ALIGN_MIDDLE.ord).bool:
+    if (a and textMiddle.ord).bool:
       label.y = b.y + b.h / 2.0 - f.height.float / 2.0
       label.h = max(b.h / 2.0, b.h - (b.h / 2.0 + f.height / 2.0))
-    elif (a and NK_TEXT_ALIGN_BOTTOM.ord).bool:
+    elif (a and textBottom.ord).bool:
       label.y = b.y + b.h - f.height
       label.h = f.height
 
@@ -1243,7 +1243,7 @@ proc nkDrawSymbol(`out`: ptr nk_command_buffer; `type`: SymbolType;
     text.text = foreground
     var length: Positive = 1
     nkWidgetText(o = `out`, b = content, str = $ch, len = length, t = text.addr,
-      a = NK_TEXT_CENTERED, f = font)
+      a = centered, f = font)
   else:
     discard
 
@@ -1434,15 +1434,15 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
       # window movement by dragging
       var buttons: ButtonsArray = cast[ButtonsArray](`in`.mouse.buttons)
       let
-        leftMouseDown: bool = buttons[NK_BUTTON_LEFT].down
-        leftMouseClicked: bool = buttons[NK_BUTTON_LEFT].clicked == 1
+        leftMouseDown: bool = buttons[Buttons.left].down
+        leftMouseClicked: bool = buttons[Buttons.left].clicked == 1
         leftMouseClickInCursor: bool = hasMouseClickDownInRect(id = left, rect = header, down = nkTrue)
         cursors: CursorsArray = cast[CursorsArray](ctx.style.cursors)
       if leftMouseDown and leftMouseClickInCursor and not leftMouseClicked:
         win.bounds.x += `in`.mouse.delta.x
         win.bounds.y += `in`.mouse.delta.y
-        buttons[NK_BUTTON_LEFT].clicked_pos.x += `in`.mouse.delta.x
-        buttons[NK_BUTTON_LEFT].clicked_pos.y += `in`.mouse.delta.y
+        buttons[Buttons.left].clicked_pos.x += `in`.mouse.delta.x
+        buttons[Buttons.left].clicked_pos.y += `in`.mouse.delta.y
         ctx.style.cursor_active = cursors[NK_CURSOR_MOVE]
       `in`.mouse.buttons = buttons.addr
 
@@ -1630,7 +1630,7 @@ proc nkPopupBegin(ctx; pType: PopupType; title: string; flags: set[PanelFlags];
     popup.layout = cast[PNkPanel](nk_create_panel(ctx = ctx))
     popup.flags = winSetToInt(nimFlags = flags)
     {.ruleOff: "assignments".}
-    popup.flags = popup.flags or nkWindowBorder.cint
+    popup.flags = popup.flags or windowBorder.cint
     if (pType == dynamicPopup):
       popup.flags = popup.flags or NK_WINDOW_DYNAMIC.cint
     {.ruleOn: "assignments".}
@@ -2424,62 +2424,76 @@ proc getButtonStyle*(field: ButtonStyleTypes): NimVec2 {.raises: [], tags: [],
   if field == padding:
     return NimVec2(x: ctx.style.button.padding.x, y: ctx.style.button.padding.y)
 
-proc stylePushVec2*(field: WindowStyleTypes; x,
-    y: cfloat): bool {.discardable, raises: [], tags: [], contractual.} =
+proc stylePushVec2(fld: WindowStyleTypes; x1,
+    y1: cfloat): bool {.discardable, raises: [], tags: [], contractual.} =
   ## Push the vector value for the selected Nuklear window style on a
   ## temporary stack
   ##
-  ## * field - the Nuklear windows style field which will be modified
-  ## * x     - the X value of the vector to push
-  ## * y     - the Y value of the vector to push
+  ## * fld - the Nuklear windows style field which will be modified
+  ## * x1  - the X value of the vector to push
+  ## * y1  - the Y value of the vector to push
   ##
   ## Returns true if value was succesfully pushed, otherwise false
   proc nk_style_push_vec2(ctx; dest: var nk_vec2;
       source: nk_vec2): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
-  if field == spacing:
+  if fld == spacing:
     return nk_style_push_vec2(ctx = ctx, dest = ctx.style.window.spacing,
-        source = new_nk_vec2(x = x, y = y))
-  elif field == padding:
+        source = new_nk_vec2(x = x1, y = y1))
+  elif fld == padding:
     return nk_style_push_vec2(ctx = ctx, dest = ctx.style.window.padding,
-        source = new_nk_vec2(x = x, y = y))
+        source = new_nk_vec2(x = x1, y = y1))
 
-proc stylePushFloat*(field: FloatStyleTypes;
-    value: cfloat): bool {.discardable, raises: [], tags: [], contractual.} =
+proc stylePushFloat(fld: FloatStyleTypes;
+    val: cfloat): bool {.raises: [], tags: [], contractual.} =
   ## Push the float value for the selected Nuklear buttons style on a
   ## temporary stack
   ##
-  ## * ctx   - the Nuklear context
-  ## * field - the Nuklear buttons style field which will be modified
-  ## * value - the float value to push
+  ## * fld - the Nuklear buttons style field which will be modified
+  ## * val - the float value to push
   ##
   ## Returns true if value was succesfully pushed, otherwise false
   proc nk_style_push_float(ctx; dest: var cfloat;
       source: cfloat): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
-  if field == buttonRounding:
+  if fld == buttonRounding:
     return nk_style_push_float(ctx = ctx, dest = ctx.style.button.rounding,
-        source = value)
-  elif field == popupBorder:
+        source = val)
+  elif fld == popupBorder:
     return nk_style_push_float(ctx = ctx, dest = ctx.style.window.popup_border,
-        source = value)
-  return false
+        source = val)
 
-proc stylePushColor*(field: ColorStyleTypes; color: Color): bool {.discardable, raises: [], tags: [], contractual.} =
+proc stylePushColor(fld: ColorStyleTypes; col: Color): bool {.raises: [], tags: [], contractual.} =
   ## Push the color value for the selected Nuklear window style on a
   ## temporary stack
   ##
-  ## * field - the Nuklear windows style field which will be modified
-  ## * color - the new color for the selected field
+  ## * fld - the Nuklear windows style field which will be modified
+  ## * col - the new color for the selected field
   ##
   ## Returns true if value was succesfully pushed, otherwise false
   proc nk_style_push_color(ctx; dest: var nk_color;
       source: nk_color): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
-  let (r, g, b) = color.extractRGB()
-  if field == background:
+  let (r, g, b) = col.extractRGB()
+  if fld == background:
     return nk_style_push_color(ctx = ctx, dest = ctx.style.window.background,
       source = nk_rgb(r = r.cint, g = g.cint, b = b.cint))
+
+proc stylePushStyleItem(fld: StyleStyleTypes; col: Color): bool {.raises: [], tags: [], contractual.} =
+  ## Push the color value for the selected Nuklear window style on a
+  ## temporary stack
+  ##
+  ## * fld - the Nuklear windows style field which will be modified
+  ## * col - the new color for the selected field
+  ##
+  ## Returns true if value was succesfully pushed, otherwise false
+  proc nk_style_push_style_item(ctx; dest: var nk_style_item; source: nk_style_item):
+    nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  let (r, g, b) = col.extractRGB()
+  if fld == progressbar:
+    return nk_style_push_style_item(ctx = ctx, dest = ctx.style.progress.cursor_normal,
+      source = nk_style_item_color(nk_rgb(r = r.cint, g = g.cint, b = b.cint)))
 
 proc styleFromTable*(table: openArray[NimColor]) {.raises: [], tags: [],
     contractual.} =
@@ -2503,23 +2517,69 @@ proc defaultStyle*() {.raises: [], tags: [], contractual.} =
     ## A binding to Nuklear's function. Internal use only
   nk_style_default(ctx = ctx)
 
-proc stylePopFloat*() {.raises: [], tags: [], contractual.} =
+proc stylePopFloat() {.raises: [], tags: [], contractual.} =
   ## Reset the UI float setting to the default Nuklear setting
   proc nk_style_pop_float(ctx) {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
   nk_style_pop_float(ctx = ctx)
 
-proc stylePopVec2*() {.raises: [], tags: [], contractual.} =
+proc stylePopVec2() {.raises: [], tags: [], contractual.} =
   ## reset the UI vector setting to the default Nuklear setting
   proc nk_style_pop_vec2(ctx) {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
   nk_style_pop_vec2(ctx = ctx)
 
-proc stylePopColor*() {.raises: [], tags: [], contractual.} =
+proc stylePopColor() {.raises: [], tags: [], contractual.} =
   ## reset the UI color setting to the default Nuklear setting
   proc nk_style_pop_color(ctx) {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
   nk_style_pop_color(ctx = ctx)
+
+proc stylePopStyleItem() {.raises: [], tags: [], contractual.} =
+  ## reset the UI color setting to the default Nuklear setting
+  proc nk_style_pop_style_item(ctx) {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  nk_style_pop_style_item(ctx = ctx)
+
+template changeStyle*(field: WindowStyleTypes; x, y: float; code: untyped) =
+  ## Change temporary the vector value for the selected Nuklear window style
+  ##
+  ## * field - the Nuklear windows style field which will be modified
+  ## * x     - the X value of the vector to push
+  ## * y     - the Y value of the vector to push
+  if stylePushVec2(fld = field, x1 = x.cfloat, y1 = y.cfloat):
+    code
+    stylePopVec2()
+
+template changeStyle*(field: FloatStyleTypes; value: float; code: untyped) =
+  ## Change temporary the float value for the selected Nuklear style
+  ##
+  ## * field - the Nuklear buttons style field which will be modified
+  ## * value - the float value to push
+  ## * code  - the code executed when the value will be properly set
+  if stylePushFloat(fld = field, val = value.cfloat):
+    code
+    stylePopFloat()
+
+template changeStyle*(field: ColorStyleTypes; color: Color; code: untyped) =
+  ## Change temporary the color value for the selected Nuklear element
+  ##
+  ## * field - the Nuklear windows style field which will be modified
+  ## * color - the new color for the selected field
+  ## * code  - the code executed when the color will be properly set
+  if stylePushColor(fld = field, col = color):
+    code
+    stylePopColor()
+
+template changeStyle*(field: StyleStyleTypes; color: Color; code: untyped) =
+  ## Change temporary the color value for the selected Nuklear style's item
+  ##
+  ## * field - the Nuklear windows style field which will be modified
+  ## * color - the new color for the selected field
+  ## * code  - the code executed when the color will be properly set
+  if stylePushStyleItem(fld = field, col = color):
+    code
+    stylePopStyleItem()
 
 # ------
 # Combos
@@ -2787,12 +2847,12 @@ proc createContextual(ctx; flags1: nk_flags; x1, y1: cfloat;
   ## Return true if the contextual menu was created successfully, otherwise
   ## false
   proc nk_contextual_begin(ctx; flags: nk_flags; size: nk_vec2;
-      triggerBounds: nk_rect; cButton: nk_buttons): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
+      triggerBounds: nk_rect; cButton: Buttons): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
   return nk_contextual_begin(ctx = ctx, flags = flags1, size = new_nk_vec2(
       x = x1, y = y1), triggerBounds = new_nk_rect(x = triggerBounds1.x,
       y = triggerBounds1.y, w = triggerBounds1.w, h = triggerBounds1.h),
-      cButton = btn.cint.nk_buttons)
+      cButton = btn.cint.Buttons)
 
 template contextualMenu*(flags: set[PanelFlags]; x, y;
     triggerBounds: NimRect; button: Buttons; content: untyped) =
