@@ -49,12 +49,12 @@ type
 # Enumerations
 # ------------
 type
-  nk_style_header_align* = enum
-    ## Internal Nuklear type
-    NK_HEADER_LEFT, NK_HEADER_RIGHT
-  nk_layout_format* = enum
-    ## Internal Nuklear type
-    NK_DYNAMIC, NK_STATIC
+  StyleHeaderAlign* = enum
+    ## The window's header alignment
+    headerLeft, headerRight
+  LayoutFormat* = enum
+    ## The layout format
+    dynamic, static
   TextAlign* = enum
     ## The alignment of a text
     textLeft = 0x01,
@@ -74,7 +74,7 @@ type
     nkFalse, nkTrue
   nk_modify* = enum
     ## Internal Nuklear type
-    NK_FIXED, NK_MODIFIABLE
+    fixed, modifiable
   CollapseStates* = enum
     ## The states of a tree's content
     minimized, maximized
@@ -82,9 +82,9 @@ type
     ## The types of symbolic icons
     none, x, underscore, circleSolid, circleOutline, rectSolid, rectOutline,
       triangleUp, triangleDown, triangleLeft, triangleRight, plus, minus, max
-  nk_style_item_type* = enum
+  StyleItemType* = enum
     ## Internal Nuklear type
-    NK_STYLE_ITEM_COLOR, NK_STYLE_ITEM_IMAGE, NK_STYLE_ITEM_NINE_SLICE
+    itemColor, itemImage, itemNineSlice
   colorFormat* = enum
     ## Colors formats
     rgb, rgba
@@ -98,26 +98,26 @@ type
     left, middle, right, double, max
   nk_anti_aliasing* = enum
     ## Internal Nuklear type
-    NK_ANTI_ALIASING_OFF, NK_ANTI_ALIASING_ON
-  nk_window_flags* = enum
+    antiAliasingOff, antiAliasingOn
+  WindowFlags* = enum
+    ## Flags related to windows
+    windowDynamic = 1 shl 11
+    windowRom = 1 shl 12
+    windowHidden = 1 shl 13
+    windowClosed = 1 shl 14
+    windowMinimized = 1 shl 15
+    windowRemoveRom = 1 shl 16
+  CommandType* = enum
+    ## Type of command
+    commandNop, commandScissor, commandLine, commandCurve,
+      commandRect, commandRectFilled, commandRectMultiColor,
+      commandCircle, commandCircleFilled, commandArc,
+      commandArcFilled, commandTriangle, commandTriangleFilled,
+      commandPolygon, commandPolygonFilled, commandPolyline,
+      commandText, commandImage, commandCustom
+  BufferAllocationType* = enum
     ## Internal Nuklear type
-    NK_WINDOW_DYNAMIC = 1 shl 11
-    NK_WINDOW_ROM = 1 shl 12
-    NK_WINDOW_HIDDEN = 1 shl 13
-    NK_WINDOW_CLOSED = 1 shl 14
-    NK_WINDOW_MINIMIZED = 1 shl 15
-    NK_WINDOW_REMOVE_ROM = 1 shl 16
-  nk_command_type* = enum
-    ## Internal Nuklear type
-    NK_COMMAND_NOP, NK_COMMAND_SCISSOR, NK_COMMAND_LINE, NK_COMMAND_CURVE,
-      NK_COMMAND_RECT, NK_COMMAND_RECT_FILLED, NK_COMMAND_RECT_MULTI_COLOR,
-      NK_COMMAND_CIRCLE, NK_COMMAND_CIRCLE_FILLED, NK_COMMAND_ARC,
-      NK_COMMAND_ARC_FILLED, NK_COMMAND_TRIANGLE, NK_COMMAND_TRIANGLE_FILLED,
-      NK_COMMAND_POLYGON, NK_COMMAND_POLYGON_FILLED, NK_COMMAND_POLYLINE,
-      NK_COMMAND_TEXT, NK_COMMAND_IMAGE, NK_COMMAND_CUSTOM
-  nk_buffer_allocation_type* = enum
-    ## Internal Nuklear type
-    NK_BUFFER_FRONT, NK_BUFFER_BACK, NK_BUFFER_MAX
+    bufferFront, bufferBack, bufferMax
   nk_allocation_type* = enum
     ## Internal Nuklear type
     NK_BUFFER_FIXED, NK_BUFFER_DYNAMIC
@@ -184,11 +184,11 @@ type
     slice*: nk_nine_slice
   nk_style_item* {.importc: "struct nk_style_item", nodecl.} = object
     ## Internal Nuklear type
-    `type`*: nk_style_item_type
+    `type`*: StyleItemType
     data*: pointer
   nk_style_window_header* {.importc, nodecl.} = object
     ## Internal Nuklear type
-    align*: nk_style_header_align
+    align*: StyleHeaderAlign
     padding*, label_padding*, spacing*: nk_vec2
     active*, hover*, normal*: nk_style_item
     label_active*, label_hover*, label_normal*: nk_color
@@ -279,7 +279,7 @@ type
     panelTooltip = 1 shl 7
   nk_command* {.importc: "struct nk_command", completeStruct.} = object
     ## Internal Nuklear type
-    `type`*: nk_command_type
+    `type`*: CommandType
     next*: nk_size
     when defined(nkIncludeCommandUserData):
       userdata*: nk_handle ## Interna Nuklear data
@@ -540,9 +540,6 @@ type
       headerTextColor, groupTextColor, selectActiveTextColor, propertyTextColor,
       popupColor, popupBorderColor, progressbarColor, progressbarBorderColor,
       countColors
-  StyleHeaderAlign* = enum
-    ## The styles of the window's header
-    headerLeft, headerRight
   ButtonBehavior* = enum
     ## The types of buttons behavior
     default, repeater

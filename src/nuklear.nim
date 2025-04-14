@@ -492,12 +492,12 @@ proc windowInput*(name: string; disable: bool = true) {.raises: [], tags: [], co
   var root: PNkPanel = windowFind(name = name).layout
   if disable:
     while root != nil:
-      root.flags = root.flags or NK_WINDOW_ROM.ord.cint
-      root.flags = root.flags and not NK_WINDOW_REMOVE_ROM.ord.cint
+      root.flags = root.flags or windowRom.ord.cint
+      root.flags = root.flags and not windowRemoveRom.ord.cint
       root = root.parent
   else:
     while root != nil:
-      root.flags = root.flags or NK_WINDOW_REMOVE_ROM.ord.cint
+      root.flags = root.flags or windowRemoveRom.ord.cint
       root = root.parent
 
 # ------
@@ -515,7 +515,7 @@ template `+`[T](p: ptr T; off: nk_size): ptr T =
 {.pop ruleOn: "namedParams".}
 
 proc nkBufferAlign(unaligned: pointer; align: nk_size; alignment: var nk_size;
-    `type`: nk_buffer_allocation_type): pointer {.raises: [], tags: [],
+    `type`: BufferAllocationType): pointer {.raises: [], tags: [],
     contractual.} =
   ## Align the sekected buffer. Internal use only
   ##
@@ -526,7 +526,7 @@ proc nkBufferAlign(unaligned: pointer; align: nk_size; alignment: var nk_size;
   ##
   ## Returns pointer to aligned buffer
   var memory: pointer = nil
-  if `type` == NK_BUFFER_BACK:
+  if `type` == bufferBack:
     if align == 0:
       memory = unaligned
       alignment = 0
@@ -588,7 +588,7 @@ proc nkBufferRealloc(b: ptr nk_buffer; capacity: nk_size;
     b.size = capacity - backSize
     return temp
 
-proc nkBufferAlloc(b: ptr nk_buffer; `type`: nk_buffer_allocation_type; size,
+proc nkBufferAlloc(b: ptr nk_buffer; `type`: BufferAllocationType; size,
     align: nk_size): pointer {.raises: [], tags: [RootEffect], contractual.} =
   ## Allocate memory for the selected buffer. Internal use only
   ##
@@ -605,7 +605,7 @@ proc nkBufferAlloc(b: ptr nk_buffer; `type`: nk_buffer_allocation_type; size,
     b.needed += size
     var unaligned: ptr nk_size = nil
     # calculate total size with needed alignment + size
-    if `type` == NK_BUFFER_FRONT:
+    if `type` == bufferFront:
       unaligned = b.memory.`ptr` + b.allocated
     else:
       unaligned = b.memory.`ptr` + (b.size - size)
@@ -615,7 +615,7 @@ proc nkBufferAlloc(b: ptr nk_buffer; `type`: nk_buffer_allocation_type; size,
 
     var full: bool = false
     # check if buffer has enough memory
-    if `type` == NK_BUFFER_FRONT:
+    if `type` == bufferFront:
       full = (b.allocated + size + alignment) > b.size
     else:
       full = (b.size - min(x = b.size, y = (size + alignment))) <= b.allocated
@@ -636,14 +636,14 @@ proc nkBufferAlloc(b: ptr nk_buffer; `type`: nk_buffer_allocation_type; size,
         return nil
 
       # align newly allocated pointer
-      if `type` == NK_BUFFER_FRONT:
+      if `type` == bufferFront:
         unaligned = b.memory.`ptr` + b.allocated
       else:
         unaligned = b.memory.`ptr` + (b.size - size)
       memory = nkBufferAlign(unaligned = unaligned, align = align,
           alignment = alignment, `type` = `type`)
 
-    if `type` == NK_BUFFER_FRONT:
+    if `type` == bufferFront:
       unaligned = b.memory.`ptr` + b.allocated
     else:
       unaligned = b.memory.`ptr` + (b.size - size)
@@ -654,7 +654,7 @@ proc nkBufferAlloc(b: ptr nk_buffer; `type`: nk_buffer_allocation_type; size,
 # ----
 # Draw
 # ----
-proc nkCommandBufferPush(b: ptr nk_command_buffer; t: nk_command_type;
+proc nkCommandBufferPush(b: ptr nk_command_buffer; t: CommandType;
     size: nk_size): pointer {.raises: [], tags: [RootEffect], contractual.} =
   ## Add a command to the commands buffer. Internal use only
   ##
@@ -669,7 +669,7 @@ proc nkCommandBufferPush(b: ptr nk_command_buffer; t: nk_command_type;
       return nil
     const align: nk_size = alignOf(x = nk_command)
     let cmd: ptr nk_command = cast[ptr nk_command](nkBufferAlloc(b = b.base,
-        `type` = NK_BUFFER_FRONT, size = size, align = align))
+        `type` = bufferFront, size = size, align = align))
     if cmd == nil:
       return nil
 
@@ -703,7 +703,7 @@ proc nkPushScissor(b: ptr nk_command_buffer; r: nk_rect) {.raises: [], tags: [
   body:
     b.clip = r
     let cmd: ptr nk_command_scissor = cast[ptr nk_command_scissor](
-        nkCommandBufferPush(b = b, t = NK_COMMAND_SCISSOR,
+        nkCommandBufferPush(b = b, t = commandScissor,
             size = nk_command_scissor.sizeof))
     if cmd == nil:
       return
@@ -730,7 +730,7 @@ proc nkStrokeRect(b: ptr nk_command_buffer, rect: NimRect, rounding,
       x1 = clip.x, y1 = clip.y, w1 = clip.w, h1 = clip.h):
       return
   var cmd: ptr nk_command_rect
-  cmd = cast[ptr nk_command_rect](nkCommandBufferPush(b = b, t = NK_COMMAND_RECT, cmd.sizeof))
+  cmd = cast[ptr nk_command_rect](nkCommandBufferPush(b = b, t = commandRect, cmd.sizeof))
   if cmd == nil:
     return
   cmd.rounding = rounding.cushort
@@ -771,7 +771,7 @@ proc nkFillRect(b: ptr nk_command_buffer; rect: NimRect; rounding: float; c: nk_
       return
 
   var cmd: ptr nk_command_rect_filled
-  cmd = cast[ptr nk_command_rect_filled](nkCommandBufferPush(b = b, t = NK_COMMAND_RECT_FILLED, cmd.sizeof))
+  cmd = cast[ptr nk_command_rect_filled](nkCommandBufferPush(b = b, t = commandRectFilled, cmd.sizeof))
   if cmd == nil:
     return
   cmd.rounding = rounding.cushort
@@ -798,7 +798,7 @@ proc nkDrawImage(b: ptr nk_command_buffer; r: NimRect; img: PImage; col: nk_colo
       return
 
   var cmd: ptr nk_command_image
-  cmd = cast[ptr nk_command_image](nkCommandBufferPush(b = b, t = NK_COMMAND_IMAGE, cmd.sizeof))
+  cmd = cast[ptr nk_command_image](nkCommandBufferPush(b = b, t = commandImage, cmd.sizeof))
   if cmd == nil:
     return
   cmd.x = r.x.cshort
@@ -1196,15 +1196,15 @@ proc nkDrawButton(`out`: ptr nk_command_buffer; bounds: NimRect;
 
   let bg: nk_style_item_data = cast[nk_style_item_data](result.data)
   case result.`type`
-  of NK_STYLE_ITEM_IMAGE:
+  of itemImage:
     nkDrawImage(b = `out`, r = bounds, img = bg.image.addr, col =
       nk_rgb_factor(col = nk_rgba(r = 255, g = 255, b = 255, a = 255),
       factor = style.color_factor_background))
-  of NK_STYLE_ITEM_NINE_SLICE:
+  of itemNineSlice:
     nkDrawNineSlice(b = `out`, r = bounds, slc = bg.slice.addr, col =
       nk_rgb_factor(col = nk_rgba(r = 255, g = 255, b = 255, a = 255),
       factor = style.color_factor_background))
-  of NK_STYLE_ITEM_COLOR:
+  of itemColor:
     nkFillRect(b = `out`, rect = bounds, rounding = style.rounding, c =
       nk_rgb_factor(col = bg.color, factor = style.color_factor_background))
     nkStrokeRect(b = `out`, rect = bounds, rounding = style.rounding,
@@ -1262,7 +1262,7 @@ proc nkDrawButtonSymbol(`out`: ptr nk_command_buffer; bounds, content: var NimRe
   # select correct colors/images
   let background: nk_style_item = nkDrawButton(`out` = `out`, bounds = bounds,
     state = state, style = style)
-  let bg: nk_color = (if background.`type` == NK_STYLE_ITEM_COLOR:
+  let bg: nk_color = (if background.`type` == itemColor:
     cast[nk_style_item_data](background.data).color else: style.text_background)
 
   var sym: nk_color = (if (state and NK_WIDGET_STATE_HOVER.ord).bool:
@@ -1371,7 +1371,7 @@ proc nkPanelHasHeader(flags: nk_flags; title: string): bool {.raises: [], tags: 
   var active: nk_bool = nkFalse
   active = (flags and (windowClosable.ord.int or windowMinimizable.ord.int)).nk_bool
   active = (active or (flags and windowTitle.ord.int).nk_bool).nk_bool
-  active = (active and not(flags and NK_WINDOW_HIDDEN.ord.int).nk_bool and title.len > 0).nk_bool
+  active = (active and not(flags and windowHidden.ord.int).nk_bool and title.len > 0).nk_bool
   return active
 
 proc nkPanelIsNonblock(`type`: PanelType): bool {.raises: [], tags: [], contractual.} =
@@ -1397,8 +1397,8 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     ctx.current.layout != nil
   body:
     zeroMem(p = ctx.current.layout, size = ctx.current.layout.sizeof)
-    if (ctx.current.flags and NK_WINDOW_HIDDEN.cint) == 1 or (
-        ctx.current.flags and NK_WINDOW_CLOSED.cint) == 1:
+    if (ctx.current.flags and windowHidden.cint) == 1 or (
+        ctx.current.flags and windowClosed.cint) == 1:
       zeroMem(p = ctx.current.layout, size = nk_panel.sizeof)
       ctx.current.layout.`type` = panelType
       return false;
@@ -1422,7 +1422,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
 
     # window movement
     if (win.flags and windowMovable.cint) == 1 and (win.flags and
-        NK_WINDOW_ROM.cint) != 1:
+        windowRom.cint) != 1:
       # calculate draggable window space
       var header: nk_rect = nk_rect(x: win.bounds.x, y: win.bounds.y,
           w: win.bounds.w, h: 0)
@@ -1522,13 +1522,13 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
       header.h += 1.0
       let bg: nk_style_item_data = cast[nk_style_item_data](background.data)
       case background.`type`
-      of NK_STYLE_ITEM_IMAGE:
+      of itemImage:
         text.background = nk_rgba(r = 0, g = 0, b = 0, a = 0)
         nkDrawImage(b = win.buffer.addr, r = header, img = bg.image.addr, col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
-      of NK_STYLE_ITEM_NINE_SLICE:
+      of itemNineSlice:
         text.background = nk_rgba(r = 0, g = 0, b = 0, a = 0)
         nkDrawNineSlice(b = win.buffer.addr, r = header, slc = bg.slice.addr, col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
-      of NK_STYLE_ITEM_COLOR:
+      of itemColor:
         text.background = bg.color
         nkFillRect(b = `out`.addr, rect = header, rounding = 0, c = bg.color)
 
@@ -1539,7 +1539,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
       button.w = button.h
       if (win.flags and windowClosable.cint).nk_bool:
         var ws: nk_flags = 0
-        if style.window.header.align == NK_HEADER_RIGHT:
+        if style.window.header.align == headerRight:
           button.x = (header.w + header.x) - (button.w + style.window.header.padding.x)
           header.w -= button.w + style.window.header.spacing.x + style.window.header.padding.x
         else:
@@ -1548,9 +1548,9 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
         if nkDoButtonSymbol(state = ws, `out` = win.buffer.addr, bounds = button,
           symbol = style.window.header.close_symbol, behavior = NK_BUTTON_DEFAULT,
           style = style.window.header.close_button.addr, `in` = `in`.addr,
-          font = style.font) and not(win.flags and NK_WINDOW_ROM.cint).nk_bool:
-          layout.flags = layout.flags or NK_WINDOW_HIDDEN.cint
-          layout.flags = layout.flags and not NK_WINDOW_MINIMIZED.cint
+          font = style.font) and not(win.flags and windowRom.cint).nk_bool:
+          layout.flags = layout.flags or windowHidden.cint
+          layout.flags = layout.flags and not windowMinimized.cint
     return true
 
 # ------
@@ -1632,7 +1632,7 @@ proc nkPopupBegin(ctx; pType: PopupType; title: string; flags: set[PanelFlags];
     {.ruleOff: "assignments".}
     popup.flags = popup.flags or windowBorder.cint
     if (pType == dynamicPopup):
-      popup.flags = popup.flags or NK_WINDOW_DYNAMIC.cint
+      popup.flags = popup.flags or windowDynamic.cint
     {.ruleOn: "assignments".}
 
     popup.buffer = win.buffer
@@ -2324,7 +2324,7 @@ proc headerAlign*(value: StyleHeaderAlign) {.raises: [], tags: [],
   ## Set the Nuklear windows header alignment
   ##
   ## * value - the new value for the alignment
-  ctx.style.window.header.align = value.ord.nk_style_header_align
+  ctx.style.window.header.align = value.ord.StyleHeaderAlign
 
 var buttonStyle: nk_style_button = nk_style_button() ## Used to store the Nuklear buttons style
 
