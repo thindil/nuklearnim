@@ -73,7 +73,7 @@ proc nk_input_begin*(ctx) {.importc, nodecl, raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
 proc nk_input_end*(ctx) {.importc, nodecl, raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
-proc nk_input_key*(ctx; key: nk_keys; down: nk_bool) {.importc, nodecl,
+proc nk_input_key*(ctx; key: Keys; down: nk_bool) {.importc, nodecl,
     raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
 proc nk_input_button*(ctx; id: Buttons; x, y: cint; down: nk_bool) {.importc, nodecl,
@@ -621,9 +621,9 @@ proc nkBufferAlloc(b: ptr nk_buffer; `type`: BufferAllocationType; size,
       full = (b.size - min(x = b.size, y = (size + alignment))) <= b.allocated
 
     if full:
-      if b.`type` != NK_BUFFER_DYNAMIC:
+      if b.`type` != bufferDynamic:
         return nil
-      if b.`type` != NK_BUFFER_DYNAMIC or b.pool.alloc == nil or b.pool.free == nil:
+      if b.`type` != bufferDynamic or b.pool.alloc == nil or b.pool.free == nil:
         return nil
 
       # buffer is full so allocate bigger buffer if dynamic
@@ -990,14 +990,14 @@ proc isMouseClicked*(btn: Buttons): bool {.raises: [], tags: [],
     ## A binding to Nuklear's function. Internal use only
   return nk_widget_is_mouse_clicked(ctx = ctx, btn = btn)
 
-proc isKeyPressed*(key: nk_keys): bool {.raises: [], tags: [], contractual.} =
+proc isKeyPressed*(key: Keys): bool {.raises: [], tags: [], contractual.} =
   ## Check if the selected key is pressed
   ##
   ## * key - the key which was pressed
   ##
   ## Returns true if the selected key is pressed, otherwise false
   proc nk_input_is_key_pressed(i: ptr nk_input;
-      key: nk_keys): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
+      key: Keys): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
   return nk_input_is_key_pressed(i = ctx.input.addr, key = key)
 
@@ -1113,7 +1113,7 @@ proc nkWidgetText(o: ptr nk_command_buffer; b: var NimRect; str: string; len: va
 # Buttons
 # -------
 proc nkButtonBehavior(state: var nk_flags; r: NimRect; i: ptr nk_input;
-  behavior: nk_button_behavior): bool {.raises: [], tags: [], contractual.} =
+  behavior: ButtonBehavior): bool {.raises: [], tags: [], contractual.} =
   ## Set the button's behavior. Internal use only
   ##
   ## * state    - the state of the button
@@ -1131,7 +1131,7 @@ proc nkButtonBehavior(state: var nk_flags; r: NimRect; i: ptr nk_input;
     if isMouseDown(id = left):
       state = NK_WIDGET_STATE_ACTIVE.nk_flags
       if hasMouseClickDownInRect(id = left, rect = nk_rect(x: r.x, y: r.y, w: r.w, h: r.h), down = nkTrue):
-        if behavior != NK_BUTTON_DEFAULT:
+        if behavior != default:
           result = isMouseDown(id = left)
         else:
           when defined(nkButtonTriggerOnRelease):
@@ -1144,7 +1144,7 @@ proc nkButtonBehavior(state: var nk_flags; r: NimRect; i: ptr nk_input;
     state = state or NK_WIDGET_STATE_LEFT.ord
 
 proc nkDoButton(state: var nk_flags; `out`: ptr nk_command_buffer; r: NimRect;
-  style: ptr nk_style_button; `in`: ptr nk_input; behavior: nk_button_behavior;
+  style: ptr nk_style_button; `in`: ptr nk_input; behavior: ButtonBehavior;
   content: var NimRect): bool {.raises: [], tags: [], contractual.} =
   ## Draw a button. Internal use only
   ##
@@ -1274,7 +1274,7 @@ proc nkDrawButtonSymbol(`out`: ptr nk_command_buffer; bounds, content: var NimRe
     background = bg, foreground = sym, borderWidth = 1, font = font)
 
 proc nkDoButtonSymbol(state: var nk_flags; `out`: ptr nk_command_buffer; bounds: var NimRect,
-  symbol: SymbolType; behavior: nk_button_behavior; style: ptr nk_style_button;
+  symbol: SymbolType; behavior: ButtonBehavior; style: ptr nk_style_button;
   `in`: ptr nk_input; font: ptr nk_user_font): bool {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw a button with the selected symbol on it. Internal use only
   ##
@@ -1443,7 +1443,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
         win.bounds.y += `in`.mouse.delta.y
         buttons[Buttons.left].clicked_pos.x += `in`.mouse.delta.x
         buttons[Buttons.left].clicked_pos.y += `in`.mouse.delta.y
-        ctx.style.cursor_active = cursors[NK_CURSOR_MOVE]
+        ctx.style.cursor_active = cursors[cursorMove]
       `in`.mouse.buttons = buttons.addr
 
     # setup panel
@@ -1546,7 +1546,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
           button.x = header.x + style.window.header.padding.x
           header.x += button.w + style.window.header.spacing.x + style.window.header.padding.x
         if nkDoButtonSymbol(state = ws, `out` = win.buffer.addr, bounds = button,
-          symbol = style.window.header.close_symbol, behavior = NK_BUTTON_DEFAULT,
+          symbol = style.window.header.close_symbol, behavior = default,
           style = style.window.header.close_button.addr, `in` = `in`.addr,
           font = style.font) and not(win.flags and windowRom.cint).nk_bool:
           layout.flags = layout.flags or windowHidden.cint

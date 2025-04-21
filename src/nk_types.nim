@@ -72,8 +72,8 @@ type
   nk_bool* = enum
     ## Internal Nuklear type
     nkFalse, nkTrue
-  nk_modify* = enum
-    ## Internal Nuklear type
+  Modify* = enum
+    ## Modify states
     fixed, modifiable
   CollapseStates* = enum
     ## The states of a tree's content
@@ -83,7 +83,7 @@ type
     none, x, underscore, circleSolid, circleOutline, rectSolid, rectOutline,
       triangleUp, triangleDown, triangleLeft, triangleRight, plus, minus, max
   StyleItemType* = enum
-    ## Internal Nuklear type
+    ## Style's item's types
     itemColor, itemImage, itemNineSlice
   colorFormat* = enum
     ## Colors formats
@@ -97,7 +97,7 @@ type
     ## Types of buttoons
     left, middle, right, double, max
   nk_anti_aliasing* = enum
-    ## Internal Nuklear type
+    ## Antialiasing state
     antiAliasingOff, antiAliasingOn
   WindowFlags* = enum
     ## Flags related to windows
@@ -116,38 +116,29 @@ type
       commandPolygon, commandPolygonFilled, commandPolyline,
       commandText, commandImage, commandCustom
   BufferAllocationType* = enum
-    ## Internal Nuklear type
+    ## Type of buffer's allocation
     bufferFront, bufferBack, bufferMax
-  nk_allocation_type* = enum
-    ## Internal Nuklear type
-    NK_BUFFER_FIXED, NK_BUFFER_DYNAMIC
-  nk_keys* = enum
-    ## Internal Nuklear type
-    NK_KEY_NONE, NK_KEY_SHIFT, NK_KEY_CTRL, NK_KEY_DEL, NK_KEY_ENTER,
-      NK_KEY_TAB, NK_KEY_BACKSPACE, NK_KEY_COPY, NK_KEY_CUT, NK_KEY_PASTE,
-      NK_KEY_UP, NK_KEY_DOWN, NK_KEY_LEFT, NK_KEY_RIGHT,
-      NK_KEY_TEXT_INSERT_MODE, NK_KEY_TEXT_REPLACE_MODE, NK_KEY_TEXT_RESET_MODE,
-      NK_KEY_TEXT_LINE_START, NK_KEY_TEXT_LINE_END, NK_KEY_TEXT_START,
-      NK_KEY_TEXT_END, NK_KEY_TEXT_UNDO, NK_KEY_TEXT_REDO,
-      NK_KEY_TEXT_SELECT_ALL, NK_KEY_TEXT_WORD_LEFT, NK_KEY_TEXT_WORD_RIGHT,
-      NK_KEY_SCROLL_START, NK_KEY_SCROLL_END, NK_KEY_SCROLL_DOWN,
-      NK_KEY_SCROLL_UP, NK_KEY_ESCAPE, NK_KEY_MAX
-  nk_style_cursor* = enum
-    ## Internal Nuklear type
-    NK_CURSOR_ARROW,
-    NK_CURSOR_TEXT,
-    NK_CURSOR_MOVE,
-    NK_CURSOR_RESIZE_VERTICAL,
-    NK_CURSOR_RESIZE_HORIZONTAL,
-    NK_CURSOR_RESIZE_TOP_LEFT_DOWN_RIGHT,
-    NK_CURSOR_RESIZE_TOP_RIGHT_DOWN_LEFT,
-    NK_CURSOR_COUNT
-  nk_button_behavior* = enum
-    ## Internal Nuklear type
-    NK_BUTTON_DEFAULT,
-    NK_BUTTON_REPEATER
-  nk_widget_states* = enum
-    ## Internal Nuklear type
+  AllocationType* = enum
+    ## Another type of buffer allocation
+    bufferFixed, bufferDynamic
+  Keys* = enum
+    ## Special keys
+    keyNone, keyShift, keyCtrl, keyDel, keyEnter,
+      keyTab, keyBackspace, keyCopy, keyCut, keyPaste,
+      keyUp, keyDown, keyLeft, keyRight,
+      keyTextInsertMode, keyTextReplaceMode, keyTextResetMode,
+      keyTextLineStart, keyTextLineEnd, keyTextStart,
+      keyTextEnd, keyTextUndo, keyTextRedo,
+      keyTextSelectAll, keyTextWordLeft, keyTextWordRight,
+      keyScrollStart, keyScrollEnd, keyScrollDown,
+      keyScrollUp, keyEscape, keyMax
+  StyleCursor* = enum
+    ## Types of cursor's styles
+    cursorArrow, cursorText, cursorMove, cursorResizeVertical,
+      cursorResizeHorizontal, cursorResizeTopLeftDownRight,
+      cursorResizeTopRightDownLeft, cursorCount
+  WidgetStates* = enum
+    ## States of a widget
     NK_WIDGET_STATE_MODIFIED = 1 shl 1
     NK_WIDGET_STATE_INACTIVE = 1 shl 2
     NK_WIDGET_STATE_ENTERED = 1 shl 3
@@ -370,7 +361,7 @@ type
     allocated*, needed*: nk_size
     memory*: nk_memory
     size*: nk_size
-    `type`*: nk_allocation_type
+    `type`*: AllocationType
     pool*: nk_allocator
     grow_factor*: cfloat
     calls*: nk_size
@@ -411,14 +402,14 @@ type
     ## Pointer to nk_panel structure
   ButtonsArray* = array[Buttons.max, nk_mouse_button]
     ## The array of mouse buttons
-  CursorsArray* = array[NK_CURSOR_COUNT, nk_cursor]
+  CursorsArray* = array[cursorCount, nk_cursor]
     ## The array of mouse buttons
 
 # ---------
 # Constants
 # ---------
 const nkNullRect*: nk_rect = nk_rect(x: -8192.0, y: -8192.0, w: -8192.0, h: -8192.0)
-    ## An empty rectangle
+  ## An empty rectangle
 
 # ------------------------------------------------------------------
 # High level bindings. The new version of the binding
