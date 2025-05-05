@@ -412,13 +412,17 @@ const
   nkNullRect*: nk_rect = nk_rect(x: -8192.0, y: -8192.0, w: -8192.0, h: -8192.0)
     ## An empty rectangle
   nkUtfInvalid*: nk_rune = 0xfffd
-    ## An invalid utf8 rune
+    ## An invalid UTF-8 rune
   nkUtfSize*: Positive = 4
     ## The number of bytes of UTF glyph
   nkUtfMask*: array[nkUtfSize + 1, nk_byte] = [0xc0, 0x80, 0xe0, 0xf0, 0xf8]
     ## The list of UTF mask bytes
   nkUtfByte*: array[nkUtfSize + 1, nk_byte] = [0x80, 0, 0xc0, 0xe0, 0xf0]
     ## The list of UTF bytes
+  nkUtfMin*: array[nkUtfSize + 1, nk_uint] = [0, 0, 0x80, 0x800, 0x10000]
+    ## The list of start UTF bytes
+  nkUtfMax*: array[nkUtfSize + 1, nk_uint] = [0x10ffff, 0x7f, 0x7ff, 0xffff, 0x10ffff]
+    ## The list of end UTF bytes
 
 # ------------------------------------------------------------------
 # High level bindings. The new version of the binding

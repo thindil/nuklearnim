@@ -23,9 +23,9 @@
 # OR TORT *(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import std/[colors, hashes, macros]
+import std/[colors, hashes, macros, unicode]
 import contracts, nimalyzer
-import nk_button, nk_colors, nk_context, nk_layout, nk_tooltip, nk_types, nk_widget
+import nk_button, nk_colors, nk_context, nk_layout, nk_tooltip, nk_types, nk_utf, nk_widget
 export nk_button, nk_colors, nk_context, nk_layout, nk_tooltip, nk_types, nk_widget
 
 # Temporary disable unused warnings
@@ -686,71 +686,6 @@ proc nkCommandBufferPush(b: ptr nk_command_buffer; t: CommandType;
     b.`end` = cmd.next
     return cmd
 
-# ---
-# UTF
-# ---
-proc nkUtfValidate(u: nk_rune; i: int): int {.raises: [], tags: [], contractual,
-  discardable.} =
-  ## Validate UTF rune
-  ##
-  ## * u - the rune to validate
-  ## * i - the index of the rune
-  ##
-  ## Returns 0 if rune is invalid, otherwise return i
-  discard
-  # TODO: continue here
-
-proc nkUtfDecodeByte(c: char, i: var int): nk_rune {.raises: [], tags: [],
-  contractual.} =
-  ## Decode one UTF byte
-  ##
-  ## * c - the character to decode
-  ## * i - the lenght of the text
-  ##
-  ## Returns modified parameter i and UTF rune
-  if i == 0:
-    return 0
-  i = 0
-  for index, rune in nkUtfMask:
-    i = index
-    if (c.nk_byte and rune) == nkUtfByte[index]:
-      return (c.nk_byte and not rune)
-  return 0
-
-proc nkUtfDecode(c: string; u: var nk_rune; clen: int): Natural {.raises: [],
-  tags: [], contractual.} =
-  ## Decode UTF text
-  ##
-  ## * c    - the text to decode
-  ## * u    - the UTF rune to decode
-  ## * clen - the length of the text
-  ##
-  ## Returns the lenght of the glyph in characters
-  if c == "" or u == 0 or clen == 0:
-    return 0
-  u = nkUtfInvalid
-  var
-    len: int = 0
-    udecoded: nk_rune = nkUtfDecodeByte(c = c[0], len)
-  if len in 1..nkUtfSize:
-    return 1
-
-  var j: int = 1
-  for i in 1..clen:
-    j = i
-    if j >= len:
-      break
-    var `type`: int = 0
-    udecoded = (udecoded shl 6) or nkUtfDecodeByte(c[i], `type`)
-    if `type` != 0:
-      return j
-
-  if j < len:
-    return 0
-  u = udecoded
-  nkUtfValidate(u = u, i = len)
-  return len
-
 # ----
 # Misc
 # ----
@@ -945,6 +880,16 @@ proc nkTextClamp(font: ptr nk_user_font; text: string; textLen: int;
   var
     unicode: nk_rune = 0
     glyphLen: int = nkUtfDecode(c = text, u = unicode, clen = textLen)
+    width, sepWidth, lastWidth: float = 0.0
+    len, sepG, g, sepLen: int = 0
+  while glyphLen > 0 and (width < space) and (len < textLen):
+    len += glyphLen
+    if unicode == '\n'.nk_rune:
+      lastWidth = width
+      sepWidth = lastWidth
+      sepG = g + 1
+      sepLen = len
+      break
   # TODO: continue here after nkUtfDecode
 
 proc nkDrawText(b: ptr nk_command_buffer; r: NimRect; str: string; length: var int;
