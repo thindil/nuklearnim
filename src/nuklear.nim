@@ -25,7 +25,7 @@
 
 import std/[colors, hashes, macros, unicode]
 import contracts, nimalyzer
-import nk_button, nk_colors, nk_context, nk_layout, nk_tooltip, nk_types, nk_utf, nk_widget
+import nk_button, nk_colors, nk_context, nk_layout, nk_math, nk_tooltip, nk_types, nk_utf, nk_widget
 export nk_button, nk_colors, nk_context, nk_layout, nk_tooltip, nk_types, nk_widget
 
 # Temporary disable unused warnings
@@ -403,19 +403,6 @@ proc nkWidgetStateReset(s: var nk_flags) {.raises: [], tags: [], contractual.} =
   else:
     s = widgetStateInactive.ord
 
-# ----
-# Math
-# ----
-proc nkIntersect(x0, y0, w0, h0, x1, y1, w1, h1: cfloat): bool {.raises: [], tags: [], contractual.} =
-  ## Check if the rectangle is inside the second rectangle
-  ##
-  ## * x0, y0, w0, h0 - the coordinates of the rectangle to check
-  ## * x1, y1, w1, h1 - the coordinates of the second rectangle
-  ##
-  ## Returns true if the rectangle is inside the second rectangle, otherwise
-  ## false.
-  return ((x1 < (x0 + w0)) and (x0 < (x1 + w1)) and (y1 < (y0 + h0)) and (y0 < (y1 + h1)))
-
 # -------
 # Windows
 # -------
@@ -738,21 +725,6 @@ proc nkStrokeRect(b: ptr nk_command_buffer, rect: NimRect, rounding,
   cmd.h = max(x = 0.cushort, y = rect.h.cushort)
   cmd.color = c
 
-proc nkShrinkRect(r: nk_rect; amount: cfloat): nk_rect {.raises: [], tags: [], contractual.} =
-  ## Shrink the selected rectangle. Internal use only
-  ##
-  ## * r      - the rectangle to shrink
-  ## * amount - the size of which the rectangle will be shrinked
-  ##
-  ## Returns the shrinked rectangle
-  let
-    w = max(r.w, 2 * amount)
-    h = max(r.h, 2 * amount)
-  result.x = r.x + amount
-  result.y = r.y + amount
-  result.w = w - 2 * amount
-  result.h = h - 2 * amount
-
 proc nkFillRect(b: ptr nk_command_buffer; rect: NimRect; rounding: float; c: nk_color) {.raises: [], tags: [RootEffect], contractual.} =
   ## Fill the rectangle with the selected color
   ##
@@ -863,8 +835,8 @@ proc nkDrawNineSlice(b: ptr nk_command_buffer; r: NimRect; slc: ptr nk_nine_slic
   nkDrawImage(b = b, r = NimRect(x: r.x + r.w - slc.r.float, y: r.y + r.h - slc.b.float, w: slc.r.float, h: slc.b.float), img = img.addr, col = col)
 
 proc nkTextClamp(font: ptr nk_user_font; text: string; textLen: int;
-  space: float; glyphs: var int; textWidth: var float; sepList: nk_rune;
-  sepCount: int): int {.raises: [], tags: [], contractual.} =
+  space: float; glyphs: var int; textWidth: var float; sepList: seq[nk_rune];
+  sepCount: int): int {.raises: [], tags: [RootEffect], contractual.} =
   ## Clamp the selected text
   ##
   ## * font      - font used to draw the text
@@ -879,7 +851,7 @@ proc nkTextClamp(font: ptr nk_user_font; text: string; textLen: int;
   ## Returns the new length of the text
   var
     unicode: nk_rune = 0
-    glyphLen: int = nkUtfDecode(c = text, u = unicode, clen = textLen)
+    glyphLen: int = nkUtfDecode(c = text, u = unicode)
     width, sepWidth, lastWidth: float = 0.0
     len, sepG, g, sepLen: int = 0
   while glyphLen > 0 and (width < space) and (len < textLen):
@@ -890,7 +862,36 @@ proc nkTextClamp(font: ptr nk_user_font; text: string; textLen: int;
       sepG = g + 1
       sepLen = len
       break
-  # TODO: continue here after nkUtfDecode
+    let s: float = try:
+        font.width(arg1 = font.userdata, h = font.height, arg3 = text.cstring,
+          len = len.cint)
+      except:
+        return
+    var i: Natural = 0
+    for sep in sepList:
+      i.inc
+      if unicode != sep:
+        continue
+      lastWidth = width
+      sepWidth = lastWidth
+      sepG = g + 1
+      sepLen = len
+      break
+    if i == sepCount:
+      sepWidth = width
+      lastWidth = sepWidth
+      sepG = g + 1
+    width = s
+    glyphLen = nkUtfDecode(c = $text[len], u = unicode)
+    g.inc
+  if len >= textLen:
+    glyphs = g
+    textWidth = lastWidth
+    return len
+  else:
+    glyphs = sepG
+    textWidth = sepWidth
+    return if sepLen == 0: len else: sepLen
 
 proc nkDrawText(b: ptr nk_command_buffer; r: NimRect; str: string; length: var int;
   font: ptr nk_user_font; bg, fg: nk_color) {.raises: [], tags: [RootEffect],
@@ -924,7 +925,22 @@ proc nkDrawText(b: ptr nk_command_buffer; r: NimRect; str: string; length: var i
       var
         glyphs: int = 0
         txtWidth: float = textWidth
-      length = nkTextClamp(font, str, length, r.w, glyphs, txtWidth, 0, 0)
+      length = nkTextClamp(font = font, text = str, textLen = length,
+        space = r.w, glyphs = glyphs, textWidth = txtWidth, sepList = @[], sepCount = 0)
+
+    if length == 0:
+      return
+    let cmd: ptr nk_command_text = cast[ptr nk_command_text](
+        nkCommandBufferPush(b = b, t = commandText,
+            size = nk_command_text.sizeof + (length + 1).nk_size))
+    cmd.x = r.x.cshort
+    cmd.y = r.y.cshort
+    cmd.w = r.w.cushort
+    cmd.h = r.h.cushort
+    cmd.background = bg
+    cmd.foreground = fg
+    cmd.font = font
+    #TODO: continue here
 
 # -----
 # Input
@@ -1118,6 +1134,7 @@ proc nkWidgetText(o: ptr nk_command_buffer; b: var NimRect; str: string; len: va
 
     nkDrawText(b = o, r = label, str = str, length = len, font = f,
       bg = t.background, fg = t.text)
+    # TODO: continue here after nkDrawText
 
 # -------
 # Buttons
@@ -1254,6 +1271,7 @@ proc nkDrawSymbol(`out`: ptr nk_command_buffer; `type`: SymbolType;
     var length: Positive = 1
     nkWidgetText(o = `out`, b = content, str = $ch, len = length, t = text.addr,
       a = centered, f = font)
+    # TODO: continue here after nkWidgetText
   else:
     discard
 
@@ -1282,6 +1300,7 @@ proc nkDrawButtonSymbol(`out`: ptr nk_command_buffer; bounds, content: var NimRe
   sym = nk_rgb_factor(col = sym, factor = style.color_factor_text)
   nkDrawSymbol(`out` = `out`, `type` = `type`, content = content,
     background = bg, foreground = sym, borderWidth = 1, font = font)
+  # TODO: continue here after nkDrawSymbol
 
 proc nkDoButtonSymbol(state: var nk_flags; `out`: ptr nk_command_buffer; bounds: var NimRect,
   symbol: SymbolType; behavior: ButtonBehavior; style: ptr nk_style_button;
@@ -1310,6 +1329,7 @@ proc nkDoButtonSymbol(state: var nk_flags; `out`: ptr nk_command_buffer; bounds:
     #   style.draw_begin(b = `out`, style.userdata)
     nkDrawButtonSymbol(`out` = `out`, bounds = bounds, content = content,
       state = state, style = style, `type` = symbol, font = font)
+    # TODO: continue here after nkDrawButtonSymbol
     # TODO
     # if style.draw_end != nil:
     #   style.draw_end(b = `out`, style.userdata)
@@ -1561,6 +1581,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
           font = style.font) and not(win.flags and windowRom.cint).nk_bool:
           layout.flags = layout.flags or windowHidden.cint
           layout.flags = layout.flags and not windowMinimized.cint
+    # TODO: continue here after nkDoButtonSymbol
     return true
 
 # ------
