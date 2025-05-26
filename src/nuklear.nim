@@ -725,7 +725,8 @@ proc nkStrokeRect(b: ptr nk_command_buffer, rect: NimRect, rounding,
   cmd.h = max(x = 0.cushort, y = rect.h.cushort)
   cmd.color = c
 
-proc nkFillRect(b: ptr nk_command_buffer; rect: NimRect; rounding: float; c: nk_color) {.raises: [], tags: [RootEffect], contractual.} =
+proc nkFillRect(b: ptr nk_command_buffer; rect: NimRect; rounding: float;
+  c: nk_color) {.raises: [], tags: [RootEffect], contractual.} =
   ## Fill the rectangle with the selected color
   ##
   ## * b        - the command buffer in which the rectangle will be drawn
@@ -736,14 +737,42 @@ proc nkFillRect(b: ptr nk_command_buffer; rect: NimRect; rounding: float; c: nk_
     return
   if b.use_clipping == 1:
     let clip: nk_rect = b.clip
-    if not nkIntersect(x0 = rect.x, y0 = rect.y, w0 = rect.w, h0 = rect.h, x1 = clip.x, y1 = clip.y, w1 = clip.w, h1 = clip.h):
+    if not nkIntersect(x0 = rect.x, y0 = rect.y, w0 = rect.w, h0 = rect.h,
+      x1 = clip.x, y1 = clip.y, w1 = clip.w, h1 = clip.h):
       return
 
   var cmd: ptr nk_command_rect_filled
-  cmd = cast[ptr nk_command_rect_filled](nkCommandBufferPush(b = b, t = commandRectFilled, cmd.sizeof))
+  cmd = cast[ptr nk_command_rect_filled](nkCommandBufferPush(b = b,
+    t = commandRectFilled, cmd.sizeof))
   if cmd == nil:
     return
   cmd.rounding = rounding.cushort
+  cmd.x = rect.x.cshort
+  cmd.y = rect.y.cshort
+  cmd.w = max(0, rect.w).cushort
+  cmd.h = max(0, rect.h).cushort
+  cmd.color = c
+
+proc nkFillCircle(b: ptr nk_command_buffer; rect: NimRect; c: nk_color)
+  {.raises: [], tags: [RootEffect], contractual.} =
+  ## Fill the circle with the selected color
+  ##
+  ## * b        - the command buffer in which the rectangle will be drawn
+  ## * rect     - the rectangle for the circle
+  ## * c        - the color to fill the circle
+  if b == nil or rect.w == 0 or rect.h == 0:
+    return
+  if b.use_clipping == 1:
+    let clip: nk_rect = b.clip
+    if not nkIntersect(x0 = rect.x, y0 = rect.y, w0 = rect.w, h0 = rect.h,
+      x1 = clip.x, y1 = clip.y, w1 = clip.w, h1 = clip.h):
+      return
+
+  var cmd: ptr nk_command_circle_filled
+  cmd = cast[ptr nk_command_circle_filled](nkCommandBufferPush(b = b,
+    t = commandCircleFilled, cmd.sizeof))
+  if cmd == nil:
+    return
   cmd.x = rect.x.cshort
   cmd.y = rect.y.cshort
   cmd.w = max(0, rect.w).cushort
@@ -940,7 +969,9 @@ proc nkDrawText(b: ptr nk_command_buffer; r: NimRect; str: string; length: var i
     cmd.background = bg
     cmd.foreground = fg
     cmd.font = font
-    #TODO: continue here
+    cmd.length = length.cint
+    cmd.height = font.height
+    cmd.str = str[0..length].cstring
 
 # -----
 # Input
@@ -1134,7 +1165,6 @@ proc nkWidgetText(o: ptr nk_command_buffer; b: var NimRect; str: string; len: va
 
     nkDrawText(b = o, r = label, str = str, length = len, font = f,
       bg = t.background, fg = t.text)
-    # TODO: continue here after nkDrawText
 
 # -------
 # Buttons
@@ -1271,7 +1301,36 @@ proc nkDrawSymbol(`out`: ptr nk_command_buffer; `type`: SymbolType;
     var length: Positive = 1
     nkWidgetText(o = `out`, b = content, str = $ch, len = length, t = text.addr,
       a = centered, f = font)
-    # TODO: continue here after nkWidgetText
+  of circleSolid, circleOutline, rectSolid, rectOutline:
+    var drawRect: nk_rect = new_nk_rect(x = content.x, y = content.y,
+      w = content.w, h = content.h)
+    drawRect = nkShrinkRect(r = drawRect, amount = borderWidth)
+    # simple empty/filled shapes
+    if `type` in [rectSolid, rectOutline]:
+      nkFillRect(b = `out`, rect = content, rounding = 0, c = foreground)
+      if `type` == rectOutline:
+        nkFillRect(b = `out`, rect = NimRect(x: drawRect.x, y: drawRect.y,
+          w: drawRect.w, h: drawRect.h), rounding = 0, c = background)
+    else:
+      nkFillCircle(b = `out`, rect = content, c = foreground)
+      if `type` == circleOutline:
+        nkFillCircle(b = `out`, rect = NimRect(x: drawRect.x, y: drawRect.y,
+          w: drawRect.w, h: drawRect.h), c = background)
+  of triangleUp, triangleDown, triangleLeft, triangleRight:
+    var heading: Heading = right
+    var points: array[3, nk_vec2]
+    case `type`
+      of triangleRight:
+        heading = right
+      of triangleLeft:
+        heading = left
+      of triangleUp:
+        heading = up
+      else:
+        heading = down
+    nkTriangleFromDirection(`result` = points, r = content, padX = 0,
+      padY = 0, direction = heading)
+    # TODO: continue here after nkTriangleFromDirection
   else:
     discard
 

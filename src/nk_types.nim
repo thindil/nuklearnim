@@ -149,6 +149,9 @@ type
         widgetStateModified.int
     widgetStateActive = widgetStateActived.int or
         widgetStateModified.int
+  Heading* = enum
+    ## Heading diretions
+    up, right, down, left
 
 # -------
 # Objects
@@ -306,12 +309,21 @@ type
     rounding*, w*, h*: cushort
     x*, y*: cshort
     color*: nk_color
+  nk_command_circle_filled* {.importc: "struct nk_command_circle_filled".} = object
+    ## Internal Nuklear type
+    header*: nk_command
+    w*, h*: cushort
+    x*, y*: cshort
+    color*: nk_color
   nk_command_text* {.importc: "struct nk_command_text".} = object
     ## Internal Nuklear type
     x*, y*: cshort
     w*, h*: cushort
     background*, foreground*: nk_color
     font*: ptr nk_user_font
+    height*: cfloat
+    length*: cint
+    str*: cstring
   nk_row_layout* {.importc: "struct nk_row_layout".} = object
     ## Internal Nuklear type
     index*, columns*, tree_depth*: cint
