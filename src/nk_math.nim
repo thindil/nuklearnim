@@ -26,7 +26,7 @@
 import contracts
 import nk_types
 
-proc nkShrinkRect*(r: nk_rect; amount: cfloat): nk_rect {.raises: [], tags: [],
+proc nkShrinkRect*(r: NimRect; amount: cfloat): NimRect {.raises: [], tags: [],
     contractual.} =
   ## Shrink the selected rectangle. Internal use only
   ##
@@ -64,4 +64,46 @@ proc nkTriangleFromDirection*(`result`: var array[3, nk_vec2]; r: NimRect;
   ## * padX
   ## * padY
   ## * direction
-  discard
+  var rect: NimRect = NimRect()
+  rect.w = max(2 * padX, r.w)
+  rect.h = max(2 * padY, r.h)
+  rect.w = rect.w - 2 * padX
+  rect.h = rect.h - 2 * padY
+
+  rect.x = r.x + padX
+  rect.y = r.y + padY
+
+  let
+    wHalf: float = rect.w / 2.0
+    hHalf: float = rect.h / 2.0
+
+  case direction
+  of up:
+    `result`[0] = nk_vec2(x: rect.x + wHalf, y: rect.y)
+    `result`[1] = nk_vec2(x: rect.x + rect.w, y: rect.y + rect.h)
+    `result`[2] = nk_vec2(x: rect.x, y: rect.y + rect.h)
+  of right:
+    `result`[0] = nk_vec2(x: rect.x, y: rect.y)
+    `result`[1] = nk_vec2(x: rect.x + rect.w, y: rect.y + hHalf)
+    `result`[2] = nk_vec2(x: rect.x, y: rect.y + rect.h)
+  of down:
+    `result`[0] = nk_vec2(x: rect.x, y: rect.y)
+    `result`[1] = nk_vec2(x: rect.x + rect.w, y: rect.y)
+    `result`[2] = nk_vec2(x: rect.x + wHalf, y: rect.y + rect.h)
+  of left:
+    `result`[0] = nk_vec2(x: rect.x, y: rect.y + hHalf)
+    `result`[1] = nk_vec2(x: rect.x + rect.w, y: rect.y)
+    `result`[2] = nk_vec2(x: rect.x + rect.w, y: rect.y + rect.h)
+
+proc nkInbox*(px, py, x, y, w, h: cfloat): bool {.raises: [], tags: [], contractual.} =
+  ## Check if the selected point is in the box
+  ##
+  ## * px - the X coordinate of the point
+  ## * py - the Y coordinate of the point
+  ## * x - the X coordinate of the top left corner of the box
+  ## * y - the Y coordinate of the top left corner of the box
+  ## * w - the width of the box
+  ## * h - the height of the box
+  ##
+  ## Returns true if the point is in the box, otherwise false
+  return ((px >= x and px < x + w) and (py >= y and py < y + h))

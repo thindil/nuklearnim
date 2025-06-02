@@ -779,6 +779,31 @@ proc nkFillCircle(b: ptr nk_command_buffer; rect: NimRect; c: nk_color)
   cmd.h = max(0, rect.h).cushort
   cmd.color = c
 
+proc nkFillTriangle(b: ptr nk_command_buffer, x0, y0, x1, y1, x2, y2: cfloat,
+  c: nk_color) {.raises: [], tags: [], contractual.} =
+  ## Fill the circle with the selected color
+  ##
+  ## * b  - the command buffer in which the triangle will be drawn
+  ## * x0 - the X coordinate of the first the triangle's vertex
+  ## * y0 - the Y coordinate of the first the triangle's vertex
+  ## * x1 - the X coordinate of the second the triangle's vertex
+  ## * y1 - the Y coordinate of the second the triangle's vertex
+  ## * x2 - the X coordinate of the third the triangle's vertex
+  ## * y2 - the Y coordinate of the third the triangle's vertex
+  ## * c  - the color to fill the triangle
+  if b == nil or c.a == 0:
+    return
+  if b.use_clipping != 0:
+    let clip: nk_rect = b.clip
+    if not nkInbox(px = x0, py = y0, x = clip.x, y = clip.y, w = clip.w,
+      h = clip.h) and not nkInbox(px = x1, py = y1, x = clip.x, y = clip.y,
+      w = clip.w, h = clip.h) and not nkInbox(px = x2, py = y2, x = clip.x,
+      y = clip.y, w = clip.w, h = clip.h):
+      return
+
+  var cmd: ptr nk_command_triangle_filled
+  # TODO: continue here
+
 proc nkDrawImage(b: ptr nk_command_buffer; r: NimRect; img: PImage; col: nk_color)
   {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw the selected image
@@ -1302,20 +1327,17 @@ proc nkDrawSymbol(`out`: ptr nk_command_buffer; `type`: SymbolType;
     nkWidgetText(o = `out`, b = content, str = $ch, len = length, t = text.addr,
       a = centered, f = font)
   of circleSolid, circleOutline, rectSolid, rectOutline:
-    var drawRect: nk_rect = new_nk_rect(x = content.x, y = content.y,
-      w = content.w, h = content.h)
+    var drawRect: NimRect = content
     drawRect = nkShrinkRect(r = drawRect, amount = borderWidth)
     # simple empty/filled shapes
     if `type` in [rectSolid, rectOutline]:
       nkFillRect(b = `out`, rect = content, rounding = 0, c = foreground)
       if `type` == rectOutline:
-        nkFillRect(b = `out`, rect = NimRect(x: drawRect.x, y: drawRect.y,
-          w: drawRect.w, h: drawRect.h), rounding = 0, c = background)
+        nkFillRect(b = `out`, rect = drawRect, rounding = 0, c = background)
     else:
       nkFillCircle(b = `out`, rect = content, c = foreground)
       if `type` == circleOutline:
-        nkFillCircle(b = `out`, rect = NimRect(x: drawRect.x, y: drawRect.y,
-          w: drawRect.w, h: drawRect.h), c = background)
+        nkFillCircle(b = `out`, rect = drawRect, c = background)
   of triangleUp, triangleDown, triangleLeft, triangleRight:
     var heading: Heading = right
     var points: array[3, nk_vec2]
@@ -1330,7 +1352,8 @@ proc nkDrawSymbol(`out`: ptr nk_command_buffer; `type`: SymbolType;
         heading = down
     nkTriangleFromDirection(`result` = points, r = content, padX = 0,
       padY = 0, direction = heading)
-    # TODO: continue here after nkTriangleFromDirection
+    nkFillTriangle(b = `out`, x0 = points[0].x, y0 = points[0].y, x1 = points[1].x, y1 = points[1].y, x2 = points[2].x, y2 = points[2].y, c = foreground)
+    # TODO: continue here after nkFillTriangle
   else:
     discard
 
@@ -1543,7 +1566,11 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     layout.bounds.w -= (2 * panelPadding.x)
     if (win.flags and windowBorder.cint).nk_bool:
       layout.border = nkPanelGetBorder(style = style, flags = win.flags, `type` = panelType)
-      layout.bounds = nkShrinkRect(r = layout.bounds, amount = layout.border)
+      var shrinked: NimRect = NimRect(x: layout.bounds.x, y: layout.bounds.y,
+        w: layout.bounds.w, h: layout.bounds.h)
+      shrinked = nkShrinkRect(r = shrinked, amount = layout.border)
+      layout.bounds = new_nk_rect(x = shrinked.x, y = shrinked.y,
+        w = shrinked.w, h = shrinked.h)
     else:
       layout.border = 0
     layout.at_y = layout.bounds.y
