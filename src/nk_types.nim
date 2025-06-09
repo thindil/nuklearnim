@@ -81,7 +81,9 @@ type
   SymbolType* = enum
     ## The types of symbolic icons
     none, x, underscore, circleSolid, circleOutline, rectSolid, rectOutline,
-      triangleUp, triangleDown, triangleLeft, triangleRight, plus, minus, max
+      triangleUp, triangleDown, triangleLeft, triangleRight, plus, minus,
+      triangleUpOutline, triangleDownOutline, triangleLeftOutline,
+      triangleRightOutline, max
   StyleItemType* = enum
     ## Style's item's types
     itemColor, itemImage, itemNineSlice
@@ -311,6 +313,12 @@ type
     header*: nk_command
     rounding*, w*, h*: cushort
     x*, y*: cshort
+    color*: nk_color
+  nk_command_triangle* {.importc: "struct nk_command_triangle".} = object
+    ## Internal Nuklear type
+    header*: nk_command
+    lineThickness*: cshort
+    a*, b*, c*: nk_vec2i
     color*: nk_color
   nk_command_triangle_filled* {.importc: "struct nk_command_triangle_filled".} = object
     ## Internal Nuklear type
@@ -584,6 +592,9 @@ type
   UserEvents* = enum
     ## The UI events caused by the user
     noEvent, quitEvent, sizeChangedEvent, keyEvent, mouseButtonEvent, anyEvent
+  ShowStates* = enum
+    ## When to change the state of a window
+    hidden, shown
 {.pop ruleOn: "namedParams".}
 
 # ----------

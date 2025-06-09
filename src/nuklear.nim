@@ -484,6 +484,23 @@ proc windowInput*(name: string; disable: bool = true) {.raises: [], tags: [], co
       root.flags = root.flags or windowRemoveRom.ord.cint
       root = root.parent
 
+proc windowDisable*() {.raises: [], tags: [], contractual.} =
+  ## Disable the current window
+  proc nk_window_disable(ctx) {.importc, nodecl, raises: [], tags: [],
+    contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  nk_window_disable(ctx = ctx)
+
+proc windowShow*(name: string; state: ShowStates) {.raises: [], tags: [], contractual.} =
+  ## Show or hide the window depending on the state
+  ##
+  ## * name  - the name of the window to show or hide
+  ## * state - the state in which the window will be
+  proc nk_window_show(ctx; name: cstring; state: ShowStates) {.importc,
+    nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  nk_window_show(ctx = ctx, name = name.cstring, state = state)
+
 # ------
 # Buffer
 # ------
@@ -725,6 +742,34 @@ proc nkStrokeRect(b: ptr nk_command_buffer, rect: NimRect, rounding,
   cmd.h = max(x = 0.cushort, y = rect.h.cushort)
   cmd.color = c
 
+proc nkStrokeTriangle(b: ptr nk_command_buffer; x0, y0, x1, y1, x2, y2,
+  lineThickness: cfloat; c: nk_color) {.raises: [], tags: [], contractual.} =
+  ## Draw a triangle. Internal use only
+  ##
+  ## * b             - the command buffer in which the triangle will be drawn
+  ## * x0            - the X coordinate of the first the triangle's vertex
+  ## * y0            - the Y coordinate of the first the triangle's vertex
+  ## * x1            - the X coordinate of the second the triangle's vertex
+  ## * y1            - the Y coordinate of the second the triangle's vertex
+  ## * x2            - the X coordinate of the third the triangle's vertex
+  ## * y2            - the Y coordinate of the third the triangle's vertex
+  ## * lineThickness - the thinckness of the triangle's border
+  ## * c             - the color used to draw the triangle
+  if b == nil or c.a == 0:
+    return
+  if b.use_clipping != 0:
+    let clip: nk_rect = b.clip
+    if not nkInbox(px = x0, py = y0, x = clip.x, y = clip.y, w = clip.w,
+      h = clip.h) and not nkInbox(px = x1, py = y1, x = clip.x, y = clip.y,
+      w = clip.w, h = clip.h) and not nkInbox(px = x2, py = y2, x = clip.x,
+      y = clip.y, w = clip.w, h = clip.h):
+      return
+
+  var cmd: ptr nk_command_triangle
+  if cmd == nil:
+    return
+  # TODO: continue here
+
 proc nkFillRect(b: ptr nk_command_buffer; rect: NimRect; rounding: float;
   c: nk_color) {.raises: [], tags: [RootEffect], contractual.} =
   ## Fill the rectangle with the selected color
@@ -780,7 +825,7 @@ proc nkFillCircle(b: ptr nk_command_buffer; rect: NimRect; c: nk_color)
   cmd.color = c
 
 proc nkFillTriangle(b: ptr nk_command_buffer, x0, y0, x1, y1, x2, y2: cfloat,
-  c: nk_color) {.raises: [], tags: [], contractual.} =
+  c: nk_color) {.raises: [], tags: [RootEffect], contractual.} =
   ## Fill the circle with the selected color
   ##
   ## * b  - the command buffer in which the triangle will be drawn
@@ -802,7 +847,17 @@ proc nkFillTriangle(b: ptr nk_command_buffer, x0, y0, x1, y1, x2, y2: cfloat,
       return
 
   var cmd: ptr nk_command_triangle_filled
-  # TODO: continue here
+  cmd = cast[ptr nk_command_triangle_filled](nkCommandBufferPush(b = b,
+    t = commandTriangleFilled, cmd.sizeof))
+  if cmd == nil:
+    return
+  cmd.a.x = x0.cshort
+  cmd.a.y = y0.cshort
+  cmd.b.x = x1.cshort
+  cmd.b.y = y1.cshort
+  cmd.c.x = x2.cshort
+  cmd.c.y = y2.cshort
+  cmd.color = c
 
 proc nkDrawImage(b: ptr nk_command_buffer; r: NimRect; img: PImage; col: nk_color)
   {.raises: [], tags: [RootEffect], contractual.} =
@@ -1352,8 +1407,28 @@ proc nkDrawSymbol(`out`: ptr nk_command_buffer; `type`: SymbolType;
         heading = down
     nkTriangleFromDirection(`result` = points, r = content, padX = 0,
       padY = 0, direction = heading)
-    nkFillTriangle(b = `out`, x0 = points[0].x, y0 = points[0].y, x1 = points[1].x, y1 = points[1].y, x2 = points[2].x, y2 = points[2].y, c = foreground)
-    # TODO: continue here after nkFillTriangle
+    nkFillTriangle(b = `out`, x0 = points[0].x, y0 = points[0].y,
+      x1 = points[1].x, y1 = points[1].y, x2 = points[2].x, y2 = points[2].y,
+      c = foreground)
+  of triangleUpOutline, triangleDownOutline, triangleLeftOutline,
+    triangleRightOutline:
+    var heading: Heading = right
+    var points: array[3, nk_vec2]
+    case `type`
+      of triangleRightOutline:
+        heading = right
+      of triangleLeftOutline:
+        heading = left
+      of triangleUpOutline:
+        heading = up
+      else:
+        heading = down
+    nkTriangleFromDirection(`result` = points, r = content, padX = 0,
+      padY = 0, direction = heading)
+    nkStrokeTriangle(b = `out`, x0 = points[0].x, y0 = points[0].y,
+      x1 = points[1].x, y1 = points[1].y, x2 = points[2].x, y2 = points[2].y,
+      lineThickness = borderWidth, c = foreground)
+    # TODO: continue here after nkStrokeTriangle
   else:
     discard
 
