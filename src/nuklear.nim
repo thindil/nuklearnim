@@ -768,7 +768,14 @@ proc nkStrokeTriangle(b: ptr nk_command_buffer; x0, y0, x1, y1, x2, y2,
   var cmd: ptr nk_command_triangle
   if cmd == nil:
     return
-  # TODO: continue here
+  cmd.lineThickness = lineThickness.cshort
+  cmd.a.x = x0.cshort
+  cmd.a.y = y0.cshort
+  cmd.b.x = x1.cshort
+  cmd.b.y = y1.cshort
+  cmd.c.x = x2.cshort
+  cmd.c.y = y2.cshort
+  cmd.color = c
 
 proc nkFillRect(b: ptr nk_command_buffer; rect: NimRect; rounding: float;
   c: nk_color) {.raises: [], tags: [RootEffect], contractual.} =
@@ -1428,7 +1435,6 @@ proc nkDrawSymbol(`out`: ptr nk_command_buffer; `type`: SymbolType;
     nkStrokeTriangle(b = `out`, x0 = points[0].x, y0 = points[0].y,
       x1 = points[1].x, y1 = points[1].y, x2 = points[2].x, y2 = points[2].y,
       lineThickness = borderWidth, c = foreground)
-    # TODO: continue here after nkStrokeTriangle
   else:
     discard
 
@@ -1457,7 +1463,6 @@ proc nkDrawButtonSymbol(`out`: ptr nk_command_buffer; bounds, content: var NimRe
   sym = nk_rgb_factor(col = sym, factor = style.color_factor_text)
   nkDrawSymbol(`out` = `out`, `type` = `type`, content = content,
     background = bg, foreground = sym, borderWidth = 1, font = font)
-  # TODO: continue here after nkDrawSymbol
 
 proc nkDoButtonSymbol(state: var nk_flags; `out`: ptr nk_command_buffer; bounds: var NimRect,
   symbol: SymbolType; behavior: ButtonBehavior; style: ptr nk_style_button;
@@ -1486,7 +1491,6 @@ proc nkDoButtonSymbol(state: var nk_flags; `out`: ptr nk_command_buffer; bounds:
     #   style.draw_begin(b = `out`, style.userdata)
     nkDrawButtonSymbol(`out` = `out`, bounds = bounds, content = content,
       state = state, style = style, `type` = symbol, font = font)
-    # TODO: continue here after nkDrawButtonSymbol
     # TODO
     # if style.draw_end != nil:
     #   style.draw_end(b = `out`, style.userdata)
@@ -1742,7 +1746,68 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
           font = style.font) and not(win.flags and windowRom.cint).nk_bool:
           layout.flags = layout.flags or windowHidden.cint
           layout.flags = layout.flags and not windowMinimized.cint
-    # TODO: continue here after nkDoButtonSymbol
+
+      # window minimize button
+      if (win.flags and windowMinimizable.cint).nk_bool:
+        var ws: nk_flags = 0
+        if style.window.header.align == headerRight:
+          button.x = (header.w + header.x) - button.w
+          if not (win.flags and windowClosable.cint).nk_bool:
+            button.x -= style.window.header.padding.x
+            header.w -= style.window.header.padding.x
+          header.w -= button.w + style.window.header.spacing.x
+        else:
+          button.x = header.x
+          header.x += button.w + style.window.header.spacing.x +
+            style.window.header.padding.x
+        if nkDoButtonSymbol(state = ws, `out` = win.buffer.addr, bounds = button,
+          symbol = if (layout.flags and windowMinimized.cint).nk_bool:
+          style.window.header.maximizeSymbol else:
+          style.window.header.minimizeSymbol, behavior = default,
+          style = style.window.header.minimize_button.addr, `in` = `in`.addr,
+          font = style.font) and not(win.flags and windowRom.cint).nk_bool:
+            layout.flags = if (layout.flags and windowMinimized.cint).nk_bool:
+              layout.flags and not windowMinimized.cint else:
+              layout.flags or windowMinimized.cint
+
+      # window header title
+      var textLen: int = title.len
+      let t: float = try:
+          font.width(arg1 = font.userdata, h = font.height,
+            arg3 = title.cstring, len = textLen.cint)
+        except:
+          return false
+      text.padding = new_nk_vec2(x = 0, y = 0)
+      var label: NimRect = NimRect(x: 0, y: 0, w: 0, h: 0)
+
+      label.x = header.x + style.window.header.padding.x
+      label.x += style.window.header.label_padding.x
+      label.y = header.y + style.window.header.label_padding.y
+      label.h = font.height + 2 * style.window.header.label_padding.y
+      label.w = t + 2 * style.window.header.spacing.x
+      label.w = (0.float).clamp(a = label.w, b = header.x + header.w - label.x)
+      nkWidgetText(o = `out`.addr, b = label, str = title, len = textLen,
+        t = text.addr, a = TextAlignment.left, f = font)
+
+    # draw window background
+    if not (layout.flags and windowMinimized.cint).nk_bool and not
+      (layout.flags and windowDynamic.cint).nk_bool:
+      var body: NimRect
+      body.x = win.bounds.x
+      body.w = win.bounds.w
+      body.y = (win.bounds.y + layout.header_height)
+      body.h = (win.bounds.h - layout.header_height)
+
+      let bg: nk_style_item_data = cast[nk_style_item_data](style.window.fixed_background.data)
+      case style.window.fixed_background.`type`
+      of itemImage:
+        nkDrawImage(b = `out`.addr, r = body, img = bg.image.addr,
+          col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
+      of itemNineSlice:
+        discard
+      of itemColor:
+        discard
+    # TODO: continue here
     return true
 
 # ------
