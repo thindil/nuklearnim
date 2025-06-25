@@ -202,7 +202,7 @@ type
       tooltip_padding*: nk_vec2
     background*, group_text_color*: nk_color
     border*, combo_border*, contextual_border*, menu_border*, group_border*,
-      tooltip_border*, popup_border*: cfloat
+      tooltip_border*, popup_border*, rounding*: cfloat
   nk_draw_command* {.importc: "struct nk_draw_command", nodecl.} = object
     ## Internal Nuklear type
     elem_count*: cuint
@@ -354,7 +354,7 @@ type
     border*, at_y*, at_x*, max_x*, header_height*, footer_height*: cfloat
     row*: nk_row_layout
     parent*: PNkPanel
-    has_scrolling*: cuint
+    has_scrolling*, offset_x*, offset_y*: cuint
   nk_popup_state* {.importc: "struct nk_popup_state", nodecl.} = object
     ## Internal Nuklear type
     win*: ptr nk_window
@@ -368,6 +368,9 @@ type
   nk_property_state* {.importc: "struct nk_property_state", nodecl.} = object
     ## Internal Nuklear type
     active*: cint
+  nk_scroll* {.importc: "struct nk_scroll", nodecl.} = object
+    ## Internal Nuklear type
+    x*, y*: cuint
   nk_window* {.importc: "struct nk_window", nodecl.} = object
     ## Internal Nuklear type
     layout*: PNkPanel
@@ -379,6 +382,7 @@ type
     buffer*: nk_command_buffer
     edit*: nk_edit_state
     property*: nk_property_state
+    scrollbar*: nk_scroll
   nk_memory* {.importc: "struct nk_memory", nodecl.} = object
     ## Internal Nuklear type
     `ptr`*: ptr nk_size
@@ -402,6 +406,17 @@ type
     pool*: nk_allocator
     grow_factor*: cfloat
     calls*: nk_size
+  nk_table* {.importc: "struct nk_table", nodecl.} = object
+    ## Internal Nuklear type
+  nk_page_data* {.bycopy, union.} = object
+    ## Internal Nuklear type
+    tbl*: nk_table
+    pan*: nk_panel
+    win*: nk_window
+  nk_page_element* {.importc: "struct nk_page_element", nodecl.} = object
+    data*: nk_page_data
+    next*, prev*: pointer
+    ## Internal Nuklear type
   nk_context* {.importc: "struct nk_context", nodecl.} = object
     ## Internal Nuklear type
     style*: nk_style

@@ -107,3 +107,19 @@ proc nkInbox*(px, py, x, y, w, h: cfloat): bool {.raises: [], tags: [], contract
   ##
   ## Returns true if the point is in the box, otherwise false
   return ((px >= x and px < x + w) and (py >= y and py < y + h))
+
+proc nkUnify*(clip: var NimRect, a: nk_rect, x0, y0, x1, y1: cfloat) {.raises: [], tags: [], contractual.} =
+  ## Unify two rectangles
+  ##
+  ## * clip - the unified rectangle
+  ## * a    - the base recrangle
+  ## * x0   - the X coordinate of top left point of the second rectangle
+  ## * y0   - the Y coordinate of top left point of the second rectangle
+  ## * x1   - the X coordinate of bottom right point of the second rectangle
+  ## * y1   - the X coordinate of bottom right point of the second rectangle
+  clip.x = max(a.x, x0)
+  clip.y = max(a.y, y0)
+  clip.w = max(a.x + a.w, x1) - clip.x
+  clip.h = max(a.y + a.h, y1) - clip.y
+  clip.w = max(0, clip.w)
+  clip.h = max(0, clip.h)

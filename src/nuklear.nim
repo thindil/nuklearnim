@@ -1719,10 +1719,12 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
       case background.`type`
       of itemImage:
         text.background = nk_rgba(r = 0, g = 0, b = 0, a = 0)
-        nkDrawImage(b = win.buffer.addr, r = header, img = bg.image.addr, col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
+        nkDrawImage(b = win.buffer.addr, r = header, img = bg.image.addr,
+          col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
       of itemNineSlice:
         text.background = nk_rgba(r = 0, g = 0, b = 0, a = 0)
-        nkDrawNineSlice(b = win.buffer.addr, r = header, slc = bg.slice.addr, col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
+        nkDrawNineSlice(b = win.buffer.addr, r = header, slc = bg.slice.addr,
+          col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
       of itemColor:
         text.background = bg.color
         nkFillRect(b = `out`.addr, rect = header, rounding = 0, c = bg.color)
@@ -1804,11 +1806,31 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
         nkDrawImage(b = `out`.addr, r = body, img = bg.image.addr,
           col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
       of itemNineSlice:
-        discard
+        nkDrawNineSlice(b = `out`.addr, r = body, slc = bg.slice.addr,
+          col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
       of itemColor:
-        discard
-    # TODO: continue here
-    return true
+        nkFillRect(b = `out`.addr, rect = body,
+          rounding = style.window.rounding, c = bg.color)
+
+    # set clipping rectangle
+    var clip: NimRect = NimRect(x: 0, y: 0, w: 0, h: 0)
+    layout.clip = layout.bounds
+    nkUnify(clip = clip, a = win.buffer.clip, x0 = layout.clip.x,
+      y0 = layout.clip.y, x1 = layout.clip.x + layout.clip.w,
+      y1 = layout.clip.y + layout.clip.h)
+    let tClip: nk_rect = new_nk_rect(x = clip.x, y = clip.y, w = clip.w, h = clip.h)
+    nkPushScissor(b = `out`.addr, r = tClip)
+    layout.clip = tClip
+    return not (layout.flags and windowHidden.cint).nk_bool and not
+      (layout.flags and windowMinimized.cint).nk_bool
+
+proc nkFreePanel(ctx; pan: PNkPanel) {.raises: [], tags: [], contractual.} =
+  ## Free memory used by the panel
+  ##
+  ## * ctx - the Nuklear context
+  ## * pan - the panel which memory will be freed
+  discard
+  # TODO: continue here
 
 # ------
 # Popups
@@ -1894,9 +1916,34 @@ proc nkPopupBegin(ctx; pType: PopupType; title: string; flags: set[PanelFlags];
 
     popup.buffer = win.buffer
     nkStartPopup(ctx = ctx, win = win)
-    # var allocated: nk_size = ctx.memory.allocated
+    var allocated: nk_size = ctx.memory.allocated
     nkPushScissor(b = popup.buffer.addr, r = nkNullRect)
-    return true
+
+    if nkPanelBegin(ctx = ctx, title = title, panelType = panelPopup):
+      # popup is running therefore invalidate parent panels
+      var root: PNkPanel = win.layout
+      while root != nil:
+        root.flags = root.flags or windowRom.cint
+        root.flags = root.flags and not windowRemoveRom.cint
+        root = root.parent
+      win.popup.active = nkTrue
+      popup.layout.offset_x = popup.scrollbar.x
+      popup.layout.offset_y = popup.scrollbar.y
+      popup.layout.parent = win.layout
+      return true
+    else:
+      # popup was closed/is invalid so cleanup
+      var root: PNkPanel = win.layout
+      while root != nil:
+        root.flags = root.flags or windowRemoveRom.cint
+        root = root.parent
+      win.popup.buf.active = nkFalse
+      win.popup.active = nkFalse
+      ctx.memory.allocated = allocated
+      ctx.current = win
+      nkFreePanel(ctx = ctx, pan = popup.layout)
+      popup.layout = nil
+      return false
 
 proc createPopup(pType2: PopupType; title2: cstring;
     flags2: nk_flags; x2, y2, w2, h2: cfloat): bool {.raises: [], tags: [],
