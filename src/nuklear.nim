@@ -1495,6 +1495,60 @@ proc nkDoButtonSymbol(state: var nk_flags; `out`: ptr nk_command_buffer; bounds:
     # if style.draw_end != nil:
     #   style.draw_end(b = `out`, style.userdata)
 
+# ---------
+# Aligmnent
+# ---------
+proc nkContainerOf[T](`ptr`: pointer; `type`: typedesc[T]; member: string): ptr typedesc[T]
+  {.raises: [], tags: [], contractual.} =
+  ## Get the container of the selected element
+  ##
+  ## * ptr    - the pointer which will be converted
+  ## * type   - the type to which the pointer will be converted
+  ## * member - the member of the container to extract
+  ##
+  ## Returns the pointer to the selected member of the container
+  if member.len == 0:
+    discard
+  # TODO: continue here
+  # for objField, objVal in fieldPairs(obj):
+  #  if objField == member:
+  #    discard
+
+# ------------
+# Page element
+# ------------
+proc nkLinkPageElementIntoFreelist(ctx; elem: ptr nk_page_element)
+  {.raises: [], tags: [], contractual.} =
+  ## Link the element into list of items to free
+  ##
+  ## * ctx  - the Nuklear context
+  ## * elem - the page element which will be freed
+  # link table into freelist
+  if ctx.freelist == nil:
+    ctx.freelist = elem
+  else:
+    elem.next = ctx.freelist
+    ctx.freelist = elem
+
+proc nkFreePageElement(ctx; elem: ptr nk_page_element) {.raises: [], tags: [],
+  contractual.} =
+  ## Free memory used by the selected page element
+  ##
+  ## * ctx  - the Nuklear context
+  ## * elem - the page element which will be removed
+  # we have a pool so just add to free list
+  if ctx.use_pool:
+    nkLinkPageElementIntoFreelist(ctx = ctx, elem = elem)
+    return
+  # if possible remove last element from back of fixed memory buffer
+  let
+    elemEnd: pointer = elem + 1
+    bufferEnd: pointer = ctx.memory.memory.`ptr` + ctx.memory.size
+  if elemEnd == bufferEnd:
+    ctx.memory.size -= elem.sizeOf
+  else:
+    nkLinkPageElementIntoFreelist(ctx = ctx, elem = elem)
+
 # -----
 # Panel
 # -----
@@ -1829,8 +1883,10 @@ proc nkFreePanel(ctx; pan: PNkPanel) {.raises: [], tags: [], contractual.} =
   ##
   ## * ctx - the Nuklear context
   ## * pan - the panel which memory will be freed
-  discard
-  # TODO: continue here
+  let
+    pd: ptr nk_page_data = nkContainerOf(`ptr` = pan, `type` = nk_page_data, member = "")
+    pe: ptr nk_page_element = nkContainerOf(`ptr` = pd, `type` = nk_page_element, member = "data")
+  nkFreePageElement(ctx = ctx, elem = pe)
 
 # ------
 # Popups
@@ -2884,6 +2940,30 @@ template changeStyle*(field: StyleStyleTypes; color: Color; code: untyped) =
   if stylePushStyleItem(fld = field, col = color):
     code
     stylePopStyleItem()
+
+var storedButton: nk_style_button = nk_style_button() ## Used to store temporary button's setting
+
+proc storeButton() {.raises: [], tags: [], contractual.} =
+  ## Store the current setting for buttons
+  storedButton = ctx.style.button
+
+proc restoreButtonStyle(destination: ButtonStyleTypes) {.raises: [], tags: [], contractual.} =
+  ## Restore default setting for the selected field in the button's style
+  ##
+  ## * destination - the field in the style which will be restored
+  if destination == normal:
+    ctx.style.button.normal = storedButton.normal
+
+template changeStyle*(src, dest: ButtonStyleTypes; code: untyped) =
+  ## Change temporary the setting of the selected button style
+  ##
+  ## * src      - the field which value will be copied
+  ## * dest     - the field to which the source value will be copied
+  ## * code     - the code executed when the temporary setting is set
+  storeButton()
+  setButtonStyle2(source = src, destination = dest)
+  code
+  restoreButtonStyle(destination = dest)
 
 # ------
 # Combos
