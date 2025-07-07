@@ -693,7 +693,7 @@ proc nkCommandBufferPush(b: ptr nk_command_buffer; t: CommandType;
 # ----
 # Misc
 # ----
-proc nkPushScissor(b: ptr nk_command_buffer; r: nk_rect) {.raises: [], tags: [
+proc nkPushScissor(b: ptr nk_command_buffer; r: NimRect) {.raises: [], tags: [
     RootEffect], contractual.} =
   ## Clear the rectangle. Internal use only
   ##
@@ -702,7 +702,7 @@ proc nkPushScissor(b: ptr nk_command_buffer; r: nk_rect) {.raises: [], tags: [
   ##
   ## Returns the modified parameter b
   body:
-    b.clip = r
+    b.clip = new_nk_rect(x = r.x, y = r.y, w = r.w, h = r.h)
     let cmd: ptr nk_command_scissor = cast[ptr nk_command_scissor](
         nkCommandBufferPush(b = b, t = commandScissor,
             size = nk_command_scissor.sizeof))
@@ -1402,7 +1402,7 @@ proc nkDrawSymbol(`out`: ptr nk_command_buffer; `type`: SymbolType;
         nkFillCircle(b = `out`, rect = drawRect, c = background)
   of triangleUp, triangleDown, triangleLeft, triangleRight:
     var heading: Heading = right
-    var points: array[3, nk_vec2]
+    var points: array[3, NimRect]
     case `type`
       of triangleRight:
         heading = right
@@ -1420,7 +1420,7 @@ proc nkDrawSymbol(`out`: ptr nk_command_buffer; `type`: SymbolType;
   of triangleUpOutline, triangleDownOutline, triangleLeftOutline,
     triangleRightOutline:
     var heading: Heading = right
-    var points: array[3, nk_vec2]
+    var points: array[3, NimRect]
     case `type`
       of triangleRightOutline:
         heading = right
@@ -1508,11 +1508,11 @@ proc nkContainerOf[T](`ptr`: pointer; `type`: typedesc[T]; member: string): ptr 
   ##
   ## Returns the pointer to the selected member of the container
   if member.len == 0:
-    discard
-  # TODO: continue here
-  # for objField, objVal in fieldPairs(obj):
-  #  if objField == member:
-  #    discard
+    return cast[ptr `type`](`ptr`)
+  let obj: `type` = cast[`type`](`ptr`)
+  for objField, objVal in obj.fieldPairs:
+    if objField == member:
+      return cast[ptr `type`](objVal)
 
 # ------------
 # Page element
@@ -1869,12 +1869,13 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     # set clipping rectangle
     var clip: NimRect = NimRect(x: 0, y: 0, w: 0, h: 0)
     layout.clip = layout.bounds
-    nkUnify(clip = clip, a = win.buffer.clip, x0 = layout.clip.x,
+    let aClip: NimRect = NimRect(x: win.buffer.clip.x, y: win.buffer.clip.y,
+      w: win.buffer.clip.w, h: win.buffer.clip.h)
+    nkUnify(clip = clip, a = aClip, x0 = layout.clip.x,
       y0 = layout.clip.y, x1 = layout.clip.x + layout.clip.w,
       y1 = layout.clip.y + layout.clip.h)
-    let tClip: nk_rect = new_nk_rect(x = clip.x, y = clip.y, w = clip.w, h = clip.h)
-    nkPushScissor(b = `out`.addr, r = tClip)
-    layout.clip = tClip
+    nkPushScissor(b = `out`.addr, r = clip)
+    layout.clip = new_nk_rect(x = clip.x, y = clip.y, w = clip.w, h = clip.h)
     return not (layout.flags and windowHidden.cint).nk_bool and not
       (layout.flags and windowMinimized.cint).nk_bool
 
@@ -1910,7 +1911,7 @@ proc nkStartPopup(ctx; win: var PNkWindow) {.raises: [], tags: [],
     win.popup.buf = buf
 
 proc nkPopupBegin(ctx; pType: PopupType; title: string; flags: set[PanelFlags];
-    x, y, w, h: var float): bool {.raises: [NuklearException], tags: [
+    x, y, w, h: float): bool {.raises: [NuklearException], tags: [
         RootEffect], contractual.} =
   ## Try to create a new popup window. Internal use only.
   ##
@@ -1955,12 +1956,13 @@ proc nkPopupBegin(ctx; pType: PopupType; title: string; flags: set[PanelFlags];
       win.popup.type = panelPopup
     # popup position is local to window
     ctx.current = popup
-    x += win.layout.clip.x
-    y += win.layout.clip.y
+    var
+      localX: float = x + win.layout.clip.x
+      localY: float = y + win.layout.clip.y
 
     # setup popup data
     popup.parent = win
-    popup.bounds = new_nk_rect(x = x, y = y, w = w, h = h)
+    popup.bounds = new_nk_rect(x = localX, y = localY, w = w, h = h)
     popup.seq = ctx.seq
     popup.layout = cast[PNkPanel](nk_create_panel(ctx = ctx))
     popup.flags = winSetToInt(nimFlags = flags)
@@ -2013,6 +2015,15 @@ proc createPopup(pType2: PopupType; title2: cstring;
     ## A binding to Nuklear's function. Internal use only
   return nk_popup_begin(ctx = ctx, pType = pType2, title = title2,
       flags = flags2, rect = new_nk_rect(x = x2, y = y2, w = w2, h = h2))
+
+proc createPopup(pType2: PopupType; title2: string; flags2: set[PanelFlags];
+  x2, y2, w2, h2: float): bool {.raises: [NuklearException],
+  tags: [RootEffect], contractual.} =
+  ## Create a new Nuklear popup window, internal use only, temporary code
+  ##
+  ## Returns true if the popup was successfully created, otherwise false.
+  return nkPopupBegin(ctx = ctx, pType = pType2, title = title2,
+    flags = flags2, x = x2, y = y2, w = w2, h = h2)
 
 proc createNonBlocking(flags2: nk_flags; x2, y2, w2, h2: cfloat): bool {.raises: [], tags: [], contractual, discardable.} =
   ## Create a new Nuklear non-blocking popup window, internal use only,
