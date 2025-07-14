@@ -48,7 +48,7 @@ using ctx: PContext
 # -------
 proc nk_end(ctx) {.importc, cdecl, raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
-proc nk_zero(`ptr`: pointer; size: nk_size) {.importc, cdecl, raises: [],
+proc nk_zero(`ptr`: pointer; size: culong) {.importc, cdecl, raises: [],
     tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
 proc nk_widget_disable_begin(ctx) {.importc, cdecl, raises: [], tags: [], contractual.}
@@ -571,7 +571,7 @@ proc nkBufferRealloc(b: ptr nk_buffer; capacity: nk_size;
     if temp != b.memory.`ptr`:
       copyMem(dest = temp, source = b.memory.`ptr`, size = bufferSize)
       try:
-        discard b.pool.free(handle = b.pool.userdata, old = b.memory.`ptr`)
+        b.pool.free(handle = b.pool.userdata, old = b.memory.`ptr`)
       except:
         discard
 
@@ -735,7 +735,7 @@ proc nkStrokeRect(b: ptr nk_command_buffer, rect: NimRect, rounding,
   if cmd == nil:
     return
   cmd.rounding = rounding.cushort
-  cmd.lineThickness = lineThickness.cushort
+  cmd.line_thickness = lineThickness.cushort
   cmd.x = rect.x.cshort
   cmd.y = rect.y.cshort
   cmd.w = max(x = 0.cushort, y = rect.w.cushort)
@@ -768,7 +768,7 @@ proc nkStrokeTriangle(b: ptr nk_command_buffer; x0, y0, x1, y1, x2, y2,
   var cmd: ptr nk_command_triangle
   if cmd == nil:
     return
-  cmd.lineThickness = lineThickness.cshort
+  cmd.line_thickness = lineThickness.cshort
   cmd.a.x = x0.cshort
   cmd.a.y = y0.cshort
   cmd.b.x = x1.cshort
@@ -1058,7 +1058,7 @@ proc nkDrawText(b: ptr nk_command_buffer; r: NimRect; str: string; length: var i
     cmd.font = font
     cmd.length = length.cint
     cmd.height = font.height
-    cmd.str = str[0..length].cstring
+    cmd.`string` = str[0..length].cstring
 
 # -----
 # Input
@@ -1949,7 +1949,7 @@ proc nkPopupBegin(ctx; pType: PopupType; title: string; flags: set[PanelFlags];
       if win.popup.active:
         return false
       {.ruleOff: "namedParams".}
-      nk_zero(`ptr` = popup, size = sizeof(popup))
+      nk_zero(`ptr` = popup, size = sizeof(popup).culong)
       {.ruleOn: "namedParams".}
       win.popup.name = titleHash.nk_hash
       win.popup.active = nkTrue
@@ -3505,3 +3505,27 @@ proc hsvaToColorf*(hsva: array[4, float]): NimColorF {.raises: [], tags: [],
   let newColor: nk_colorf = nk_hsva_colorf(h = hsva[0], s = hsva[1], v = hsva[
       2], a = hsva[3])
   result = NimColorF(r: newColor.r, g: newColor.g, b: newColor.b, a: newColor.a)
+
+# --------------------------------
+# Temporary exports for old C code
+# --------------------------------
+
+#proc nk_unify(clip: var nk_rect; a: ptr nk_rect; x0, y0, x1, y1: cfloat) {.raises: [], tags: [],
+#    contractual, exportc.} =
+#  ## Temporary C binding. Internal use only
+#  ##
+#  ## * clip - the unified rectangle
+#  ## * a    - the base recrangle
+#  ## * x0   - the X coordinate of top left point of the second rectangle
+#  ## * y0   - the Y coordinate of top left point of the second rectangle
+#  ## * x1   - the X coordinate of bottom right point of the second rectangle
+#  ## * y1   - the X coordinate of bottom right point of the second rectangle
+#  ##
+#  ## Returns modified parameter clip
+#  var res: NimRect = NimRect(x: clip.x, y: clip.y, w: clip.w, h: clip.h)
+#  nkUnify(clip = res, a = NimRect(x: a.x, y: a.y, w: a.y, h: a.h), x0 = x0,
+#    y0 = y0, x1 = x1, y1 = y1)
+#  clip.x = res.x
+#  clip.y = res.y
+#  clip.w = res.w
+#  clip.h = res.h

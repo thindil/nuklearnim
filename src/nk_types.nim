@@ -319,7 +319,7 @@ type
   nk_command_triangle* {.importc: "struct nk_command_triangle".} = object
     ## Internal Nuklear type
     header*: nk_command
-    lineThickness*: cshort
+    line_thickness*: cshort
     a*, b*, c*: nk_vec2i
     color*: nk_color
   nk_command_triangle_filled* {.importc: "struct nk_command_triangle_filled".} = object
@@ -341,7 +341,7 @@ type
     font*: ptr nk_user_font
     height*: cfloat
     length*: cint
-    str*: cstring
+    `string`*: cstring
   nk_row_layout* {.importc: "struct nk_row_layout".} = object
     ## Internal Nuklear type
     index*, columns*, tree_depth*: cint
@@ -391,7 +391,7 @@ type
   nk_plugin_alloc* = proc (handle: nk_handle; old: pointer;
       size: nk_size): pointer {.cdecl.}
     ## Internal Nuklear type
-  nk_plugin_free* = proc (handle: nk_handle; old: pointer): pointer {.cdecl.}
+  nk_plugin_free* = proc (handle: nk_handle; old: pointer) {.cdecl.}
     ## Internal Nuklear type
   nk_allocator* {.importc: "struct nk_allocator", nodecl.} = object
     ## Internal Nuklear type
