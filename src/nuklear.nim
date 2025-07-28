@@ -25,11 +25,10 @@
 
 import std/[colors, hashes, macros, unicode]
 import contracts, nimalyzer
-import nk_button, nk_colors, nk_context, nk_layout, nk_math, nk_tooltip, nk_types, nk_utf, nk_widget
-export nk_button, nk_colors, nk_context, nk_layout, nk_tooltip, nk_types, nk_widget
-
-# Temporary disable unused warnings
-{.push hint[XDeclaredButNotUsed]: off.}
+import nk_button, nk_colors, nk_context, nk_input, nk_layout, nk_math,
+  nk_panel, nk_tooltip, nk_types, nk_utf, nk_widget
+export nk_button, nk_colors, nk_context, nk_input, nk_layout, nk_tooltip,
+  nk_types, nk_widget
 
 ## Provides code for Nuklear binding
 
@@ -78,12 +77,6 @@ proc nk_input_key*(ctx; key: Keys; down: nk_bool) {.importc, nodecl,
   ## A binding to Nuklear's function. Internal use only
 proc nk_input_button*(ctx; id: Buttons; x, y: cint; down: nk_bool) {.importc, nodecl,
     raises: [], tags: [], contractual.}
-  ## A binding to Nuklear's function. Internal use only
-
-# ------
-# Panels
-# ------
-proc nk_create_panel(ctx): pointer {.importc, cdecl, raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
 
 # ----
@@ -389,20 +382,6 @@ template disabled*(content: untyped) =
   content
   nk_widget_disable_end(ctx = ctx)
 
-# ------
-# Widget
-# ------
-proc nkWidgetStateReset(s: var nk_flags) {.raises: [], tags: [], contractual.} =
-  ## Reset the state of a widget. Internal use only
-  ##
-  ## * s - the state to reset
-  ##
-  ## Returns the modified parameter s
-  if (s and widgetStateModified.int).bool:
-    s = widgetStateInactive.int or widgetStateModified.int
-  else:
-    s = widgetStateInactive.ord
-
 # -------
 # Windows
 # -------
@@ -504,16 +483,6 @@ proc windowShow*(name: string; state: ShowStates) {.raises: [], tags: [], contra
 # ------
 # Buffer
 # ------
-{.push ruleOff: "namedParams".}
-template `+`[T](p: ptr T; off: nk_size): ptr T =
-  ## Pointer artihmetic, adding
-  ##
-  ## * p   - the pointer to modify
-  ## * off - the value to add to the pointer
-  ##
-  ## Returns the new pointer moved by off.
-  cast[ptr type(p[])](cast[nk_size](p) +% off * p[].sizeof)
-{.pop ruleOn: "namedParams".}
 
 proc nkBufferAlign(unaligned: pointer; align: nk_size; alignment: var nk_size;
     `type`: BufferAllocationType): pointer {.raises: [], tags: [],
@@ -1145,31 +1114,6 @@ proc isKeyPressed*(key: Keys): bool {.raises: [], tags: [], contractual.} =
     ## A binding to Nuklear's function. Internal use only
   return nk_input_is_key_pressed(i = ctx.input.addr, key = key)
 
-proc hasMouseClickInRect*(id: Buttons; rect: NimRect): bool {.raises: [], tags: [], contractual.} =
-  ## Check if the mouse button was clicked in the selected rectangle
-  ##
-  ## * id   - the mouse button which will be checked
-  ## * rect - the rectangle in which the mouse button will be checked
-  ##
-  ## Returns true if the mouse button was checked in the selected rectangle, otherwise false
-  proc nk_input_has_mouse_click_in_rect(i: ptr nk_input; id: Buttons; rect: nk_rect): nk_bool
-    {.importc, nodecl, raises: [], tags: [], contractual.}
-    ## A binding to Nuklear's function. Internal use only
-  return nk_input_has_mouse_click_in_rect(i = ctx.input.addr, id = id, rect = nk_rect(x: rect.x, y: rect.y, w: rect.w, h: rect.h))
-
-proc hasMouseClickDownInRect*(id: Buttons; rect: nk_rect; down: nk_bool): bool {.raises: [], tags: [], contractual.} =
-  ## Check if the mouse button is clicked down in the selected rectangle
-  ##
-  ## * id   - the mouse button which will be checked
-  ## * rect - the rectangle in which the mouse button will be checked
-  ## * down - if true, the button is clicked down
-  ##
-  ## Returns true if the mouse button was checked in the selected rectangle, otherwise false
-  proc nk_input_has_mouse_click_down_in_rect(i: ptr nk_input; id: Buttons; rect: nk_rect; down: nk_bool): nk_bool
-    {.importc, nodecl, raises: [], tags: [], contractual.}
-    ## A binding to Nuklear's function. Internal use only
-  return nk_input_has_mouse_click_down_in_rect(i = ctx.input.addr, id = id, rect = rect, down = down)
-
 proc isMousePressed*(id: Buttons): bool {.raises: [], tags: [], contractual.} =
   ## Check if the selected mouse button is pressed now
   ##
@@ -1274,7 +1218,7 @@ proc nkButtonBehavior(state: var nk_flags; r: NimRect; i: ptr nk_input;
     state = widgetStateHovered.nk_flags
     if isMouseDown(id = left):
       state = widgetStateActive.nk_flags
-      if hasMouseClickDownInRect(id = left, rect = nk_rect(x: r.x, y: r.y, w: r.w, h: r.h), down = nkTrue):
+      if hasMouseClickDownInRect(id = left, rect = r, down = nkTrue):
         if behavior != default:
           result = isMouseDown(id = left)
         else:
@@ -1495,138 +1439,13 @@ proc nkDoButtonSymbol(state: var nk_flags; `out`: ptr nk_command_buffer; bounds:
     # if style.draw_end != nil:
     #   style.draw_end(b = `out`, style.userdata)
 
-# ---------
-# Aligmnent
-# ---------
-proc nkContainerOf[T](`ptr`: pointer; `type`: typedesc[T]; member: string): ptr typedesc[T]
-  {.raises: [], tags: [], contractual.} =
-  ## Get the container of the selected element
-  ##
-  ## * ptr    - the pointer which will be converted
-  ## * type   - the type to which the pointer will be converted
-  ## * member - the member of the container to extract
-  ##
-  ## Returns the pointer to the selected member of the container
-  if member.len == 0:
-    return cast[ptr `type`](`ptr`)
-  let obj: `type` = cast[`type`](`ptr`)
-  for objField, objVal in obj.fieldPairs:
-    if objField == member:
-      return cast[ptr `type`](objVal)
-
 # ------------
 # Page element
 # ------------
-proc nkLinkPageElementIntoFreelist(ctx; elem: ptr nk_page_element)
-  {.raises: [], tags: [], contractual.} =
-  ## Link the element into list of items to free
-  ##
-  ## * ctx  - the Nuklear context
-  ## * elem - the page element which will be freed
-  # link table into freelist
-  if ctx.freelist == nil:
-    ctx.freelist = elem
-  else:
-    elem.next = ctx.freelist
-    ctx.freelist = elem
-
-proc nkFreePageElement(ctx; elem: ptr nk_page_element) {.raises: [], tags: [],
-  contractual.} =
-  ## Free memory used by the selected page element
-  ##
-  ## * ctx  - the Nuklear context
-  ## * elem - the page element which will be removed
-  # we have a pool so just add to free list
-  if ctx.use_pool:
-    nkLinkPageElementIntoFreelist(ctx = ctx, elem = elem)
-    return
-  # if possible remove last element from back of fixed memory buffer
-  let
-    elemEnd: pointer = elem + 1
-    bufferEnd: pointer = ctx.memory.memory.`ptr` + ctx.memory.size
-  if elemEnd == bufferEnd:
-    ctx.memory.size -= elem.sizeOf
-  else:
-    nkLinkPageElementIntoFreelist(ctx = ctx, elem = elem)
 
 # -----
 # Panel
 # -----
-proc nkPanelGetPadding(style: nk_style; `type`: PanelType): nk_vec2 {.raises: [
-    ], tags: [], contractual.} =
-  ## Get the padding for the selected panel, based on its type. Internal use
-  ## only
-  ##
-  ## * style - the whole style of the application
-  ## * type  - the selected type of the panel
-  ##
-  ## Returns vector with information about padding for the selected panel
-  case `type`
-  of panelWindow:
-    return style.window.padding
-  of panelGroup:
-    return style.window.group_padding
-  of panelPopup:
-    return style.window.popup_padding
-  of panelContextual:
-    return style.window.contextual_padding
-  of panelCombo:
-    return style.window.combo_padding
-  of panelMenu:
-    return style.window.menu_padding
-  of panelTooltip:
-    return style.window.tooltip_padding
-  else:
-    discard
-
-proc nkPanelGetBorder(style: nk_style; flags: nk_flags; `type`: PanelType): cfloat {.raises: [], tags: [], contractual.} =
-  ## Get the border size for the selected panel, based on its type. Internal use
-  ## only
-  ##
-  ## * style - the whole style of the application
-  ## * type  - the selected type of the panel
-  ##
-  ## Returns size of the border of the selected panel
-  if (flags and windowBorder.ord.int).nk_bool:
-    case `type`
-    of panelWindow:
-      return style.window.border
-    of panelGroup:
-      return style.window.group_border
-    of panelPopup:
-      return style.window.popup_border
-    of panelContextual:
-      return style.window.contextual_border
-    of panelCombo:
-      return style.window.combo_border
-    of panelMenu:
-      return style.window.menu_border
-    of panelTooltip:
-      return style.window.tooltip_border
-    else:
-      return 0
-  else:
-    return 0
-
-proc nkPanelHasHeader(flags: nk_flags; title: string): bool {.raises: [], tags: [], contractual.} =
-  ## Check if a panel has a header to draw. Internal use only
-  ##
-  ## * flags - the panel's flags
-  ## * title - the panel's  title
-  var active: nk_bool = nkFalse
-  active = (flags and (windowClosable.ord.int or windowMinimizable.ord.int)).nk_bool
-  active = (active or (flags and windowTitle.ord.int).nk_bool).nk_bool
-  active = (active and not(flags and windowHidden.ord.int).nk_bool and title.len > 0).nk_bool
-  return active
-
-proc nkPanelIsNonblock(`type`: PanelType): bool {.raises: [], tags: [], contractual.} =
-  ## Check if the selected panel's type is non-blocking panel
-  ##
-  ## * type - the type of panel to check
-  ##
-  ## Returns true if the panel's type is non-blocking, otherwise false.
-  return (`type`.cint and panelSetNonBlock.cint).bool
-
 proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     ], tags: [RootEffect], contractual.} =
   ## Start drawing a Nuklear panel. Internal use only
@@ -1644,7 +1463,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     zeroMem(p = ctx.current.layout, size = ctx.current.layout.sizeof)
     if (ctx.current.flags and windowHidden.cint) == 1 or (
         ctx.current.flags and windowClosed.cint) == 1:
-      zeroMem(p = ctx.current.layout, size = nk_panel.sizeof)
+      zeroMem(p = ctx.current.layout, size = nk_types.nk_panel.sizeof)
       ctx.current.layout.`type` = panelType
       return false;
     # pull state into local stack
@@ -1669,7 +1488,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     if (win.flags and windowMovable.cint) == 1 and (win.flags and
         windowRom.cint) != 1:
       # calculate draggable window space
-      var header: nk_rect = nk_rect(x: win.bounds.x, y: win.bounds.y,
+      var header: NimRect = NimRect(x: win.bounds.x, y: win.bounds.y,
           w: win.bounds.w, h: 0)
       if nkPanelHasHeader(flags = win.flags, title = title):
         header.h = font.height + 2.0 * style.window.header.padding.y
@@ -1878,16 +1697,6 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     layout.clip = new_nk_rect(x = clip.x, y = clip.y, w = clip.w, h = clip.h)
     return not (layout.flags and windowHidden.cint).nk_bool and not
       (layout.flags and windowMinimized.cint).nk_bool
-
-proc nkFreePanel(ctx; pan: PNkPanel) {.raises: [], tags: [], contractual.} =
-  ## Free memory used by the panel
-  ##
-  ## * ctx - the Nuklear context
-  ## * pan - the panel which memory will be freed
-  let
-    pd: ptr nk_page_data = nkContainerOf(`ptr` = pan, `type` = nk_page_data, member = "")
-    pe: ptr nk_page_element = nkContainerOf(`ptr` = pd, `type` = nk_page_element, member = "data")
-  nkFreePageElement(ctx = ctx, elem = pe)
 
 # ------
 # Popups
@@ -3505,27 +3314,3 @@ proc hsvaToColorf*(hsva: array[4, float]): NimColorF {.raises: [], tags: [],
   let newColor: nk_colorf = nk_hsva_colorf(h = hsva[0], s = hsva[1], v = hsva[
       2], a = hsva[3])
   result = NimColorF(r: newColor.r, g: newColor.g, b: newColor.b, a: newColor.a)
-
-# --------------------------------
-# Temporary exports for old C code
-# --------------------------------
-
-#proc nk_unify(clip: var nk_rect; a: ptr nk_rect; x0, y0, x1, y1: cfloat) {.raises: [], tags: [],
-#    contractual, exportc.} =
-#  ## Temporary C binding. Internal use only
-#  ##
-#  ## * clip - the unified rectangle
-#  ## * a    - the base recrangle
-#  ## * x0   - the X coordinate of top left point of the second rectangle
-#  ## * y0   - the Y coordinate of top left point of the second rectangle
-#  ## * x1   - the X coordinate of bottom right point of the second rectangle
-#  ## * y1   - the X coordinate of bottom right point of the second rectangle
-#  ##
-#  ## Returns modified parameter clip
-#  var res: NimRect = NimRect(x: clip.x, y: clip.y, w: clip.w, h: clip.h)
-#  nkUnify(clip = res, a = NimRect(x: a.x, y: a.y, w: a.y, h: a.h), x0 = x0,
-#    y0 = y0, x1 = x1, y1 = y1)
-#  clip.x = res.x
-#  clip.y = res.y
-#  clip.w = res.w
-#  clip.h = res.h
