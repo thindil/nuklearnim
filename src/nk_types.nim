@@ -254,15 +254,17 @@ type
     text*: nk_style_text
     cursor_active*: nk_cursor
     cursors*: pointer
-  nk_mouse_button* {.importc: "struct nk_mouse_button", nodecl.} = object
+  nk_mouse_button* {.importc: "struct nk_mouse_button", nodecl,
+      completeStruct.} = object
     ## Internal Nuklear type
     down*: nk_bool
     clicked*: cuint
     clicked_pos*: nk_vec2
   nk_mouse* {.importc: "struct nk_mouse", nodecl.} = object
     ## Internal Nuklear type
-    delta*: nk_vec2
+    delta*, pos*, prev*, scroll_delta*, : nk_vec2
     buttons*: pointer
+    grab*, grabbed*, ungrab*: uint8
   nk_input* {.importc: "struct nk_input", nodecl.} = object
     ## Internal Nuklear type
     mouse*: nk_mouse
@@ -624,6 +626,19 @@ type
   ShowStates* = enum
     ## When to change the state of a window
     hidden, shown
+  # TODO: test code
+  MouseButton* = object
+    ## Used to store information about a mouse button.
+    down*, clicked*: bool
+    clickedPos*: NimVec2
+  Mouse* = object
+    ## Used to store information about a mouse
+    delta*, pos*, prev*, scrollDelta*, : NimVec2
+    buttons*: array[Buttons.max, MouseButton]
+    grab*, grabbed*, ungrab*: bool
+  Input* = object
+    ## Used to store information about the user's input
+    mouse*: Mouse
 {.pop ruleOn: "namedParams".}
 
 # ---------

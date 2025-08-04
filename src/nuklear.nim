@@ -65,20 +65,6 @@ proc nk_window_find(ctx; name: cstring): ptr nk_window {.importc, nodecl,
     raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
 
-# -----
-# Input
-# -----
-proc nk_input_begin*(ctx) {.importc, nodecl, raises: [], tags: [], contractual.}
-  ## A binding to Nuklear's function. Internal use only
-proc nk_input_end*(ctx) {.importc, nodecl, raises: [], tags: [], contractual.}
-  ## A binding to Nuklear's function. Internal use only
-proc nk_input_key*(ctx; key: Keys; down: nk_bool) {.importc, nodecl,
-    raises: [], tags: [], contractual.}
-  ## A binding to Nuklear's function. Internal use only
-proc nk_input_button*(ctx; id: Buttons; x, y: cint; down: nk_bool) {.importc, nodecl,
-    raises: [], tags: [], contractual.}
-  ## A binding to Nuklear's function. Internal use only
-
 # ----
 # Text
 # ----
@@ -1039,11 +1025,10 @@ proc isMouseHovering*(rect: NimRect): bool {.raises: [], tags: [],
   ## * rect - the area in which the mouse will be checked for hovering
   ##
   ## Returns true if the mouse is hovering over the rectangle, otherwise false
-  proc nk_input_is_mouse_hovering_rect(i: ptr nk_input;
-      rect: nk_rect): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
-    ## A binding to Nuklear's function. Internal use only
-  return nk_input_is_mouse_hovering_rect(i = ctx.input.addr, rect = new_nk_rect(
-      x = rect.x, y = rect.y, w = rect.w, h = rect.h))
+  if ctx.input.addr == nil:
+    return false
+  return nkInbox(px = ctx.input.mouse.pos.x, py = ctx.input.mouse.pos.y,
+    x = rect.x, y = rect.y, w = rect.w, h = rect.h)
 
 proc isMousePrevHovering*(rect: NimRect): bool {.raises: [], tags: [],
     contractual.} =
