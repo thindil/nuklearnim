@@ -155,23 +155,51 @@ type
     ## Heading diretions
     up, right, down, left
 
+# ---------
+# Constants
+# ---------
+const
+  nkUtfInvalid*: nk_rune = 0xfffd
+    ## An invalid UTF-8 rune
+  nkUtfSize*: Positive = 4
+    ## The number of bytes of UTF glyph
+  nkUtfMask*: array[nkUtfSize + 1, nk_byte] = [0xc0, 0x80, 0xe0, 0xf0, 0xf8]
+    ## The list of UTF mask bytes
+  nkUtfByte*: array[nkUtfSize + 1, nk_byte] = [0x80, 0, 0xc0, 0xe0, 0xf0]
+    ## The list of UTF bytes
+  nkUtfMin*: array[nkUtfSize + 1, nk_uint] = [0, 0, 0x80, 0x800, 0x10000]
+    ## The list of start UTF bytes
+  nkUtfMax*: array[nkUtfSize + 1, nk_uint] = [0x10ffff, 0x7f, 0x7ff, 0xffff, 0x10ffff]
+    ## The list of end UTF bytes
+  nkWindowMaxName: Positive = 64
+    ## The maximum lenght of a window's name
+
 # -------
 # Objects
 # -------
 {.push ruleOff: "namedParams".}
 type
-  nk_color* {.importc: "struct nk_color", nodecl.} = object
+  nk_color* {.importc: "struct nk_color".} = object
     ## Internal Nuklear type
     r*, g*, b*, a*: nk_byte
-  nk_colorf* {.importc: "struct nk_colorf", nodecl.} = object
+  nk_colorf* {.importc: "struct nk_colorf".} = object
     ## Internal Nuklear type
     r*, g*, b*, a*: cfloat
-  nk_vec2* {.importc: "struct nk_vec2", nodecl, completeStruct.} = object
+  nk_vec2* {.importc: "struct nk_vec2", completeStruct.} = object
     ## Internal Nuklear type
     x*, y*: cfloat
-  nk_vec2i* {.importc: "struct nk_vec2i", nodecl, completeStruct.} = object
+  nk_vec2i* {.importc: "struct nk_vec2i".} = object
     ## Internal Nuklear type
     x*, y*: cshort
+  nk_handle* {.bycopy, union.} = object
+    ## Internal Nuklear type
+    `ptr`*: pointer
+    id*: cint
+  nk_image* {.importc: "struct nk_image", nodecl.} = object
+    ## Internal Nuklear type
+    handle*: nk_handle
+    w*, h*: nk_ushort
+    region*: array[4, nk_ushort]
   nk_nine_slice* {.importc: "struct nk_nine_slice", nodecl.} = object
     ## Internal Nuklear type
     image*: nk_image
@@ -203,6 +231,9 @@ type
     background*, group_text_color*: nk_color
     border*, combo_border*, contextual_border*, menu_border*, group_border*,
       tooltip_border*, popup_border*, rounding*: cfloat
+  nk_rect* {.importc: "struct nk_rect", nodecl.} = object
+    ## Internal Nuklear type
+    x*, y*, w*, h*: cfloat
   nk_draw_command* {.importc: "struct nk_draw_command", nodecl.} = object
     ## Internal Nuklear type
     elem_count*: cuint
@@ -228,10 +259,6 @@ type
   nk_style_progress* {.importc: "struct nk_style_progress", nodecl.} = object
     cursor_normal*: nk_style_item
     ## Internal Nuklear type
-  nk_handle* {.bycopy, union.} = object
-    ## Internal Nuklear type
-    `ptr`*: pointer
-    id*: cint
   nk_text_width_f* = proc (arg1: nk_handle; h: cfloat; arg3: cstring;
       len: cint): cfloat {.cdecl.}
     ## Internal Nuklear type
@@ -240,6 +267,8 @@ type
     userdata*: nk_handle
     height*: cfloat
     width*: nk_text_width_f
+  PNkUserFont* = ptr nk_user_font
+    ## Pointer to nk_user_font structure
   nk_style_text* {.importc: "struct nk_style_text", nodecl.} = object
     ## Internal Nuklear type
     padding*: nk_vec2
@@ -250,16 +279,18 @@ type
     window*: nk_style_window
     button*: nk_style_button
     progress*: nk_style_progress
-    font*: ptr nk_user_font
+    font*: PNkUserFont
     text*: nk_style_text
     cursor_active*: nk_cursor
     cursors*: pointer
-  nk_mouse_button* {.importc: "struct nk_mouse_button", nodecl,
+  nk_mouse_button* {.importc: "struct nk_mouse_button",
       completeStruct.} = object
     ## Internal Nuklear type
     down*: nk_bool
     clicked*: cuint
     clicked_pos*: nk_vec2
+  ButtonsArray* = array[Buttons.max, nk_mouse_button]
+    ## The array of mouse buttons
   nk_mouse* {.importc: "struct nk_mouse", nodecl.} = object
     ## Internal Nuklear type
     delta*, pos*, prev*, scroll_delta*, : nk_vec2
@@ -340,7 +371,7 @@ type
     x*, y*: cshort
     w*, h*: cushort
     background*, foreground*: nk_color
-    font*: ptr nk_user_font
+    font*: PNkUserFont
     height*: cfloat
     length*: cint
     `string`*: cstring
@@ -348,19 +379,27 @@ type
     ## Internal Nuklear type
     index*, columns*, tree_depth*: cint
     ratio*, item_width*, item_height*, height*: cfloat
+  nk_scroll* {.importc: "struct nk_scroll", completeStruct.} = object
+    ## Internal Nuklear type
+    x*, y*: cuint
+  nk_menu_state* {.importc: "struct nk_menu_state", completeStruct.} = object
+    x*, y*, w*, h*: cfloat
+    offset*: nk_scroll
   nk_panel* {.importc: "struct nk_panel", nodecl.} = object
     ## Internal Nuklear type
     `type`*: PanelType
-    clip*: nk_rect
+    clip*, bounds*: nk_rect
     flags*: nk_flags
-    bounds*: nk_rect
     border*, at_y*, at_x*, max_x*, header_height*, footer_height*: cfloat
     row*: nk_row_layout
     parent*: PNkPanel
     has_scrolling*, offset_x*, offset_y*: cuint
+    menu*: nk_menu_state
+  PNkPanel* = ptr nk_panel
+    ## Pointer to nk_panel structure
   nk_popup_state* {.importc: "struct nk_popup_state", nodecl.} = object
     ## Internal Nuklear type
-    win*: ptr nk_window
+    win*: PNkWindow
     active*: nk_bool
     `type`*: PanelType
     name*: nk_hash
@@ -371,14 +410,11 @@ type
   nk_property_state* {.importc: "struct nk_property_state", nodecl.} = object
     ## Internal Nuklear type
     active*: cint
-  nk_scroll* {.importc: "struct nk_scroll", nodecl.} = object
-    ## Internal Nuklear type
-    x*, y*: cuint
-  nk_window* {.importc: "struct nk_window", nodecl.} = object
+  nk_window* {.importc: "struct nk_window", completeStruct.} = object
     ## Internal Nuklear type
     layout*: PNkPanel
     popup*: nk_popup_state
-    parent*: ptr nk_window
+    parent*, next*, prev*: PNkWindow
     bounds*: nk_rect
     seq*: uint
     flags*: nk_flags
@@ -386,6 +422,15 @@ type
     edit*: nk_edit_state
     property*: nk_property_state
     scrollbar*: nk_scroll
+    name*: nk_hash
+    name_string*: array[nkWindowMaxName, char]
+    scrollbar_hiding_timer*: float
+    scrolled*: uint
+    widgets_disabled*: nk_bool
+    tables*: ptr nk_table
+    table_count*: uint
+  PNkWindow* = ptr nk_window
+    ## Pointer to nk_window structure
   nk_memory* {.importc: "struct nk_memory", nodecl.} = object
     ## Internal Nuklear type
     `ptr`*: ptr nk_size
@@ -411,6 +456,8 @@ type
     calls*: nk_size
   nk_table* {.importc: "struct nk_table", nodecl.} = object
     ## Internal Nuklear type
+    `seq`*, size*: cuint
+    next*, prev*: ptr nk_table
   nk_page_data* {.bycopy, union.} = object
     ## Internal Nuklear type
     tbl*: nk_table
@@ -424,61 +471,29 @@ type
     ## Internal Nuklear type
     style*: nk_style
     input*: nk_input
-    current*, active*: ptr nk_window
+    current*, active*: PNkWindow
     seq*: uint
     memory*: nk_buffer
     use_pool*: bool
     freelist*: pointer
     when defined(nkIncludeCommandUserData):
       userdata*: nk_handle ## Interna Nuklear data
-  nk_rect* {.importc: "struct nk_rect", nodecl.} = object
-    ## Internal Nuklear type
-    x*, y*, w*, h*: cfloat
   nk_text_edit* = object
     ## Internal Nuklear type
   nk_font* {.importc: "struct nk_font", nodecl.} = object
     ## Internal Nuklear type
-    handle*: nk_user_font
+    handle*: PNkUserFont
   nk_font_atlas* {.importc: "struct nk_font_atlas", nodecl.} = object
     ## Internal Nuklear type
   nk_font_config* {.importc: "struct nk_font_config", nodecl.} = object
     ## Internal Nuklear type
     `range`*: pointer
-  nk_image* {.importc: "struct nk_image", nodecl.} = object
-    ## Internal Nuklear type
-    handle*: nk_handle
-    w*, h*: nk_ushort
-    region*: array[4, nk_ushort]
   nk_text* {.importc: "struct nk_text", nodecl.} = object
     ## Internal Nuklear type
     padding*: nk_vec2
     background*, text*: nk_color
-  PNkWindow* = ptr nk_window
-    ## Pointer to nk_window structure
-  PNkPanel* = ptr nk_panel
-    ## Pointer to nk_panel structure
-  ButtonsArray* = array[Buttons.max, nk_mouse_button]
-    ## The array of mouse buttons
   CursorsArray* = array[cursorCount, nk_cursor]
     ## The array of mouse buttons
-
-# ---------
-# Constants
-# ---------
-const
-  nkUtfInvalid*: nk_rune = 0xfffd
-    ## An invalid UTF-8 rune
-  nkUtfSize*: Positive = 4
-    ## The number of bytes of UTF glyph
-  nkUtfMask*: array[nkUtfSize + 1, nk_byte] = [0xc0, 0x80, 0xe0, 0xf0, 0xf8]
-    ## The list of UTF mask bytes
-  nkUtfByte*: array[nkUtfSize + 1, nk_byte] = [0x80, 0, 0xc0, 0xe0, 0xf0]
-    ## The list of UTF bytes
-  nkUtfMin*: array[nkUtfSize + 1, nk_uint] = [0, 0, 0x80, 0x800, 0x10000]
-    ## The list of start UTF bytes
-  nkUtfMax*: array[nkUtfSize + 1, nk_uint] = [0x10ffff, 0x7f, 0x7ff, 0xffff, 0x10ffff]
-    ## The list of end UTF bytes
-
 
 {.push ruleOff: "namedParams".}
 template `+`*[T](p: ptr T; off: nk_size): ptr T =
