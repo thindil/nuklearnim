@@ -173,34 +173,39 @@ const
     ## The list of end UTF bytes
   nkWindowMaxName: Positive = 64
     ## The maximum lenght of a window's name
+  nkMaxLayoutRowTemplateColumns*: Positive = 16
+    ## The max amount of columns in row template
+  nkChartMaxSlot*: Positive = 4
+    ## The max amount of slot in charts
+  nkMaxNumberBuffer*: Positive = 64
 
 # -------
 # Objects
 # -------
 {.push ruleOff: "namedParams".}
 type
-  nk_color* {.importc: "struct nk_color".} = object
+  nk_color* {.importc: "struct nk_color", completeStruct.} = object
     ## Internal Nuklear type
     r*, g*, b*, a*: nk_byte
-  nk_colorf* {.importc: "struct nk_colorf".} = object
+  nk_colorf* {.importc: "struct nk_colorf", completeStruct.} = object
     ## Internal Nuklear type
     r*, g*, b*, a*: cfloat
   nk_vec2* {.importc: "struct nk_vec2", completeStruct.} = object
     ## Internal Nuklear type
     x*, y*: cfloat
-  nk_vec2i* {.importc: "struct nk_vec2i".} = object
+  nk_vec2i* {.importc: "struct nk_vec2i", completeStruct.} = object
     ## Internal Nuklear type
     x*, y*: cshort
   nk_handle* {.bycopy, union.} = object
     ## Internal Nuklear type
     `ptr`*: pointer
     id*: cint
-  nk_image* {.importc: "struct nk_image", nodecl.} = object
+  nk_image* {.importc: "struct nk_image", completeStruct.} = object
     ## Internal Nuklear type
     handle*: nk_handle
     w*, h*: nk_ushort
     region*: array[4, nk_ushort]
-  nk_nine_slice* {.importc: "struct nk_nine_slice", nodecl.} = object
+  nk_nine_slice* {.importc: "struct nk_nine_slice", completeStruct.} = object
     ## Internal Nuklear type
     image*: nk_image
     l*, t*, r*, b*: nk_ushort
@@ -209,41 +214,14 @@ type
     color*: nk_color
     image*: nk_image
     slice*: nk_nine_slice
-  nk_style_item* {.importc: "struct nk_style_item", nodecl.} = object
+  nk_style_item* {.importc: "struct nk_style_item", completeStruct.} = object
     ## Internal Nuklear type
     `type`*: StyleItemType
     data*: pointer
-  nk_style_window_header* {.importc, nodecl.} = object
-    ## Internal Nuklear type
-    align*: StyleHeaderAlign
-    padding*, label_padding*, spacing*: nk_vec2
-    active*, hover*, normal*: nk_style_item
-    label_active*, label_hover*, label_normal*: nk_color
-    close_symbol*, minimize_symbol*, maximize_symbol*: SymbolType
-    close_button*, minimize_button*, maximize_button*: nk_style_button
-  nk_style_window* {.importc, nodecl.} = object
-    ## Internal Nuklear type
-    header*: nk_style_window_header
-    fixed_background*: nk_style_item
-    spacing*, scrollbar_size*, padding*, group_padding*, popup_padding*,
-      contextual_padding*, combo_padding*, menu_padding*,
-      tooltip_padding*: nk_vec2
-    background*, group_text_color*: nk_color
-    border*, combo_border*, contextual_border*, menu_border*, group_border*,
-      tooltip_border*, popup_border*, rounding*: cfloat
-  nk_rect* {.importc: "struct nk_rect", nodecl.} = object
-    ## Internal Nuklear type
-    x*, y*, w*, h*: cfloat
-  nk_draw_command* {.importc: "struct nk_draw_command", nodecl.} = object
-    ## Internal Nuklear type
-    elem_count*: cuint
-    clip_rect*: nk_rect
-    texture*: nk_handle
-    when defined(nkIncludeCommandUserData):
-      userdata*: nk_handle
   nk_draw_f* = proc(b: ptr nk_command_buffer; userData: nk_handle) {.cdecl.}
     ## Internal Nuklear type
-  nk_style_button* {.importc: "struct nk_style_button", nodecl.} = object
+  nk_style_button* {.importc: "struct nk_style_button",
+      completeStruct.} = object
     ## Internal Nuklear type
     normal*, hover*, active*: nk_style_item
     border_color*, text_background*, text_normal*, text_hover*,
@@ -256,8 +234,52 @@ type
     userdata*: cint
     draw_begin*: cint
     draw_end*: cint
-  nk_style_progress* {.importc: "struct nk_style_progress", nodecl.} = object
-    cursor_normal*: nk_style_item
+  nk_style_window_header* {.importc: "struct nk_style_window_header",
+      completeStruct.} = object
+    ## Internal Nuklear type
+    align*: StyleHeaderAlign
+    padding*, label_padding*, spacing*: nk_vec2
+    active*, hover*, normal*: nk_style_item
+    label_active*, label_hover*, label_normal*: nk_color
+    close_symbol*, minimize_symbol*, maximize_symbol*: SymbolType
+    close_button*, minimize_button*: nk_style_button
+  nk_style_window* {.importc: "struct nk_style_window",
+      completeStruct.} = object
+    ## Internal Nuklear type
+    header*: nk_style_window_header
+    fixed_background*, scaler*: nk_style_item
+    spacing*, scrollbar_size*, padding*, group_padding*, popup_padding*,
+      contextual_padding*, combo_padding*, menu_padding*,
+      tooltip_padding*, min_size*: nk_vec2
+    background*, group_text_color*, border_color*, popup_border_color*,
+      popup_background*, combo_border_color*, contextual_border_color*,
+      menu_border_color*, group_border_color*, tooltip_border_color*,
+      tooltip_background*, : nk_color
+    border*, combo_border*, contextual_border*, menu_border*, group_border*,
+      tooltip_border*, popup_border*, rounding*: cfloat
+  nk_rect* {.importc: "struct nk_rect", completeStruct.} = object
+    ## Internal Nuklear type
+    x*, y*, w*, h*: cfloat
+  nk_draw_command* {.importc: "struct nk_draw_command",
+      completeStruct.} = object
+    ## Internal Nuklear type
+    elem_count*: cuint
+    clip_rect*: nk_rect
+    texture*: nk_handle
+    when defined(nkIncludeCommandUserData):
+      userdata*: nk_handle
+  nk_style_progress* {.importc: "struct nk_style_progress",
+      completeStruct.} = object
+    ## Internal Nuklear type
+    cursor_normal*, cursor_hover*, cursor_active*, normal*, hover*,
+      active*: nk_style_item
+    border_color*, cursor_border_color*: nk_color
+    rounding*, border*, cursor_border*, cursor_rounding*, color_factor*,
+      disabled_factor*: cfloat
+    padding*: nk_vec2
+    userdata*: nk_handle
+    draw_begin*: ptr nk_draw_f
+    draw_end*: ptr nk_draw_f
     ## Internal Nuklear type
   nk_text_width_f* = proc (arg1: nk_handle; h: cfloat; arg3: cstring;
       len: cint): cfloat {.cdecl.}
@@ -330,6 +352,7 @@ type
     clip*: nk_rect
     base*: ptr nk_buffer
     use_clipping*: cint
+  PNkCommandBuffer* = ptr nk_command_buffer
   nk_command_image* {.importc: "struct nk_command_image".} = object
     ## Internal Nuklear type
     header*: nk_command
@@ -375,16 +398,31 @@ type
     height*: cfloat
     length*: cint
     `string`*: cstring
-  nk_row_layout* {.importc: "struct nk_row_layout".} = object
+  nk_row_layout* {.importc: "struct nk_row_layout", completeStruct.} = object
     ## Internal Nuklear type
     index*, columns*, tree_depth*: cint
-    ratio*, item_width*, item_height*, height*: cfloat
+    ratio*, item_width*, item_height*, height*, min_height*, item_offset*,
+      filled*: cfloat
+    templates: array[nkMaxLayoutRowTemplateColumns, cfloat]
   nk_scroll* {.importc: "struct nk_scroll", completeStruct.} = object
     ## Internal Nuklear type
     x*, y*: cuint
   nk_menu_state* {.importc: "struct nk_menu_state", completeStruct.} = object
     x*, y*, w*, h*: cfloat
     offset*: nk_scroll
+  nk_chart_slot* {.importc: "struct nk_chart_slot", completeStruct.} = object
+    `type`*: ChartType
+    color*, highlight*: nk_color
+    min*, max*, range*: cfloat
+    count*, index*: cint
+    last*: nk_vec2
+    show_markers: nk_bool
+    ## Internal Nuklear type
+  nk_chart* {.importc: "struct nk_chart", completeStruct.} = object
+    ## Internal Nuklear type
+    slot*: cint
+    x, y, w, h: cfloat
+    slots: pointer
   nk_panel* {.importc: "struct nk_panel", nodecl.} = object
     ## Internal Nuklear type
     `type`*: PanelType
@@ -395,6 +433,8 @@ type
     parent*: PNkPanel
     has_scrolling*, offset_x*, offset_y*: cuint
     menu*: nk_menu_state
+    chart*: nk_chart
+    buffer*: PNkCommandBuffer
   PNkPanel* = ptr nk_panel
     ## Pointer to nk_panel structure
   nk_popup_state* {.importc: "struct nk_popup_state", nodecl.} = object
@@ -407,16 +447,20 @@ type
   nk_edit_state* {.importc: "struct nk_edit_state", nodecl.} = object
     ## Internal Nuklear type
     active*: cint
-  nk_property_state* {.importc: "struct nk_property_state", nodecl.} = object
+  nk_property_state* {.importc: "struct nk_property_state",
+      completeStruct.} = object
     ## Internal Nuklear type
-    active*: cint
+    active*, prev*, length*, cursor*, select_start*, select_end*, state*: cint
+    buffer*: array[nkMaxNumberBuffer, char]
+    name*: nk_hash
+    seq*, old*: cuint
   nk_window* {.importc: "struct nk_window", completeStruct.} = object
     ## Internal Nuklear type
     layout*: PNkPanel
     popup*: nk_popup_state
     parent*, next*, prev*: PNkWindow
     bounds*: nk_rect
-    seq*: uint
+    seq*, scrolled*, table_count: cuint
     flags*: nk_flags
     buffer*: nk_command_buffer
     edit*: nk_edit_state
@@ -424,11 +468,9 @@ type
     scrollbar*: nk_scroll
     name*: nk_hash
     name_string*: array[nkWindowMaxName, char]
-    scrollbar_hiding_timer*: float
-    scrolled*: uint
+    scrollbar_hiding_timer*: cfloat
     widgets_disabled*: nk_bool
     tables*: ptr nk_table
-    table_count*: uint
   PNkWindow* = ptr nk_window
     ## Pointer to nk_window structure
   nk_memory* {.importc: "struct nk_memory", nodecl.} = object
@@ -454,16 +496,17 @@ type
     pool*: nk_allocator
     grow_factor*: cfloat
     calls*: nk_size
-  nk_table* {.importc: "struct nk_table", nodecl.} = object
+  nk_table* {.importc: "struct nk_table".} = object
     ## Internal Nuklear type
     `seq`*, size*: cuint
+    keys*, values*: pointer
     next*, prev*: ptr nk_table
   nk_page_data* {.bycopy, union.} = object
     ## Internal Nuklear type
     tbl*: nk_table
     pan*: nk_panel
     win*: nk_window
-  nk_page_element* {.importc: "struct nk_page_element", nodecl.} = object
+  nk_page_element* {.importc: "struct nk_page_element".} = object
     data*: nk_page_data
     next*, prev*: pointer
     ## Internal Nuklear type
@@ -472,7 +515,7 @@ type
     style*: nk_style
     input*: nk_input
     current*, active*: PNkWindow
-    seq*: uint
+    seq*: cuint
     memory*: nk_buffer
     use_pool*: bool
     freelist*: pointer
