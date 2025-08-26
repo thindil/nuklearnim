@@ -284,27 +284,94 @@ type
   nk_text_width_f* = proc (arg1: nk_handle; h: cfloat; arg3: cstring;
       len: cint): cfloat {.cdecl.}
     ## Internal Nuklear type
-  nk_user_font* {.importc: "struct nk_user_font", nodecl.} = object
+  nk_user_font_glyph* {.importc: "struct nk_user_font_glyph",
+      completeStruct.} = object
+    ## Internal Nuklear type
+    uv*: array[2, nk_vec2]
+    offset*: nk_vec2
+    width*, height*, xadvance*: cfloat
+  nk_query_font_glyph_f* = proc(handle: nk_handle; fontHeight: cfloat;
+      glyph: nk_user_font_glyph; codepoint, nextCodepoint: nk_rune) {.cdecl.}
+    ## Internal Nuklear type
+  nk_user_font* {.importc: "struct nk_user_font", completeStruct.} = object
     ## Internal Nuklear type
     userdata*: nk_handle
     height*: cfloat
     width*: nk_text_width_f
+    when defined(nkIncludeVertexBufferOutput):
+      query*: nk_query_font_glyph_f
+      texture*: nk_handle
   PNkUserFont* = ptr nk_user_font
     ## Pointer to nk_user_font structure
-  nk_style_text* {.importc: "struct nk_style_text", nodecl.} = object
+  nk_style_text* {.importc: "struct nk_style_text", completeStruct.} = object
     ## Internal Nuklear type
     padding*: nk_vec2
-  nk_cursor* {.importc: "struct nk_cursor", nodecl.} = object
+    color*: nk_color
+    color_factor*, disabled_factor*: cfloat
+  nk_cursor* {.importc: "struct nk_cursor", completeStruct.} = object
     ## Internal Nuklear type
+    img*: nk_image
+    size*, offset*: nk_vec2
+  PNkCursor* = ptr nk_cursor
+    ## Pointer to nk_user_font structure
+  nk_style_toggle* {.importc: "struct nk_style_toggle",
+      completeStruct.} = object
+    ## Internal Nuklear type
+    normal*, hover*, active*, cursor_normal*, cursor_hover*: nk_style_item
+    border_color*, text_normal*, text_hover*, text_active*,
+      text_background*: nk_color
+    text_alignment*: nk_flags
+    padding*, touch_padding*: nk_vec2
+    spacing*, border*, color_factor*, disabled_factor*: cfloat
+  nk_style_selectable* {.importc: "struct nk_style_selectable",
+      completeStruct.} = object
+    ## Internal Nuklear type
+    normal*, hover*, pressed*, normal_active*, hover_active*,
+      pressed_active*: nk_style_item
+    text_normal*, text_hover*, text_pressed*, text_normal_active*,
+      text_hover_active*, text_pressed_active*, text_background*: nk_color
+    text_alignment*: nk_flags
+    rounding*, color_factor*, disabled_factor*: cfloat
+    padding*, touch_padding, image_padding*: nk_vec2
+    userdata*: nk_handle
+    draw_begin*: ptr nk_draw_f
+    draw_end*: ptr nk_draw_f
+  nk_style_slider* {.importc: "struct nk_style_slider",
+      completeStruct.} = object
+    ## Internal Nuklear type
+    normal*, hover*, active*, bar_normal*, bar_hover*, bar_active*,
+      cursor_normal*, cursor_hover*, cursor_active*: nk_style_item
+    border_color*, bar_filled*: nk_color
+    border*, rounding*, bar_height*, color_factor*, disabled_factor*: cfloat
+    padding*, spacing*, cursor_size*: nk_vec2
+    show_buttons*: cint
+    inc_button*, dec_button*: nk_style_button
+    inc_symbol*, dec_symbol*: SymbolType
+    userdata*: nk_handle
+    draw_begin*: ptr nk_draw_f
+    draw_end*: ptr nk_draw_f
+  nk_style_knob* {.importc: "struct nk_style_knob", completeStruct.} = object
+    ## Internal Nuklear type
+    normal*, hover*, active*: nk_style_item
+    border_color*, knob_normal*, knob_hover*, knob_active*, knob_border_color*,
+      cursor_normal*, cursor_hover*, cursor_active*: nk_color
+    border*, knob_border*, cursor_width*, color_factor*,
+      disabled_factor*: cfloat
+    padding*, spacing*: nk_vec2
   nk_style* {.importc: "struct nk_style", nodecl.} = object
     ## Internal Nuklear type
     window*: nk_style_window
-    button*: nk_style_button
+    button*, contextual_button*, menu_button*: nk_style_button
     progress*: nk_style_progress
     font*: PNkUserFont
     text*: nk_style_text
-    cursor_active*: nk_cursor
+    cursor_active*, cursor_last*: PNkCursor
     cursors*: pointer
+    cursor_visible*: cint
+    option*, checkbox*: nk_style_toggle
+    selectable*: nk_style_selectable
+    slider*: nk_style_slider
+    knob*: nk_style_knob
   nk_mouse_button* {.importc: "struct nk_mouse_button",
       completeStruct.} = object
     ## Internal Nuklear type
