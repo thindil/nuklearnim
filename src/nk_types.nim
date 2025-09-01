@@ -358,11 +358,61 @@ type
     border*, knob_border*, cursor_width*, color_factor*,
       disabled_factor*: cfloat
     padding*, spacing*: nk_vec2
-  nk_style* {.importc: "struct nk_style", nodecl.} = object
+  nk_style_scrollbar* {.importc: "struct nk_style_scrollbar",
+      completeStruct.} = object
+    ## Internal Nuklear type
+    normal*, hover*, active*, cursor_normal*, cursor_hover*,
+      cursor_active: nk_style_item
+    border_color*, cursor_border_color*: nk_color
+    border*, rounding*, border_cursor*, color_factor*, disabled_factor*: cfloat
+    padding*: nk_vec2
+    show_buttons*: cint
+    inc_button*, dec_button*: nk_style_button
+    inc_symbol, dec_symbol*: SymbolType
+    userdata*: nk_handle
+    draw_begin*: ptr nk_draw_f
+    draw_end*: ptr nk_draw_f
+  nk_style_edit* {.importc: "struct nk_style_edit", completeStruct.} = object
+    ## Internal Nuklear type
+    normal*, hover*, active*: nk_style_item
+    border_color*, cursor_normal*, cursor_hover*, cursor_text_normal*,
+      cursor_text_hover*, text_normal*, text_hover*, text_active*,
+      selected_normal*, selected_hover*, selected_text_normal*,
+      selected_text_hover*: nk_color
+    scrollbar*: nk_style_scrollbar
+    border*, rounding*, cursor_size*, row_padding*, color_factor*,
+      disabled_factor*: cfloat
+    scrollbar_size*, padding*: nk_vec2
+  nk_style_chart* {.importc: "struct nk_style_chart", completeStruct.} = object
+    ## Internal Nuklear type
+    background*: nk_style_item
+    border_color*, selected_color*, color*: nk_color
+    border*, rounding*, color_factor*, disabled_factor*: cfloat
+    padding*: nk_vec2
+    show_markers*: nk_bool
+  nk_style_tab* {.importc: "struct nk_style_tab", completeStruct.} = object
+    ## Internal Nuklear type
+    background*: nk_style_item
+    border_color*, text*: nk_color
+    tab_maximize_button*, tab_minimize_button*, node_maximize_button*,
+      node_minimize_button*: nk_style_button
+    sym_minimize*, sym_maximize*: SymbolType
+    border*, rounding*, indent*, color_factor*, disabled_factor*: cfloat
+    padding*, spacing*: nk_vec2
+  nk_style_combo* {.importc: "struct nk_style_combo", completeStruct.} = object
+    ## Internal Nuklear type
+    normal*, hover*, active*: nk_style_item
+    border_color*, label_normal*, label_hover*, label_active*, symbol_normal*,
+      symbol_hover*, symbol_active*: nk_color
+    button*: nk_style_button
+    sym_normal*, sym_hover*, sym_active*: SymbolType
+    border*, rounding*, color_factor*, disabled_factor*: cfloat
+    content_padding*, button_padding*, spacing*: nk_vec2
+  nk_style* {.importc: "struct nk_style", completeStruct.} = object
     ## Internal Nuklear type
     window*: nk_style_window
     button*, contextual_button*, menu_button*: nk_style_button
-    progress*: nk_style_progress
+    progress*, property*: nk_style_progress
     font*: PNkUserFont
     text*: nk_style_text
     cursor_active*, cursor_last*: PNkCursor
@@ -372,6 +422,11 @@ type
     selectable*: nk_style_selectable
     slider*: nk_style_slider
     knob*: nk_style_knob
+    edit*: nk_style_edit
+    chart*: nk_style_chart
+    scrollh*, scrollv*: nk_style_scrollbar
+    tab*: nk_style_tab
+    combo*: nk_style_combo
   nk_mouse_button* {.importc: "struct nk_mouse_button",
       completeStruct.} = object
     ## Internal Nuklear type
@@ -380,11 +435,19 @@ type
     clicked_pos*: nk_vec2
   ButtonsArray* = array[Buttons.max, nk_mouse_button]
     ## The array of mouse buttons
-  nk_mouse* {.importc: "struct nk_mouse", nodecl.} = object
+  nk_mouse* {.importc: "struct nk_mouse", completeStruct.} = object
     ## Internal Nuklear type
     delta*, pos*, prev*, scroll_delta*, : nk_vec2
     buttons*: pointer
     grab*, grabbed*, ungrab*: uint8
+    when defined(nkButtonTriggerOnRelease):
+      down_pos*: nk_vec2
+  nk_key* {.importc: "struct nk_key", completeStruct.} = object
+    ## Internal Nuklear type
+    down*: nk_bool
+    clicked*: cuint
+  KeysArray* = array[keyMax, nk_key]
+    ## The array of keyboard keys
   nk_input* {.importc: "struct nk_input", nodecl.} = object
     ## Internal Nuklear type
     mouse*: nk_mouse
