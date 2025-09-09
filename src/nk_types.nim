@@ -448,10 +448,16 @@ type
     clicked*: cuint
   KeysArray* = array[keyMax, nk_key]
     ## The array of keyboard keys
-  nk_input* {.importc: "struct nk_input", nodecl.} = object
+  nk_keyboard* {.importc: "struct nk_keyboard", completeStruct.} = object
+    ## Internal Nuklear type
+    keys*, text*: pointer
+    text_len*: cint
+  nk_input* {.importc: "struct nk_input", completeStruct.} = object
     ## Internal Nuklear type
     mouse*: nk_mouse
-  nk_popup_buffer* {.importc: "struct nk_popup_buffer", nodecl.} = object
+    keyboard*: nk_keyboard
+  nk_popup_buffer* {.importc: "struct nk_popup_buffer",
+      completeStruct.} = object
     ## Internal Nuklear type
     begin*, `end`*, parent*, last*: nk_size
     active*: nk_bool
@@ -471,55 +477,64 @@ type
     next*: nk_size
     when defined(nkIncludeCommandUserData):
       userdata*: nk_handle ## Interna Nuklear data
-  nk_command_scissor* {.importc: "struct nk_command_scissor".} = object
+  nk_command_scissor* {.importc: "struct nk_command_scissor",
+      completeStruct.} = object
     ## Internal Nuklear type
     header*: nk_command
     x*, y*: cshort
     w*, h*: cushort
-  nk_command_buffer* {.importc: "struct nk_command_buffer".} = object
+  nk_command_buffer* {.importc: "struct nk_command_buffer",
+      completeStruct.} = object
     ## Internal Nuklear type
     begin*, `end`*, last*: nk_size
     clip*: nk_rect
     base*: ptr nk_buffer
     use_clipping*: cint
+    userdata*: nk_handle
   PNkCommandBuffer* = ptr nk_command_buffer
-  nk_command_image* {.importc: "struct nk_command_image".} = object
+  nk_command_image* {.importc: "struct nk_command_image",
+      completeStruct.} = object
     ## Internal Nuklear type
     header*: nk_command
     x*, y*: cshort
     w*, h*: cushort
     img*: nk_image
     col*: nk_color
-  nk_command_rect* {.importc: "struct nk_command_rect".} = object
+  nk_command_rect* {.importc: "struct nk_command_rect",
+      completeStruct.} = object
     ## Internal Nuklear type
     header*: nk_command
     rounding*, w*, h*, line_thickness*: cushort
     x*, y*: cshort
     color*: nk_color
-  nk_command_rect_filled* {.importc: "struct nk_command_rect_filled".} = object
+  nk_command_rect_filled* {.importc: "struct nk_command_rect_filled",
+      completeStruct.} = object
     ## Internal Nuklear type
     header*: nk_command
     rounding*, w*, h*: cushort
     x*, y*: cshort
     color*: nk_color
-  nk_command_triangle* {.importc: "struct nk_command_triangle".} = object
+  nk_command_triangle* {.importc: "struct nk_command_triangle",
+      completeStruct.} = object
     ## Internal Nuklear type
     header*: nk_command
     line_thickness*: cshort
     a*, b*, c*: nk_vec2i
     color*: nk_color
-  nk_command_triangle_filled* {.importc: "struct nk_command_triangle_filled".} = object
+  nk_command_triangle_filled* {.importc: "struct nk_command_triangle_filled",
+      completeStruct.} = object
     ## Internal Nuklear type
     header*: nk_command
     a*, b*, c*: nk_vec2i
     color*: nk_color
-  nk_command_circle_filled* {.importc: "struct nk_command_circle_filled".} = object
+  nk_command_circle_filled* {.importc: "struct nk_command_circle_filled",
+      completeStruct.} = object
     ## Internal Nuklear type
     header*: nk_command
     w*, h*: cushort
     x*, y*: cshort
     color*: nk_color
-  nk_command_text* {.importc: "struct nk_command_text".} = object
+  nk_command_text* {.importc: "struct nk_command_text", completeStruct.} = object
     ## Internal Nuklear type
     x*, y*: cshort
     w*, h*: cushort
@@ -528,6 +543,7 @@ type
     height*: cfloat
     length*: cint
     `string`*: cstring
+    header*: nk_command
   nk_row_layout* {.importc: "struct nk_row_layout", completeStruct.} = object
     ## Internal Nuklear type
     index*, columns*, tree_depth*: cint
@@ -553,7 +569,7 @@ type
     slot*: cint
     x, y, w, h: cfloat
     slots: pointer
-  nk_panel* {.importc: "struct nk_panel", nodecl.} = object
+  nk_panel* {.importc: "struct nk_panel", completeStruct.} = object
     ## Internal Nuklear type
     `type`*: PanelType
     clip*, bounds*: nk_rect
