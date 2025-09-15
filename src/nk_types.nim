@@ -534,7 +534,8 @@ type
     w*, h*: cushort
     x*, y*: cshort
     color*: nk_color
-  nk_command_text* {.importc: "struct nk_command_text", completeStruct.} = object
+  nk_command_text* {.importc: "struct nk_command_text",
+      completeStruct.} = object
     ## Internal Nuklear type
     x*, y*: cshort
     w*, h*: cushort
@@ -583,16 +584,22 @@ type
     buffer*: PNkCommandBuffer
   PNkPanel* = ptr nk_panel
     ## Pointer to nk_panel structure
-  nk_popup_state* {.importc: "struct nk_popup_state", nodecl.} = object
+  nk_popup_state* {.importc: "struct nk_popup_state", completeStruct.} = object
     ## Internal Nuklear type
     win*: PNkWindow
     active*: nk_bool
     `type`*: PanelType
     name*: nk_hash
     buf*: nk_popup_buffer
-  nk_edit_state* {.importc: "struct nk_edit_state", nodecl.} = object
+    combo_count*, con_count*, col_old*, active_con*: cuint
+    header*: nk_rect
+  nk_edit_state* {.importc: "struct nk_edit_state", completeStruct.} = object
     ## Internal Nuklear type
-    active*: cint
+    active*, prev*, cursor*, sel_start*, sel_end*: cint
+    name*: nk_hash
+    seq*, old*: cuint
+    scrollbar*: nk_scroll
+    mode*, single_line*: uint8
   nk_property_state* {.importc: "struct nk_property_state",
       completeStruct.} = object
     ## Internal Nuklear type
@@ -619,7 +626,11 @@ type
     tables*: ptr nk_table
   PNkWindow* = ptr nk_window
     ## Pointer to nk_window structure
-  nk_memory* {.importc: "struct nk_memory", nodecl.} = object
+  nk_buffer_marker* = object
+    ## Internal Nuklear type
+    active*: nk_bool
+    offset*: nk_size
+  nk_memory* {.importc: "struct nk_memory", completeStruct.} = object
     ## Internal Nuklear type
     `ptr`*: ptr nk_size
     size*: nk_size
@@ -628,12 +639,12 @@ type
     ## Internal Nuklear type
   nk_plugin_free* = proc (handle: nk_handle; old: pointer) {.cdecl.}
     ## Internal Nuklear type
-  nk_allocator* {.importc: "struct nk_allocator", nodecl.} = object
+  nk_allocator* {.importc: "struct nk_allocator", completeStruct.} = object
     ## Internal Nuklear type
     alloc*: nk_plugin_alloc
     free*: nk_plugin_free
     userdata*: nk_handle
-  nk_buffer* {.importc: "struct nk_buffer", nodecl.} = object
+  nk_buffer* {.importc: "struct nk_buffer", completeStruct.} = object
     ## Internal Nuklear type
     allocated*, needed*: nk_size
     memory*: nk_memory
@@ -642,7 +653,8 @@ type
     pool*: nk_allocator
     grow_factor*: cfloat
     calls*: nk_size
-  nk_table* {.importc: "struct nk_table".} = object
+    marker*: array[bufferMax, nk_buffer_marker]
+  nk_table* {.importc: "struct nk_table", completeStruct.} = object
     ## Internal Nuklear type
     `seq`*, size*: cuint
     keys*, values*: pointer
@@ -652,10 +664,14 @@ type
     tbl*: nk_table
     pan*: nk_panel
     win*: nk_window
-  nk_page_element* {.importc: "struct nk_page_element".} = object
+  nk_page_element* {.importc: "struct nk_page_element",
+      completeStruct.} = object
     data*: nk_page_data
     next*, prev*: pointer
     ## Internal Nuklear type
+  nk_str* {.importc: "struct nk_str", completeStruct.} = object
+    buffer*: nk_buffer
+    len*: cint
   nk_context* {.importc: "struct nk_context", nodecl.} = object
     ## Internal Nuklear type
     style*: nk_style
