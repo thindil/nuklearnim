@@ -21,7 +21,7 @@ jobs:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Update Nimble
-      run: nimble install -y nimble
+      run: nimble install -y nimble contracts nimalyzer
 
     - name: Debug demo build
       run: |
