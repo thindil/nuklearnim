@@ -154,6 +154,9 @@ type
   Heading* = enum
     ## Heading diretions
     up, right, down, left
+  ButtonBehavior* = enum
+    ## The types of buttons behavior
+    default, repeater
 
 # ---------
 # Constants
@@ -178,10 +181,16 @@ const
   nkChartMaxSlot*: Positive = 4
     ## The max amount of slot in charts
   nkMaxNumberBuffer*: Positive = 64
+    ## The max amount of buffers
+  nkTextEditUndoStateCount*: Positive = 99
+    ## The max amount of text field undo records
+  nkTextEditUndoCharCount*: Positive = 999
+    ## The max length of text filed undo characters
 
 # -------
 # Objects
 # -------
+
 {.push ruleOff: "namedParams".}
 type
   nk_color* {.importc: "struct nk_color", completeStruct.} = object
@@ -666,12 +675,42 @@ type
     win*: nk_window
   nk_page_element* {.importc: "struct nk_page_element",
       completeStruct.} = object
+    ## Internal Nuklear type
     data*: nk_page_data
     next*, prev*: pointer
-    ## Internal Nuklear type
   nk_str* {.importc: "struct nk_str", completeStruct.} = object
     buffer*: nk_buffer
     len*: cint
+  nk_plugin_filter* = proc (text: nk_text_edit; unicode: nk_rune) {.cdecl.}
+  nk_text_undo_record* {.importc: "struct nk_text_undo_record",
+      completeStruct.} = object
+    ## Internal Nuklear type
+    where*: cint
+    insert_length*, delete_length*, char_storage*: cshort
+  nk_text_undo_state* {.importc: "struct nk_text_undo_state",
+      completeStruct.} = object
+    ## Internal Nuklear type
+    undo_rec*: pointer
+    undo_point*, redo_point*, undo_char_point*, redo_char_point*: cshort
+  nk_text_edit* {.importc: "struct nk_text_edit", completeStruct.} = object
+    ## Internal Nuklear type
+    clip*: nk_clipboard
+    string*: nk_str
+    filter*: nk_plugin_filter
+    scrollbar*: nk_vec2
+    cursor*, select_start*, select_end*: cint
+    mode*, cursor_at_end_of_line*, initialized*, has_preferred_x*, single_line*,
+      active*, padding1*: uint8
+    preferred_x*: cfloat
+    undo*: nk_text_undo_state
+  nk_plugin_paste* = proc (handle: nk_handle; edit: ptr nk_text_edit) {.cdecl.}
+    ## Internal Nuklear type
+  nk_plugin_copy* = proc (handle: nk_handle; text: cstring; len: cint) {.cdecl.}
+    ## Internal Nuklear type
+  nk_clipboard* {.importc: "struct nk_clipboard", completeStruct.} = object
+    userdata*: nk_handle
+    copy*: nk_plugin_copy
+    paste*: nk_plugin_paste
   nk_context* {.importc: "struct nk_context", nodecl.} = object
     ## Internal Nuklear type
     style*: nk_style
@@ -681,10 +720,11 @@ type
     memory*: nk_buffer
     use_pool*: bool
     freelist*: pointer
+    clip*: nk_clipboard
+    last_widget_state*: nk_flags
+    button_behavior*: ButtonBehavior
     when defined(nkIncludeCommandUserData):
       userdata*: nk_handle ## Interna Nuklear data
-  nk_text_edit* = object
-    ## Internal Nuklear type
   nk_font* {.importc: "struct nk_font", nodecl.} = object
     ## Internal Nuklear type
     handle*: PNkUserFont
@@ -831,9 +871,6 @@ type
       headerTextColor, groupTextColor, selectActiveTextColor, propertyTextColor,
       popupColor, popupBorderColor, progressbarColor, progressbarBorderColor,
       countColors
-  ButtonBehavior* = enum
-    ## The types of buttons behavior
-    default, repeater
   PanelSet* {.size: sizeof(cint).} = enum
     ## The setting of panels
     panelSetNonBlock = panelContextual.int or panelCombo.int or panelMenu.int or
