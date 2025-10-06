@@ -167,6 +167,9 @@ type
       formatR32B32, formatR8G8B8A8, formatB8G8R8A8, formatR16G15B16A16,
       formatR32G32B32A32, formtR32G32B32A32Float, formatR32G32B32A32Double,
       formatRGB32, formatRGBA32, formatCount
+  FontCoordType* = enum
+    ## The types of fonts coordinates
+    coordUv, coordPixel
 
 # ---------
 # Constants
@@ -512,12 +515,14 @@ type
     header*: nk_command
     x*, y*: cshort
     w*, h*: cushort
+  PNkBuffer* = ptr nk_buffer
+    ## Pointer to nk_buffer type
   nk_command_buffer* {.importc: "struct nk_command_buffer",
       completeStruct.} = object
     ## Internal Nuklear type
     begin*, `end`*, last*: nk_size
     clip*: nk_rect
-    base*: ptr nk_buffer
+    base*: PNkBuffer
     use_clipping*: cint
     userdata*: nk_handle
   PNkCommandBuffer* = ptr nk_command_buffer
@@ -816,23 +821,50 @@ type
       completeStruct.} = object
     texture*: nk_handle
     uv*: nk_vec2
-  nk_convert_config* {.importc: "struct nk_convert_config", nodecl.} = object
+  nk_draw_vertex_layout_element* {.importc: "struct nk_draw_vertex_layout_element",
+      completeStruct.} = object
+    attribute*: DrawVertexLayoutAttribute
+    format*: DrawVertexLayoutFormat
+    offset*: nk_size
+  nk_convert_config* {.importc: "struct nk_convert_config",
+      completeStruct.} = object
     ## Internal Nuklear type
     global_alpha*: cfloat
     line_AA*, shape_AA*: AntiAliasing
     circle_segment_count*, arc_segment_count*, curve_segment_count*: cuint
     tex_null*: nk_draw_null_texture
-  nk_draw_list* {.importc: "struct nk_draw_list", nodecl.} = object
+    vertex_layout*: nk_draw_vertex_layout_element
+    vertex_size*, vertex_alignment*: nk_size
+  nk_draw_list* {.importc: "struct nk_draw_list", completeStruct.} = object
     ## Internal Nuklear type
     clip_rect*: nk_rect
     circle_vtx: array[12, nk_vec2]
     config*: nk_convert_config
-  nk_context* {.importc: "struct nk_context", nodecl.} = object
+    buffer*, vertices*, elements*: PNkBuffer
+    element_count*, vertex_count*, cmd_count*, path_count*, path_offset*: cuint
+    cmd_offset*: nk_size
+    line_AA, shape_AA: AntiAliasing
+    when defined(nkIncludeCommandUserData):
+      userdata*: nk_handle
+  nk_page* {.importc: "struct nk_pool", completeStruct.} = object
+    ## Internal Nuklear type
+    size*: cuint
+    next*: ptr nk_page
+    win*: pointer
+  nk_pool* {.importc: "struct nk_pool", completeStruct.} = object
+    ## Internal Nuklear type
+    alloc: nk_allocator
+    `type`: AllocationType
+    page_count*, capacity*: cuint
+    pages*: ptr nk_page
+    freelist*: pointer
+    size*, cap*: nk_size
+  nk_context* {.importc: "struct nk_context", completeStruct.} = object
     ## Internal Nuklear type
     style*: nk_style
     input*: nk_input
-    current*, active*: PNkWindow
-    seq*: cuint
+    begin*, `end`*, current*, active*: PNkWindow
+    seq*, count*: cuint
     memory*: nk_buffer
     use_pool*: bool
     freelist*: pointer
@@ -842,14 +874,42 @@ type
     stacks*: nk_configuration_stacks
     when defined(nkIncludeCommandUserData):
       userdata*: nk_handle ## Interna Nuklear data
+    when defined(nkIncludeVertexBufferOutput):
+      draw_list*: nk_draw_list
+    text_edit*: nk_text_edit
+    overlay*: nk_command_buffer
+    build*: cint
+    pool*: nk_pool
+  nk_font_glyph* {.importc: "struct nk_font_glyph", completeStruct.} = object
+    codepoint*: nk_rune
+    xadvance, x0, y0, x1, y1, w, h, u0, v0, u1, v1: cfloat
   nk_font* {.importc: "struct nk_font", nodecl.} = object
     ## Internal Nuklear type
-    handle*: PNkUserFont
+    handle*, texture*: PNkUserFont
+    next*: ptr nk_font
+    scale*: cfloat
+    config*: ptr nk_font_config
+    glyphs*: ptr nk_font_glyph
   nk_font_atlas* {.importc: "struct nk_font_atlas", nodecl.} = object
     ## Internal Nuklear type
-  nk_font_config* {.importc: "struct nk_font_config", nodecl.} = object
+  nk_baked_font* {.importc: "struct nk_baked_font", completeStruct.} = object
     ## Internal Nuklear type
-    `range`*: pointer
+    height*: cfloat
+    glyph_offset*, glyph_count*: nk_rune
+    ranges*: pointer
+  nk_font_config* {.importc: "struct nk_font_config".} = object
+    ## Internal Nuklear type
+    `range`*, ttf_blob: pointer
+    next*, n*, p*: ptr nk_font_config
+    ttf_size*: nk_size
+    ttf_data_owned_by_atlas*, merge_mode*, pixel_snap*, oversample_v*,
+      oversample_h*: uint8
+    padding*: array[3, uint8]
+    size*: cfloat
+    coord_type*: FontCoordType
+    spacing*: nk_vec2
+    font*: ptr nk_baked_font
+    fallback_glyph*: nk_rune
   nk_text* {.importc: "struct nk_text", nodecl.} = object
     ## Internal Nuklear type
     padding*: nk_vec2
