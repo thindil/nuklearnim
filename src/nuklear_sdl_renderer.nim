@@ -44,12 +44,12 @@ include nuklear
 # SDL2 bindings
 
 const
-  SDL_INIT_VIDEO*: cint = 0x00000020
-  SDL_WINDOWPOS_CENTERED*: cint = 0x2FFF0000 or 0
-  SDL_WINDOW_SHOWN*: cuint = 0x00000004
-  SDL_WINDOW_ALLOW_HIGHDPI*: cuint = 0x00002000
-  SDL_RENDERER_ACCELERATED*: cint = 0x00000002
-  SDL_RENDERER_PRESENTVSYNC*: cint = 0x0000000
+  SDL_INIT_VIDEO: cint = 0x00000020
+  SDL_WINDOWPOS_CENTERED: cint = 0x2FFF0000 or 0
+  SDL_WINDOW_SHOWN: cuint = 0x00000004
+  SDL_WINDOW_ALLOW_HIGHDPI: cuint = 0x00002000
+  SDL_RENDERER_ACCELERATED: cint = 0x00000002
+  SDL_RENDERER_PRESENTVSYNC: cint = 0x0000000
   SDLK_RSHIFT: uint = 0x400000e5u
   SDLK_LSHIFT: uint = 0x400000e1u
   SDLK_DELETE: uint = 0x0000007fu
@@ -72,8 +72,8 @@ const
   SDLK_LEFT: uint = 0x40000050u
   SDLK_RIGHT: uint = 0x4000004fu
   SDLK_ESCAPE: uint = 0x0000001bu
-  IMG_INIT_PNG*: cint = 0x00000002
-  windowCentered* = SDL_WINDOWPOS_CENTERED
+  IMG_INIT_PNG: cint = 0x00000002
+  windowCentered*: cint = SDL_WINDOWPOS_CENTERED ## The centered position of a window
 
 type
   SDL_EventType = enum
@@ -111,49 +111,98 @@ type
   SDL_Mouse_Buttons = enum
     SDL_BUTTON_LEFT = 1, SDL_BUTTON_MIDDLE, SDL_BUTTON_RIGHT
 
-proc SDL_SetHint(name, value: cstring) {.importc, nodecl.}
-proc SDL_Init(flags: cint): cint {.importc, nodecl.}
+proc SDL_SetHint(name, value: cstring) {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_Init(flags: cint): cint {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL binding
 proc SDL_CreateWindow(title: cstring; x, y, w, h: cint;
-    flags: cuint): WindowPtr {.importc, nodecl.}
-proc SDL_Log(fmt: cstring) {.importc, varargs, nodecl.}
-proc SDL_GetError(): cstring {.importc, nodecl.}
+    flags: cuint): WindowPtr {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_Log(fmt: cstring) {.importc, varargs, nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_GetError(): cstring {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL binding
 proc SDL_CreateRenderer(window: WindowPtr; index,
-    flags: cint): RendererPtr {.importc, nodecl.}
-proc SDL_GetRendererOutputSize(renderer: RendererPtr; w, h: var cint) {.importc, nodecl.}
-proc SDL_GetWindowSize(window: WindowPtr; w, h: var cint) {.importc, nodecl.}
+    flags: cint): RendererPtr {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_GetRendererOutputSize(renderer: RendererPtr; w, h: var cint) {.importc,
+    nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_GetWindowSize(window: WindowPtr; w, h: var cint) {.importc, nodecl,
+    raises: [], tags: [], contractual.}
+  ## Internal SDL binding
 proc SDL_RenderSetScale(renderer: RendererPtr; scaleX,
-    scaleY: cfloat) {.importc, nodecl.}
-proc SDL_PollEvent(event: var SDL_Event): cint {.importc, nodecl.}
+    scaleY: cfloat) {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_PollEvent(event: var SDL_Event): cint {.importc, nodecl, raises: [],
+    tags: [], contractual.}
+  ## Internal SDL binding
 proc SDL_SetRenderDrawColor(renderer: RendererPtr; r, g, b,
-    a: uint8): cint {.importc, nodecl.}
-proc SDL_RenderClear(renderer: RendererPtr): cint {.importc, nodecl.}
-proc SDL_RenderPresent(renderer: RendererPtr) {.importc, nodecl.}
-proc SDL_DestroyRenderer(renderer: RendererPtr) {.importc, nodecl.}
-proc SDL_DestroyWindow(window: WindowPtr) {.importc, nodecl.}
-proc SDL_Quit() {.importc, nodecl.}
-proc SDL_SetWindowIcon(window: WindowPtr; icon: SurfacePtr) {.importc, nodecl.}
+    a: uint8): cint {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_RenderClear(renderer: RendererPtr): cint {.importc, nodecl, raises: [],
+    tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_RenderPresent(renderer: RendererPtr) {.importc, nodecl, raises: [],
+    tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_DestroyRenderer(renderer: RendererPtr) {.importc, nodecl, raises: [],
+    tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_DestroyWindow(window: WindowPtr) {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_Quit() {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_SetWindowIcon(window: WindowPtr; icon: SurfacePtr) {.importc, nodecl,
+    raises: [], tags: [], contractual.}
+  ## Internal SDL binding
 proc SDL_CreateTextureFromSurface(renderer: RendererPtr;
-    surface: SurfacePtr): TexturePtr {.importc, nodecl.}
-proc SDL_FreeSurface(surface: SurfacePtr) {.importc, nodecl.}
-proc SDL_RWFromFile(file, mode: cstring): RWPtr {.importc, nodecl.}
-proc SDL_SetWindowSize(window: WindowPtr; w, h: cint) {.importc, nodecl.}
-proc SDL_SetWindowPosition(window: WindowPtr; x, y: cint) {.importc, nodecl.}
-proc SDL_SetWindowResizable(window: WindowPtr; resizable: cint) {.importc, nodecl.}
+    surface: SurfacePtr): TexturePtr {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_FreeSurface(surface: SurfacePtr) {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_RWFromFile(file, mode: cstring): RWPtr {.importc, nodecl, raises: [],
+    tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_SetWindowSize(window: WindowPtr; w, h: cint) {.importc, nodecl,
+    raises: [], tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_SetWindowPosition(window: WindowPtr; x, y: cint) {.importc, nodecl,
+    raises: [], tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_SetWindowResizable(window: WindowPtr; resizable: cint) {.importc,
+    nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL binding
 proc SDL_GetKeyboardState(numkeys: ptr int = nil): ptr array[512,
-    uint8] {.importc, nodecl.}
-proc IMG_Init(flags: cint): cint {.importc, nodecl.}
-proc IMG_Load(file: cstring): SurfacePtr {.importc, nodecl.}
-proc IMG_LoadSizedSVG_RW(src: RWPtr; width, height: cint): SurfacePtr {.importc, nodecl.}
-proc IMG_Quit() {.importc, nodecl.}
+    uint8] {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL Image binding
+proc IMG_Init(flags: cint): cint {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL Image binding
+proc IMG_Load(file: cstring): SurfacePtr {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL Image binding
+proc IMG_LoadSizedSVG_RW(src: RWPtr; width, height: cint): SurfacePtr {.importc,
+    nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL Image binding
+proc IMG_Quit() {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## Internal SDL Image binding
 
 # Nuklear SDL2 backend bindings
 
-proc nk_sdl_init(win: WindowPtr; renderer: RendererPtr): PContext {.importc, nodecl.}
-proc nk_sdl_font_stash_begin(atlas: ptr ptr nk_font_atlas) {.importc, nodecl.}
-proc nk_sdl_font_stash_end() {.importc, nodecl.}
-proc nk_sdl_handle_event(evt: var SDL_Event): cint {.importc, nodecl.}
-proc nk_sdl_render(aa: AntiAliasing) {.importc, nodecl.}
-proc nk_sdl_shutdown() {.importc, nodecl.}
+proc nk_sdl_init(win: WindowPtr; renderer: RendererPtr): PContext {.importc,
+    nodecl, raises: [], tags: [], contractual.}
+  ## Internal Nuklear binding
+proc nk_sdl_font_stash_begin(atlas: ptr ptr nk_font_atlas) {.importc, nodecl,
+    raises: [], tags: [], contractual.}
+  ## Internal Nuklear binding
+proc nk_sdl_font_stash_end() {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## Internal Nuklear binding
+proc nk_sdl_handle_event(evt: var SDL_Event): cint {.importc, nodecl, raises: [
+    ], tags: [], contractual.}
+  ## Internal Nuklear binding
+proc nk_sdl_render(aa: AntiAliasing) {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## Internal Nuklear binding
+proc nk_sdl_shutdown() {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## Internal Nuklear binding
 
 # High level bindings
 
@@ -169,7 +218,8 @@ var
   fontScale: cfloat     ## The scale used to resize a font
 
 proc nuklearInit*(windowWidth, windowHeight: int; name: string = "";
-    iconPath: string = ""): PContext {.discardable.} =
+    iconPath: string = ""): PContext {.discardable, raises: [], tags: [],
+        contractual.} =
   ## Initialize Nuklear library, create the main program's window with the
   ## selected parameters.
   ##
@@ -177,40 +227,45 @@ proc nuklearInit*(windowWidth, windowHeight: int; name: string = "";
   ## * windowHeight - the default main window height
   ## * name         - the title of the main window
   ## * iconPath     - the full path to the window's icon. Default value is empty.
-  SDL_SetHint("SDL_HINT_VIDEO_HIGHDPI_DISABLED", "0")
-  discard SDL_Init(SDL_INIT_VIDEO)
-  discard IMG_Init(IMG_INIT_PNG)
-  win = SDL_CreateWindow(name.cstring, SDL_WINDOWPOS_CENTERED,
-      SDL_WINDOWPOS_CENTERED, windowWidth.cint, windowHeight.cint,
-          SDL_WINDOW_SHOWN or SDL_WINDOW_ALLOW_HIGHDPI)
+  SDL_SetHint(name = "SDL_HINT_VIDEO_HIGHDPI_DISABLED", value = "0")
+  discard SDL_Init(flags = SDL_INIT_VIDEO)
+  discard IMG_Init(flags = IMG_INIT_PNG)
+  win = SDL_CreateWindow(title = name.cstring, x = SDL_WINDOWPOS_CENTERED,
+      y = SDL_WINDOWPOS_CENTERED, w = windowWidth.cint, h = windowHeight.cint,
+          flags = SDL_WINDOW_SHOWN or SDL_WINDOW_ALLOW_HIGHDPI)
   if win == nil:
+    {.ruleOff: "namedparams".}
     SDL_Log("Error SDL_CreateWindow %s", SDL_GetError())
+    {.ruleOn: "namedparams".}
     quit QuitFailure
-  renderer = SDL_CreateRenderer(win, -1, SDL_RENDERER_ACCELERATED or SDL_RENDERER_PRESENTVSYNC)
+  renderer = SDL_CreateRenderer(window = win, index = -1,
+      flags = SDL_RENDERER_ACCELERATED or SDL_RENDERER_PRESENTVSYNC)
   if renderer == nil:
+    {.ruleOff: "namedparams".}
     SDL_Log("Error SDL_CreateRenderer %s", SDL_GetError())
+    {.ruleOn: "namedparams".}
     quit QuitFailure
   var renderW, renderH, windowW, windowH: cint
-  SDL_GetRendererOutputSize(renderer, renderW, renderH)
-  SDL_GetWindowSize(win, windowW, windowH)
+  SDL_GetRendererOutputSize(renderer = renderer, w = renderW, h = renderH)
+  SDL_GetWindowSize(window = win, w = windowW, h = windowH)
   if iconPath.len > 0:
-    SDL_SetWindowIcon(win, IMG_Load(file = iconPath.cstring))
+    SDL_SetWindowIcon(window = win, icon = IMG_Load(file = iconPath.cstring))
   let scaleX: cfloat = renderW.cfloat / windowW.cfloat
   let scaleY: cfloat = renderH.cfloat / windowH.cfloat
-  SDL_RenderSetScale(renderer, scaleX, scaleY)
+  SDL_RenderSetScale(renderer = renderer, scaleX = scaleX, scaleY = scaleY)
   fontScale = scaleY
-  setContext(nk_sdl_init(win, renderer))
+  setContext(context = nk_sdl_init(win = win, renderer = renderer))
   return getContext()
 
-proc nuklearInput*(): UserEvents =
+proc nuklearInput*(): UserEvents {.raises: [], tags: [], contractual.} =
   ## Handle the user input
   ##
   ## Returns true if user requested to close the window, otherwise false
   let ctx = getContext()
   var evt: SDL_Event
-  nk_input_begin(ctx)
+  nk_input_begin(ctx = ctx)
   result = noEvent
-  while SDL_PollEvent(evt) != 0:
+  while SDL_PollEvent(event = evt) != 0:
     case evt.`type`
     of SDL_QUIT.cuint:
       return quitEvent
@@ -226,62 +281,62 @@ proc nuklearInput*(): UserEvents =
         kEvnt: SDL_KeyboardEvent = cast[SDL_KeyboardEvent](evt)
       case kEvnt.keysym.sym
       of SDLK_RSHIFT.cuint, SDLK_LSHIFT.cuint:
-        nk_input_key(ctx, keyShift, down)
+        nk_input_key(ctx = ctx, key = keyShift, down = down)
       of SDLK_DELETE.cuint:
-        nk_input_key(ctx, keyDel, down)
+        nk_input_key(ctx = ctx, key = keyDel, down = down)
       of SDLK_RETURN.cuint:
-        nk_input_key(ctx, keyEnter, down)
+        nk_input_key(ctx = ctx, key = keyEnter, down = down)
       of SDLK_TAB.cuint:
-        nk_input_key(ctx, keyTab, down)
+        nk_input_key(ctx = ctx, key = keyTab, down = down)
       of SDLK_BACKSPACE.cuint:
-        nk_input_key(ctx, keyBackspace, down)
+        nk_input_key(ctx = ctx, key = keyBackspace, down = down)
       of SDLK_HOME.cuint:
-        nk_input_key(ctx, keyTextStart, down)
-        nk_input_key(ctx, keyScrollStart, down)
+        nk_input_key(ctx = ctx, key = keyTextStart, down = down)
+        nk_input_key(ctx = ctx, key = keyScrollStart, down = down)
       of SDLK_END.cuint:
-        nk_input_key(ctx, keyTextEnd, down)
-        nk_input_key(ctx, keyScrollEnd, down)
+        nk_input_key(ctx = ctx, key = keyTextEnd, down = down)
+        nk_input_key(ctx = ctx, key = keyScrollEnd, down = down)
       of SDLK_PAGEDOWN.cuint:
-        nk_input_key(ctx, keyScrollDown, down)
+        nk_input_key(ctx = ctx, key = keyScrollDown, down = down)
       of SDLK_PAGEUP.cuint:
-        nk_input_key(ctx, keyScrollUp, down)
+        nk_input_key(ctx = ctx, key = keyScrollUp, down = down)
       of SDLK_Z.cuint:
-        nk_input_key(ctx, keyTextUndo, (down and (state[
+        nk_input_key(ctx = ctx, key = keyTextUndo, down = (down and (state[
             SDL_SCANCODE_LCTRL.ord] == 1)).nk_bool)
       of SDLK_R.cuint:
-        nk_input_key(ctx, keyTextRedo, (down and (state[
+        nk_input_key(ctx = ctx, key = keyTextRedo, down = (down and (state[
             SDL_SCANCODE_LCTRL.ord] == 1)).nk_bool)
       of SDLK_C.cuint:
-        nk_input_key(ctx, keyCopy, (down and (state[
+        nk_input_key(ctx = ctx, key = keyCopy, down = (down and (state[
             SDL_SCANCODE_LCTRL.ord] == 1)).nk_bool)
       of SDLK_V.cuint:
-        nk_input_key(ctx, keyPaste, (down and (state[
+        nk_input_key(ctx = ctx, key = keyPaste, down = (down and (state[
             SDL_SCANCODE_LCTRL.ord] == 1)).nk_bool)
       of SDLK_X.cuint:
-        nk_input_key(ctx, keyCut, (down and (state[
+        nk_input_key(ctx = ctx, key = keyCut, down = (down and (state[
             SDL_SCANCODE_LCTRL.ord] == 1)).nk_bool)
       of SDLK_B.cuint:
-        nk_input_key(ctx, keyTextLineStart, (down and (state[
+        nk_input_key(ctx = ctx, key = keyTextLineStart, down = (down and (state[
             SDL_SCANCODE_LCTRL.ord] == 1)).nk_bool)
       of SDLK_E.cuint:
-        nk_input_key(ctx, keyTextLineEnd, (down and (state[
+        nk_input_key(ctx = ctx, key = keyTextLineEnd, down = (down and (state[
             SDL_SCANCODE_LCTRL.ord] == 1)).nk_bool)
       of SDLK_UP.cuint:
-        nk_input_key(ctx, keyUp, down)
+        nk_input_key(ctx = ctx, key = keyUp, down = down)
       of SDLK_DOWN.cuint:
-        nk_input_key(ctx, keyDown, down)
+        nk_input_key(ctx = ctx, key = keyDown, down = down)
       of SDLK_LEFT.cuint:
         if state[SDL_SCANCODE_LCTRL.ord] == 1:
-          nk_input_key(ctx, keyTextWordLeft, down)
+          nk_input_key(ctx = ctx, key = keyTextWordLeft, down = down)
         else:
-          nk_input_key(ctx, keyLeft, down)
+          nk_input_key(ctx = ctx, key = keyLeft, down = down)
       of SDLK_RIGHT.cuint:
         if state[SDL_SCANCODE_LCTRL.ord] == 1:
-          nk_input_key(ctx, keyTextWordRight, down)
+          nk_input_key(ctx = ctx, key = keyTextWordRight, down = down)
         else:
-          nk_input_key(ctx, keyRight, down)
+          nk_input_key(ctx = ctx, key = keyRight, down = down)
       of SDLK_ESCAPE.cuint:
-        nk_input_key(ctx, keyEscape, down)
+        nk_input_key(ctx = ctx, key = keyEscape, down = down)
       else:
         result = noEvent
     of SDL_MOUSEBUTTONDOWN.cuint, SDL_MOUSEBUTTONUP.cuint:
@@ -294,36 +349,37 @@ proc nuklearInput*(): UserEvents =
       case mEvnt.button:
       of SDL_BUTTON_LEFT.uint8:
         if mEvnt.clicks > 1:
-            nk_input_button(ctx, double, x, y, down)
-        nk_input_button(ctx, left, x, y, down)
+          nk_input_button(ctx = ctx, id = double, x = x, y = y, down = down)
+        nk_input_button(ctx = ctx, id = left, x = x, y = y, down = down)
       of SDL_BUTTON_MIDDLE.uint8:
-        nk_input_button(ctx, middle, x, y, down)
+        nk_input_button(ctx = ctx, id = middle, x = x, y = y, down = down)
       of SDL_BUTTON_RIGHT.uint8:
-        nk_input_button(ctx, right, x, y, down)
+        nk_input_button(ctx = ctx, id = right, x = x, y = y, down = down)
       else:
         discard
     else:
-      discard nk_sdl_handle_event(evt)
+      discard nk_sdl_handle_event(evt = evt)
       result = anyEvent
-  nk_input_end(ctx)
+  nk_input_end(ctx = ctx)
 
-proc nuklearDraw*() =
+proc nuklearDraw*() {.raises: [], tags: [], contractual.} =
   ## Draw the main window content
-  discard SDL_SetRenderDrawColor(renderer, (0.10 * 255).uint8, (0.18 *
-      255).uint8, (0.24 * 255).uint8, 255)
-  discard SDL_RenderClear(renderer)
-  nk_sdl_render(antiAliasingOn)
-  SDL_RenderPresent(renderer)
+  discard SDL_SetRenderDrawColor(renderer = renderer, r = (0.10 * 255).uint8,
+      g = (0.18 * 255).uint8, b = (0.24 * 255).uint8, a = 255)
+  discard SDL_RenderClear(renderer = renderer)
+  nk_sdl_render(aa = antiAliasingOn)
+  SDL_RenderPresent(renderer = renderer)
 
-proc nuklearClose*() =
+proc nuklearClose*() {.raises: [], tags: [], contractual.} =
   ## Release all resources related to Xlib and Nuklear
   nk_sdl_shutdown()
-  SDL_DestroyRenderer(renderer)
-  SDL_DestroyWindow(win)
+  SDL_DestroyRenderer(renderer = renderer)
+  SDL_DestroyWindow(window = win)
   IMG_Quit()
   SDL_Quit()
 
-proc nuklearLoadSVGImage*(filePath: string; width, height: int): PImage =
+proc nuklearLoadSVGImage*(filePath: string; width,
+    height: int): PImage {.raises: [NuklearException], tags: [], contractual.} =
   ## Load the selected SVG image from a file
   ##
   ## * filePath - the full path to the file from which the image will be loaded
@@ -331,19 +387,20 @@ proc nuklearLoadSVGImage*(filePath: string; width, height: int): PImage =
   ## Returns the nk_image structure
   let img: RWPtr = SDL_RWFromFile(file = filePath.cstring, mode = "r")
   if img == nil:
-    raise newException(NuklearException, $(SDL_GetError()))
+    raise newException(exceptn = NuklearException, message = $(SDL_GetError()))
   let surface: SurfacePtr = IMG_LoadSizedSVG_RW(src = img, width = width.cint,
       height = height.cint)
   if surface == nil:
-    raise newException(NuklearException, $(SDL_GetError()))
+    raise newException(exceptn = NuklearException, message = $(SDL_GetError()))
   let image: TexturePtr = SDL_CreateTextureFromSurface(renderer = renderer,
       surface = surface)
   if image == nil:
-    raise newException(NuklearException, $(SDL_GetError()))
+    raise newException(exceptn = NuklearException, message = $(SDL_GetError()))
   SDL_FreeSurface(surface = surface)
   return image
 
-proc nuklearLoadFont*(font: FontData; glyphsRanges: openArray[nk_rune] = []): ptr nk_font =
+proc nuklearLoadFont*(font: FontData; glyphsRanges: openArray[nk_rune] = [
+    ]): ptr nk_font {.raises: [], tags: [], contractual.} =
   ## Load a font from file with the selected size
   ##
   ## * font         - the font to load. Its path and size
@@ -353,16 +410,18 @@ proc nuklearLoadFont*(font: FontData; glyphsRanges: openArray[nk_rune] = []): pt
   ## Returns the pointer for the font
   var
     atlas: ptr nk_font_atlas
-    config = new_nk_font_config(0)
+    config = new_nk_font_config(pixelHeight = 0)
   if glyphsRanges.len > 0:
     config.`range` = glyphsRanges.addr
-  nk_sdl_font_stash_begin(atlas.unsafeAddr)
-  result = nk_font_atlas_add_from_file(atlas, font.path.cstring,
-      font.size.cfloat * fontScale, config.addr)
+  nk_sdl_font_stash_begin(atlas = atlas.unsafeAddr)
+  {.ruleOff: "namedParams".}
+  result = nk_font_atlas_add_from_file(atlas = atlas,
+      filePath = font.path.cstring, height = font.size.cfloat * fontScale, config.addr)
+  {.ruleOn: "namedParams".}
   nk_sdl_font_stash_end()
 
 proc nuklearSetDefaultFont*(defaultFont: ptr nk_font = nil;
-    fontSize: int = 14) =
+    fontSize: int = 14) {.raises: [], tags: [], contractual.} =
   ## Set the default font for an application
   ##
   ## * defaultFont - the pointer to the nk_font which will be used as default
@@ -370,25 +429,26 @@ proc nuklearSetDefaultFont*(defaultFont: ptr nk_font = nil;
   ## * fontSize    - the size of the font used in the UI. Default values is 14.
   var
     atlas: ptr nk_font_atlas
-    config = new_nk_font_config(0)
+    config = new_nk_font_config(pixelHeight = 0)
     font: ptr nk_font
-  nk_sdl_font_stash_begin(atlas.unsafeAddr)
+  nk_sdl_font_stash_begin(atlas = atlas.unsafeAddr)
   if defaultFont == nil:
-    font = nk_font_atlas_add_default(atlas, fontSize.cfloat * fontScale,
-        config.unsafeAddr)
+    font = nk_font_atlas_add_default(atlas = atlas, height = fontSize.cfloat *
+        fontScale, config = config.unsafeAddr)
   else:
     font = defaultFont
   nk_sdl_font_stash_end()
-  nk_style_set_font(getContext(), font.handle.unsafeAddr)
+  nk_style_set_font(ctx = getContext(), font = font.handle.unsafeAddr)
 
-proc nuklearResizeWin*(width, height: int) =
+proc nuklearResizeWin*(width, height: int) {.raises: [], tags: [],
+    contractual.} =
   ## Resize the main window of the application
   ##
   ## * width  - the new width of the main window
   ## * height - the new height of the main window
   SDL_SetWindowSize(window = win, w = width.cint, h = height.cint)
 
-proc nuklearSetWindowPos*(x, y: int) =
+proc nuklearSetWindowPos*(x, y: int) {.raises: [], tags: [], contractual.} =
   ## Set the window position on the screen, related to the upper left corner
   ## of the screen
   ##
@@ -398,13 +458,15 @@ proc nuklearSetWindowPos*(x, y: int) =
   ##       windowCentered
   SDL_SetWindowPosition(window = win, x = x.cint, y = y.cint)
 
-proc nuklearSetWindowResizable*(resizable: bool = true) =
+proc nuklearSetWindowResizable*(resizable: bool = true) {.raises: [], tags: [],
+    contractual.} =
   ## Set the main window of application resizable, or not
   ##
   ## * resizable - if true, the window will be resizable, otherwise not
   SDL_SetWindowResizable(window = win, resizable = resizable.ord.cint)
 
-proc nuklearGetWindowSize*(): tuple[w: float; h: float] =
+proc nuklearGetWindowSize*(): tuple[w: float; h: float] {.raises: [], tags: [],
+    contractual.} =
   ## Get the current size of the main window of the application
   ##
   ## Returns a tuple with width and height of the window.
