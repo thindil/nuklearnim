@@ -25,7 +25,12 @@ jobs:
 
     - name: Debug demo build
       run: |
+        sudo apt-get update
         sudo apt-get install -y libsdl2-dev libsdl2-image-dev
         cd demo
         ./build.nims sdl2
 
+#    - name: Check with Nimalyzer
+#      run: |
+#        sudo apt-get install -y libpcre3
+#        nimalyzer tools/nimalyzer.cfg
