@@ -518,7 +518,7 @@ proc nkBufferRealloc(b: ptr nk_buffer; capacity: nk_size;
     let temp: pointer = try:
         b.pool.alloc(handle = b.pool.userdata, old = b.memory.`ptr`,
             size = capacity)
-      except:
+      except Exception:
         return nil
 
     size = capacity
@@ -527,7 +527,7 @@ proc nkBufferRealloc(b: ptr nk_buffer; capacity: nk_size;
       copyMem(dest = temp, source = b.memory.`ptr`, size = bufferSize)
       try:
         b.pool.free(handle = b.pool.userdata, old = b.memory.`ptr`)
-      except:
+      except Exception:
         discard
 
     if b.size == bufferSize:
@@ -685,7 +685,7 @@ proc nkStrokeRect(b: PNkCommandBuffer, rect: NimRect, rounding,
     if not nkIntersect(x0 = rect.x, y0 = rect.y, w0 = rect.w, h0 = rect.h,
       x1 = clip.x, y1 = clip.y, w1 = clip.w, h1 = clip.h):
       return
-  var cmd: ptr nk_command_rect
+  var cmd: ptr nk_command_rect = nil
   cmd = cast[ptr nk_command_rect](nkCommandBufferPush(b = b, t = commandRect, size = cmd.sizeof))
   if cmd == nil:
     return
@@ -720,7 +720,7 @@ proc nkStrokeTriangle(b: PNkCommandBuffer; x0, y0, x1, y1, x2, y2,
       y = clip.y, w = clip.w, h = clip.h):
       return
 
-  var cmd: ptr nk_command_triangle
+  var cmd: ptr nk_command_triangle = nil
   if cmd == nil:
     return
   cmd.line_thickness = lineThickness.cshort
@@ -748,7 +748,7 @@ proc nkFillRect(b: PNkCommandBuffer; rect: NimRect; rounding: float;
       x1 = clip.x, y1 = clip.y, w1 = clip.w, h1 = clip.h):
       return
 
-  var cmd: ptr nk_command_rect_filled
+  var cmd: ptr nk_command_rect_filled = nil
   cmd = cast[ptr nk_command_rect_filled](nkCommandBufferPush(b = b,
     t = commandRectFilled, size = cmd.sizeof))
   if cmd == nil:
@@ -775,7 +775,7 @@ proc nkFillCircle(b: PNkCommandBuffer; rect: NimRect; c: nk_color)
       x1 = clip.x, y1 = clip.y, w1 = clip.w, h1 = clip.h):
       return
 
-  var cmd: ptr nk_command_circle_filled
+  var cmd: ptr nk_command_circle_filled = nil
   cmd = cast[ptr nk_command_circle_filled](nkCommandBufferPush(b = b,
     t = commandCircleFilled, size = cmd.sizeof))
   if cmd == nil:
@@ -808,7 +808,7 @@ proc nkFillTriangle(b: PNkCommandBuffer, x0, y0, x1, y1, x2, y2: cfloat,
       y = clip.y, w = clip.w, h = clip.h):
       return
 
-  var cmd: ptr nk_command_triangle_filled
+  var cmd: ptr nk_command_triangle_filled = nil
   cmd = cast[ptr nk_command_triangle_filled](nkCommandBufferPush(b = b,
     t = commandTriangleFilled, size = cmd.sizeof))
   if cmd == nil:
@@ -837,7 +837,7 @@ proc nkDrawImage(b: PNkCommandBuffer; r: NimRect; img: PImage; col: nk_color)
       h0 = r.h, x1 = c.x, y1 = c.y, w1 = c.w, h1 = c.h):
       return
 
-  var cmd: ptr nk_command_image
+  var cmd: ptr nk_command_image = nil
   cmd = cast[ptr nk_command_image](nkCommandBufferPush(b = b, t = commandImage,
     size = cmd.sizeof))
   if cmd == nil:
@@ -858,13 +858,13 @@ proc nkDrawNineSlice(b: PNkCommandBuffer; r: NimRect; slc: ptr nk_nine_slice; co
   ## * slc - the image's slice to draw
   ## * col - the color used as a background for the slice
   let slcImg: ptr nk_image = cast[ptr nk_image](slc)
-  var rgnX, rgnY, rgnW, rgnH: nk_ushort;
+  var rgnX, rgnY, rgnW, rgnH: nk_ushort = 0
   rgnX = slcImg.region[0]
   rgnY = slcImg.region[1]
   rgnW = slcImg.region[2]
   rgnH = slcImg.region[3]
 
-  var img: nk_image;
+  var img: nk_image = nk_image()
 
   # top-left
   img.handle = slcImg.handle
@@ -937,7 +937,7 @@ proc nkTextClamp(font: ptr nk_user_font; text: string; textLen: int;
     let s: float = try:
         font.width(arg1 = font.userdata, h = font.height, arg3 = text.cstring,
           len = len.cint)
-      except:
+      except Exception:
         return
     var i: Natural = 0
     for sep in sepList:
@@ -960,10 +960,9 @@ proc nkTextClamp(font: ptr nk_user_font; text: string; textLen: int;
     glyphs = g
     textWidth = lastWidth
     return len
-  else:
-    glyphs = sepG
-    textWidth = sepWidth
-    return if sepLen == 0: len else: sepLen
+  glyphs = sepG
+  textWidth = sepWidth
+  return if sepLen == 0: len else: sepLen
 
 proc nkDrawText(b: PNkCommandBuffer; r: NimRect; str: string; length: var int;
   font: ptr nk_user_font; bg, fg: nk_color) {.raises: [], tags: [RootEffect],
@@ -991,7 +990,7 @@ proc nkDrawText(b: PNkCommandBuffer; r: NimRect; str: string; length: var int;
     # make sure text fits inside bounds
     let textWidth: float = try:
         font.width(arg1 = font.userdata, h = font.height, arg3 = str.cstring, len = length.cint)
-      except:
+      except Exception:
         return
     if textWidth > r.w:
       var
@@ -1152,11 +1151,12 @@ proc nkWidgetText(o: PNkCommandBuffer; b: var NimRect; str: string; len: var int
     textWidth = try:
         f.width(arg1 = f.userdata, h = f.height, arg3 = str.cstring,
           len = len.cint)
-      except:
+      except Exception:
         return
     textWidth += (2.0 * t.padding.x)
 
     # align in x-axis
+    {.ruleOff: "ifStatements".}
     if (a and textLeft.ord).bool:
       label.x = b.x + t.padding.x
       label.w = max(x = 0, y = b.w - 2 * t.padding.x)
@@ -1172,6 +1172,7 @@ proc nkWidgetText(o: PNkCommandBuffer; b: var NimRect; str: string; len: var int
       label.w = textWidth.float + 2 * t.padding.x
     else:
       return
+    {.ruleOn: "ifStatements".}
 
     # align in y-axis
     if (a and textMiddle.ord).bool:
@@ -1206,13 +1207,13 @@ proc nkButtonBehavior(state: var nk_flags; r: NimRect; i: ptr nk_input;
     if isMouseDown(id = left):
       state = widgetStateActive.nk_flags
       if hasMouseClickDownInRect(id = left, rect = r, down = nkTrue):
-        if behavior != default:
-          result = isMouseDown(id = left)
-        else:
+        if behavior == default:
           when defined(nkButtonTriggerOnRelease):
             result = isMouseReleased(id = left)
           else:
             result = isMousePressed(id = left)
+        else:
+          result = isMouseDown(id = left)
   if (state and widgetStateHover.ord).nk_bool and not isMousePrevHovering(rect = r):
     state = state or widgetStateEntered.ord
   elif isMousePrevHovering(rect = r):
@@ -1312,7 +1313,7 @@ proc nkDrawSymbol(`out`: PNkCommandBuffer; `type`: SymbolType;
         '-'
       else:
         ' '
-    var text: nk_text
+    var text: nk_text = nk_text()
     text.padding = nk_vec2(x: 0, y: 0)
     text.background = background
     text.text = foreground
@@ -1333,7 +1334,7 @@ proc nkDrawSymbol(`out`: PNkCommandBuffer; `type`: SymbolType;
         nkFillCircle(b = `out`, rect = drawRect, c = background)
   of triangleUp, triangleDown, triangleLeft, triangleRight:
     var heading: Heading = right
-    var points: array[3, NimRect]
+    var points: array[3, NimRect] = [NimRect(), NimRect(), NimRect()]
     case `type`
       of triangleRight:
         heading = right
@@ -1351,7 +1352,7 @@ proc nkDrawSymbol(`out`: PNkCommandBuffer; `type`: SymbolType;
   of triangleUpOutline, triangleDownOutline, triangleLeftOutline,
     triangleRightOutline:
     var heading: Heading = right
-    var points: array[3, NimRect]
+    var points: array[3, NimRect] = [NimRect(), NimRect(), NimRect()]
     case `type`
       of triangleRightOutline:
         heading = right
@@ -1433,6 +1434,138 @@ proc nkDoButtonSymbol(state: var nk_flags; `out`: PNkCommandBuffer; bounds: var 
 # -----
 # Panel
 # -----
+proc panelHeader(win: ptr nkWindow; title: string; style: nk_style;
+  font: ptr nk_user_font; layout: PNkPanel; `out`: nk_command_buffer,
+  `in`: nk_input): bool {.raises: [], tags: [RootEffect], contractual.} =
+  ## Start drawing a Nuklear panel's header if needed. Internal use only
+  ##
+  ## * win    - the panel which header will be draw
+  ## * title  - the panel's title
+  ## * style  - the current UI style
+  ## * font   - the font used by the UI
+  ## * layout - the layout of the panel
+  ## * out    - the command buffer
+  ## * in     - the user's input
+  ##
+  ## Returns true if the header was drawn, otherwise false
+  if nkPanelHasHeader(flags = win.flags, title = title):
+    var
+      header: NimRect = NimRect()
+      background: nk_style_item = nk_style_item()
+      text: nk_text = nk_text()
+
+    # calculate header bounds
+    header.x = win.bounds.x
+    header.y = win.bounds.y
+    header.w = win.bounds.w
+    header.h = font.height + 2.0 + style.window.header.padding.y
+    header.h += (2.0 + style.window.header.label_padding.y)
+
+    # shrink panel by header
+    layout.header_height = header.h
+    layout.bounds.y += header.h
+    layout.bounds.h -= header.h
+    layout.at_y += header.h
+
+    # select correct header background and text color
+    if ctx.active == win:
+      background = style.window.header.active
+      if layout.`type` == panelGroup:
+        text.text = style.window.group_text_color
+      else:
+        text.text = style.window.header.label_active
+    elif isMouseHovering(rect = header):
+      background = style.window.header.hover
+      if layout.`type` == panelGroup:
+        text.text = style.window.group_text_color
+      else:
+        text.text = style.window.header.label_hover
+    else:
+      background = style.window.header.normal
+      if layout.`type` == panelGroup:
+        text.text = style.window.group_text_color
+      else:
+        text.text = style.window.header.label_normal
+
+    # draw header background
+    header.h += 1.0
+    let bg: nk_style_item_data = cast[nk_style_item_data](background.data)
+    case background.`type`
+    of itemImage:
+      text.background = nk_rgba(r = 0, g = 0, b = 0, a = 0)
+      nkDrawImage(b = win.buffer.addr, r = header, img = bg.image.addr,
+        col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
+    of itemNineSlice:
+      text.background = nk_rgba(r = 0, g = 0, b = 0, a = 0)
+      nkDrawNineSlice(b = win.buffer.addr, r = header, slc = bg.slice.addr,
+        col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
+    of itemColor:
+      text.background = bg.color
+      nkFillRect(b = `out`.addr, rect = header, rounding = 0, c = bg.color)
+
+    # window close button
+    var button: NimRect = NimRect()
+    button.y = header.y + style.window.header.padding.y
+    button.h = header.h - 2 * style.window.header.padding.y
+    button.w = button.h
+    if (win.flags and windowClosable.cint).nk_bool:
+      var ws: nk_flags = 0
+      if style.window.header.align == headerRight:
+        button.x = (header.w + header.x) - (button.w + style.window.header.padding.x)
+        header.w -= button.w + style.window.header.spacing.x + style.window.header.padding.x
+      else:
+        button.x = header.x + style.window.header.padding.x
+        header.x += button.w + style.window.header.spacing.x + style.window.header.padding.x
+      if nkDoButtonSymbol(state = ws, `out` = win.buffer.addr, bounds = button,
+        symbol = style.window.header.close_symbol, behavior = default,
+        style = style.window.header.close_button.addr, `in` = `in`.addr,
+        font = style.font) and not(win.flags and windowRom.cint).nk_bool:
+        layout.flags = layout.flags or windowHidden.cint
+        layout.flags = layout.flags and not windowMinimized.cint
+
+    # window minimize button
+    if (win.flags and windowMinimizable.cint).nk_bool:
+      var ws: nk_flags = 0
+      if style.window.header.align == headerRight:
+        button.x = (header.w + header.x) - button.w
+        if not (win.flags and windowClosable.cint).nk_bool:
+          button.x -= style.window.header.padding.x
+          header.w -= style.window.header.padding.x
+        header.w -= button.w + style.window.header.spacing.x
+      else:
+        button.x = header.x
+        header.x += button.w + style.window.header.spacing.x +
+          style.window.header.padding.x
+      if nkDoButtonSymbol(state = ws, `out` = win.buffer.addr, bounds = button,
+        symbol = if (layout.flags and windowMinimized.cint).nk_bool:
+        style.window.header.maximizeSymbol else:
+        style.window.header.minimizeSymbol, behavior = default,
+        style = style.window.header.minimize_button.addr, `in` = `in`.addr,
+        font = style.font) and not(win.flags and windowRom.cint).nk_bool:
+          layout.flags = if (layout.flags and windowMinimized.cint).nk_bool:
+            layout.flags and not windowMinimized.cint else:
+            layout.flags or windowMinimized.cint
+
+    # window header title
+    var textLen: int = title.len
+    let t: float = try:
+        font.width(arg1 = font.userdata, h = font.height,
+          arg3 = title.cstring, len = textLen.cint)
+      except Exception:
+        return false
+    text.padding = new_nk_vec2(x = 0, y = 0)
+    var label: NimRect = NimRect(x: 0, y: 0, w: 0, h: 0)
+
+    label.x = header.x + style.window.header.padding.x
+    label.x += style.window.header.label_padding.x
+    label.y = header.y + style.window.header.label_padding.y
+    label.h = font.height + 2 * style.window.header.label_padding.y
+    label.w = t + 2 * style.window.header.spacing.x
+    label.w = (0.float).clamp(a = label.w, b = header.x + header.w - label.x)
+    nkWidgetText(o = `out`.addr, b = label, str = title, len = textLen,
+      t = text.addr, a = TextAlignment.left, f = font)
+  return true
+
 proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     ], tags: [RootEffect], contractual.} =
   ## Start drawing a Nuklear panel. Internal use only
@@ -1529,132 +1662,20 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
       layout.bounds.w -= scrollbarSize.x
     if nkPanelIsNonblock(`type` = panelType):
       layout.footer_height = 0
-      if not(win.flags and windowNoScrollbar.cint).nk_bool or (win.flags and windowScalable.cint).nk_bool:
+      if not(win.flags and windowNoScrollbar.cint).nk_bool or (win.flags and
+        windowScalable.cint).nk_bool:
         layout.footer_height = scrollbarSize.y
       layout.bounds.h -= layout.footer_height
 
     # panel header
-    if nkPanelHasHeader(flags = win.flags, title = title):
-      var
-        header: NimRect
-        background: nk_style_item
-        text: nk_text
-
-      # calculate header bounds
-      header.x = win.bounds.x
-      header.y = win.bounds.y
-      header.w = win.bounds.w
-      header.h = font.height + 2.0 + style.window.header.padding.y
-      header.h += (2.0 + style.window.header.label_padding.y)
-
-      # shrink panel by header
-      layout.header_height = header.h
-      layout.bounds.y += header.h
-      layout.bounds.h -= header.h
-      layout.at_y += header.h
-
-      # select correct header background and text color
-      if ctx.active == win:
-        background = style.window.header.active
-        if layout.`type` == panelGroup:
-          text.text = style.window.group_text_color
-        else:
-          text.text = style.window.header.label_active
-      elif isMouseHovering(rect = header):
-        background = style.window.header.hover
-        if layout.`type` == panelGroup:
-          text.text = style.window.group_text_color
-        else:
-          text.text = style.window.header.label_hover
-      else:
-        background = style.window.header.normal
-        if layout.`type` == panelGroup:
-          text.text = style.window.group_text_color
-        else:
-          text.text = style.window.header.label_normal
-
-      # draw header background
-      header.h += 1.0
-      let bg: nk_style_item_data = cast[nk_style_item_data](background.data)
-      case background.`type`
-      of itemImage:
-        text.background = nk_rgba(r = 0, g = 0, b = 0, a = 0)
-        nkDrawImage(b = win.buffer.addr, r = header, img = bg.image.addr,
-          col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
-      of itemNineSlice:
-        text.background = nk_rgba(r = 0, g = 0, b = 0, a = 0)
-        nkDrawNineSlice(b = win.buffer.addr, r = header, slc = bg.slice.addr,
-          col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
-      of itemColor:
-        text.background = bg.color
-        nkFillRect(b = `out`.addr, rect = header, rounding = 0, c = bg.color)
-
-      # window close button
-      var button: NimRect = NimRect()
-      button.y = header.y + style.window.header.padding.y
-      button.h = header.h - 2 * style.window.header.padding.y
-      button.w = button.h
-      if (win.flags and windowClosable.cint).nk_bool:
-        var ws: nk_flags = 0
-        if style.window.header.align == headerRight:
-          button.x = (header.w + header.x) - (button.w + style.window.header.padding.x)
-          header.w -= button.w + style.window.header.spacing.x + style.window.header.padding.x
-        else:
-          button.x = header.x + style.window.header.padding.x
-          header.x += button.w + style.window.header.spacing.x + style.window.header.padding.x
-        if nkDoButtonSymbol(state = ws, `out` = win.buffer.addr, bounds = button,
-          symbol = style.window.header.close_symbol, behavior = default,
-          style = style.window.header.close_button.addr, `in` = `in`.addr,
-          font = style.font) and not(win.flags and windowRom.cint).nk_bool:
-          layout.flags = layout.flags or windowHidden.cint
-          layout.flags = layout.flags and not windowMinimized.cint
-
-      # window minimize button
-      if (win.flags and windowMinimizable.cint).nk_bool:
-        var ws: nk_flags = 0
-        if style.window.header.align == headerRight:
-          button.x = (header.w + header.x) - button.w
-          if not (win.flags and windowClosable.cint).nk_bool:
-            button.x -= style.window.header.padding.x
-            header.w -= style.window.header.padding.x
-          header.w -= button.w + style.window.header.spacing.x
-        else:
-          button.x = header.x
-          header.x += button.w + style.window.header.spacing.x +
-            style.window.header.padding.x
-        if nkDoButtonSymbol(state = ws, `out` = win.buffer.addr, bounds = button,
-          symbol = if (layout.flags and windowMinimized.cint).nk_bool:
-          style.window.header.maximizeSymbol else:
-          style.window.header.minimizeSymbol, behavior = default,
-          style = style.window.header.minimize_button.addr, `in` = `in`.addr,
-          font = style.font) and not(win.flags and windowRom.cint).nk_bool:
-            layout.flags = if (layout.flags and windowMinimized.cint).nk_bool:
-              layout.flags and not windowMinimized.cint else:
-              layout.flags or windowMinimized.cint
-
-      # window header title
-      var textLen: int = title.len
-      let t: float = try:
-          font.width(arg1 = font.userdata, h = font.height,
-            arg3 = title.cstring, len = textLen.cint)
-        except:
-          return false
-      text.padding = new_nk_vec2(x = 0, y = 0)
-      var label: NimRect = NimRect(x: 0, y: 0, w: 0, h: 0)
-
-      label.x = header.x + style.window.header.padding.x
-      label.x += style.window.header.label_padding.x
-      label.y = header.y + style.window.header.label_padding.y
-      label.h = font.height + 2 * style.window.header.label_padding.y
-      label.w = t + 2 * style.window.header.spacing.x
-      label.w = (0.float).clamp(a = label.w, b = header.x + header.w - label.x)
-      nkWidgetText(o = `out`.addr, b = label, str = title, len = textLen,
-        t = text.addr, a = TextAlignment.left, f = font)
+    if not panelHeader(win = win, title = title, style = style, font = font,
+      layout = layout, `out` = `out`, `in` = `in`):
+      return false
 
     # draw window background
     if not (layout.flags and windowMinimized.cint).nk_bool and not
       (layout.flags and windowDynamic.cint).nk_bool:
-      var body: NimRect
+      var body: NimRect = NimRect()
       body.x = win.bounds.x
       body.w = win.bounds.w
       body.y = (win.bounds.y + layout.header_height)
@@ -1773,8 +1794,8 @@ proc nkPopupBegin(ctx; pType: PopupType; title: string; flags: set[PanelFlags];
     var allocated: nk_size = ctx.memory.allocated
     nkPushScissor(b = popup.buffer.addr, r = nkNullRect)
 
+    # popup is running therefore invalidate parent panels
     if nkPanelBegin(ctx = ctx, title = title, panelType = panelPopup):
-      # popup is running therefore invalidate parent panels
       var root: PNkPanel = win.layout
       while root != nil:
         root.flags = root.flags or windowRom.cint
@@ -1785,19 +1806,19 @@ proc nkPopupBegin(ctx; pType: PopupType; title: string; flags: set[PanelFlags];
       popup.layout.offset_y = popup.scrollbar.y
       popup.layout.parent = win.layout
       return true
-    else:
-      # popup was closed/is invalid so cleanup
-      var root: PNkPanel = win.layout
-      while root != nil:
-        root.flags = root.flags or windowRemoveRom.cint
-        root = root.parent
-      win.popup.buf.active = nkFalse
-      win.popup.active = nkFalse
-      ctx.memory.allocated = allocated
-      ctx.current = win
-      nkFreePanel(ctx = ctx, pan = popup.layout)
-      popup.layout = nil
-      return false
+
+    # popup was closed/is invalid so cleanup
+    var root: PNkPanel = win.layout
+    while root != nil:
+      root.flags = root.flags or windowRemoveRom.cint
+      root = root.parent
+    win.popup.buf.active = nkFalse
+    win.popup.active = nkFalse
+    ctx.memory.allocated = allocated
+    ctx.current = win
+    nkFreePanel(ctx = ctx, pan = popup.layout)
+    popup.layout = nil
+    return false
 
 proc createPopup(pType2: PopupType; title2: cstring;
     flags2: nk_flags; x2, y2, w2, h2: cfloat): bool {.raises: [], tags: [],
