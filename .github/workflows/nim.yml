@@ -30,7 +30,7 @@ jobs:
         cd demo
         ./build.nims sdl2
 
-#    - name: Check with Nimalyzer
-#      run: |
-#        sudo apt-get install -y libpcre3
-#        nimalyzer tools/nimalyzer.cfg
+    - name: Check with Nimalyzer
+      run: |
+        sudo apt-get install -y libpcre3
+        nimalyzer tools/nimalyzer.cfg
