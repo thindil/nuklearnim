@@ -59,7 +59,7 @@ proc nk_layout_space_end(ctx) {.importc, cdecl, raises: [], tags: [], contractua
 
 proc nkPanelLayout(ctx; win: PNkWindow; height: float; cols: int) {.raises: [
     NuklearException], tags: [RootEffect], contractual.} =
-  ## Set the panel layout
+  ## Set the panel layout.  Internal use only
   ##
   ## * ctx    - the Nuklear context
   ## * height - the height in pixels of each row
@@ -91,7 +91,7 @@ proc nkPanelLayout(ctx; win: PNkWindow; height: float; cols: int) {.raises: [
   layout.row.item_offset = 0
   if (layout.flags and windowDynamic.int).bool:
     # draw background for dynamic panels
-    var background: NimRect = NimRect()
+    var background: Rect = Rect()
     background.x = win.bounds.x
     background.w = win.bounds.y
     background.y = layout.at_y - 1.0
@@ -109,7 +109,7 @@ proc nkPanelLayout(ctx; win: PNkWindow; height: float; cols: int) {.raises: [
 proc nkRowLayout(ctx; fmt: LayoutFormat; height: float; cols,
     width: int) {.raises: [NuklearException], tags: [RootEffect],
         contractual.} =
-  ## Set the current row layout
+  ## Set the current row layout,  Internal use only
   ##
   ## * ctx    - the Nuklear context
   ## * fmt    - the layout format
@@ -137,16 +137,16 @@ proc nkRowLayout(ctx; fmt: LayoutFormat; height: float; cols,
     win.layout.row.item_width = width.float
 
 proc nkLayoutRowDynamic(ctx; height: float; cols: int) {.raises: [
-    NuklearException], tags: [RootEffect], contractual.} =
-  ## Set the current row layout to dynamic
+    NuklearException], tags: [RootEffect], contractual, used.} =
+  ## Set the current row layout to dynamic,  Internal use only
   ##
   ## * ctx    - the Nuklear context
   ## * height - the height in pixels of each row
   ## * cols   - the amount of columns in each row
   nkRowLayout(ctx = ctx, fmt = dynamic, height = height, cols = cols, width = 0)
 
-proc setLayoutRowDynamic*(height: float; cols: int) {.raises: [], tags: [],
-    contractual.} =
+proc setLayoutRowDynamic*(height: float; cols: int) {.raises: [], tags: [
+    RootEffect], contractual.} =
   ## Set the current widgets layout to divide it into selected amount of
   ## columns with the selected height in rows and grows in width when the
   ## parent window resizes
@@ -255,15 +255,15 @@ template layoutSpaceDynamic*(height: float; widgetsCount: int;
   content
   nk_layout_space_end(ctx = ctx)
 
-proc layoutWidgetBounds*(): NimRect {.raises: [], tags: [], contractual.} =
+proc layoutWidgetBounds*(): Rect {.raises: [], tags: [], contractual.} =
   ## Get the rectangle of the current widget in the layout
   ##
-  ## Returns NimRect with the data for the current widget
+  ## Returns Rect with the data for the current widget
   proc nk_layout_widget_bounds(ctx): nk_rect {.importc, nodecl, raises: [],
       tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
   let rect: nk_rect = nk_layout_widget_bounds(ctx = ctx)
-  result = NimRect(x: rect.x, y: rect.y, w: rect.w, h: rect.h)
+  result = Rect(x: rect.x, y: rect.y, w: rect.w, h: rect.h)
 
 proc layoutSetMinRowHeight*(height: float) {.raises: [], tags: [],
     contractual.} =

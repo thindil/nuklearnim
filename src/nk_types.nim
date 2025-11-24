@@ -172,9 +172,118 @@ type
     coordUv, coordPixel
   PanelRowLayoutType* = enum
     ## The types of panel row layouts
-    layoutDynamicFixed, layoutDynamicRow, layoutDynamicFree, layoutDynamic,
+    layoutDynamicFixed, layoutDynamicRow, layoutDynamicFree, layoutDynamicType,
       layoutStaticFixed, layoutStaticRow, layoutStaticFree, LayoutStatic,
       layoutTemplate, layoutCount
+  PanelFlags* = enum
+    ## The settings for panels
+    windowNoFlags = 0,
+    windowBorder = 1 shl 0,
+    windowMovable = 1 shl 1,
+    windowScalable = 1 shl 2,
+    windowClosable = 1 shl 3
+    windowMinimizable = 1 shl 4,
+    windowNoScrollbar = 1 shl 5,
+    windowTitle = 1 shl 6,
+    windowScaleLeft = 1 shl 9
+    windowNoInput = 1 shl 10
+  PopupType* = enum
+    ## The types of popup windows
+    staticPopup, dynamicPopup
+  TextAlignment* = enum
+    ## The alignments of a text
+    left = textMiddle.int or textLeft.int,
+    centered = textMiddle.int or textCentered.int,
+    right = textMiddle.int or textRight.int
+  EditFlags* = enum
+    ## The edit fields' flags
+    default = 0,
+    readOnly = 1 shl 0,
+    autoSelect = 1 shl 1,
+    sigEnter = 1 shl 2,
+    allowTab = 1 shl 3,
+    noCursor = 1 shl 4,
+    selectable = 1 shl 5,
+    clipboard = 1 shl 6,
+    ctrlEnterNewLine = 1 shl 7,
+    noHorizontalScroll = 1 shl 8,
+    alwaysInsertMode = 1 shl 9,
+    multiline = 1 shl 10,
+    gotoEndOnActivate = 1 shl 11
+  EditEvent* = enum
+    ## The events which happen in a text field
+    none = 0,
+    active = 1 shl 0,
+    inactive = 1 shl 1,
+    activated = 1 shl 2,
+    deactivated = 1 shl 3,
+    commited = 1 shl 4
+  EditTypes* = enum
+    ## The types of edit fields
+    simple = alwaysInsertMode,
+    field = simple.int or selectable.int or clipboard.int,
+    editor = allowTab.int or selectable.int or clipboard.int or multiline.int,
+    box = alwaysInsertMode.int or selectable.int or multiline.int or
+        allowTab.int or clipboard.int
+  ButtonStyleTypes* = enum
+    ## The types of fields in style's settings for UI buttons
+    normal, hover, active, borderColor, textBackground, textNormal, textHover,
+      textActive, rounding, padding, border, imagePadding, touchPadding,
+      colorFactorBackground, colorFactorText
+  FloatStyleTypes* = enum
+    ## The types of fields in style's settings with float values
+    buttonRounding, popupBorder
+  ColorStyleTypes* = enum
+    ## The types of fields in style's settings for UI colors
+    background
+  StyleStyleTypes* = enum
+    ## The types of fields in style's settings for UI colors
+    progressbar
+  WindowStyleTypes* = enum
+    ## The types of fields in style's settings for windows
+    spacing, padding
+  StyleColors* = enum
+    ## Names of the colors for UI's elements which can be set. The last value
+    ## is special, it defines the amount of available colors' settings.
+    textColor, windowColor, headerColor, borderColor, buttonColor,
+      buttonHoverColor, buttonActiveColor, toggleColor, toggleHoverColor,
+      toggleCursorColor, selectColor, selectActiveColor, sliderColor,
+      sliderCursorColor, sliderCursorHoverColor, sliderCursorActiveColor,
+      propertyColor, editColor, editCursorColor, comboColor, chartColor,
+      colorChartColor, colorChartHighlightColor, scrollbarColor,
+      scrollbarCursorColor, scrollbarCursorHoverColor,
+      scrollbarCursorActiveColor, tabHeaderColor, knobColor, knobCursorColor,
+      knobCursorHoverColor, knobCursorActiveColor, buttonTextColor,
+      buttonHoverTextColor, buttonActiveTextColor, editTextColor,
+      comboTextColor, tooltipColor, tooltipBorderColor, groupBorderColor,
+      headerTextColor, groupTextColor, selectActiveTextColor, propertyTextColor,
+      popupColor, popupBorderColor, progressbarColor, progressbarBorderColor,
+      countColors
+  PanelType* = enum
+    ## The types of panels
+    panelNone = 0,
+    panelWindow = 1 shl 0,
+    panelGroup = 1 shl 1,
+    panelPopup = 1 shl 2,
+    panelContextual = 1 shl 4,
+    panelCombo = 1 shl 5,
+    panelMenu = 1 shl 6,
+    panelTooltip = 1 shl 7
+  PanelSet* = enum
+    ## The setting of panels
+    panelSetNonBlock = panelContextual.int or panelCombo.int or panelMenu.int or
+        panelTooltip.int,
+    panelSetPopup = panelSetNonBlock.int or panelPopup.int,
+    panelSetSub = panelSetPopup.int or panelGroup.int
+  UserEvents* = enum
+    ## The UI events caused by the user
+    noEvent, quitEvent, sizeChangedEvent, keyEvent, mouseButtonEvent, anyEvent
+  ShowStates* = enum
+    ## When to change the state of a window
+    hidden, shown
+  HandleType* = enum
+    ## Types of handle
+    handlePtr, handleInt
 
 # ---------
 # Constants
@@ -503,16 +612,6 @@ type
     ## Internal Nuklear type
     begin*, `end`*, parent*, last*: nk_size
     active*: nk_bool
-  PanelType* {.size: sizeof(cint).} = enum
-    ## The types of panels
-    panelNone = 0,
-    panelWindow = 1 shl 0,
-    panelGroup = 1 shl 1,
-    panelPopup = 1 shl 2,
-    panelContextual = 1 shl 4,
-    panelCombo = 1 shl 5,
-    panelMenu = 1 shl 6,
-    panelTooltip = 1 shl 7
   nk_command* {.importc: "struct nk_command", completeStruct.} = object
     ## Internal Nuklear type
     `type`*: CommandType
@@ -525,8 +624,6 @@ type
     header*: nk_command
     x*, y*: cshort
     w*, h*: cushort
-  PNkBuffer* = ptr nk_buffer
-    ## Pointer to nk_buffer type
   nk_command_buffer* {.importc: "struct nk_command_buffer",
       completeStruct.} = object
     ## Internal Nuklear type
@@ -702,6 +799,8 @@ type
     grow_factor*: cfloat
     calls*: nk_size
     marker*: array[bufferMax, nk_buffer_marker]
+  PNkBuffer* = ptr nk_buffer
+    ## Pointer to nk_buffer type
   nk_table* {.importc: "struct nk_table", completeStruct.} = object
     ## Internal Nuklear type
     `seq`*, size*: cuint
@@ -959,149 +1058,97 @@ template `+`*[T](p: ptr T; off: nk_size): ptr T =
 # Types
 # -----
 type
-  NimColor* = object
-    ## Used to store information about the selected color. Usually later
-    ## converted to Nuklear structure nk_color
+  NkColor* = object
+    ## Used to store information about the selected color.
     r*, g*, b*, a*: int
-  NimColorF* = object
+  NkColorF* = object
     ## Also used to store information about the selected color, but as a float
     ## values.
     r*, g*, b*, a*: float
-  NimRect* = object
-    ## Used to store information about UI rectangle. Usually later converted to
-    ## Nuklear nk_rect
-    x*, y*, w*, h*: cfloat
-  NimVec2* = object
-    ## Used to store information about UI vector. Usually later converted to
-    ## Nuklear nk_vec2
-    x*, y*: cfloat
+  Rect* = object
+    ## Used to store information about UI rectangle.
+    x*, y*, w*, h*: float
+  Vec2* = object
+    ## Used to store information about UI vector.
+    ##
+    ## * x - the X coordinate of the point
+    ## * y - the Y coordinate of the point
+    x*, y*: float
   ButtonStyle* = object
     ## Used to store information about a button's style.
-    borderColor*, textNormal*, textHover*: NimColor
+    borderColor*, textNormal*, textHover*: NkColor
     rounding*: float
-    padding*: NimVec2
-    imagePadding*: NimVec2
-    touchPadding*: NimVec2
-  ButtonStyleTypes* = enum
-    ## The types of fields in style's settings for UI buttons
-    normal, hover, active, borderColor, textBackground, textNormal, textHover,
-      textActive, rounding, padding, border, imagePadding, touchPadding,
-      colorFactorBackground, colorFactorText
-  FloatStyleTypes* = enum
-    ## The types of fields in style's settings with float values
-    buttonRounding, popupBorder
-  ColorStyleTypes* = enum
-    ## The types of fields in style's settings for UI colors
-    background
-  StyleStyleTypes* = enum
-    ## The types of fields in style's settings for UI colors
-    progressbar
-  WindowStyleTypes* = enum
-    ## The types of fields in style's settings for windows
-    spacing, padding
-  PanelFlags* {.size: sizeof(cint).} = enum
-    ## The settings for panels
-    windowNoFlags = 0,
-    windowBorder = 1 shl 0,
-    windowMovable = 1 shl 1,
-    windowScalable = 1 shl 2,
-    windowClosable = 1 shl 3
-    windowMinimizable = 1 shl 4,
-    windowNoScrollbar = 1 shl 5,
-    windowTitle = 1 shl 6,
-    windowScaleLeft = 1 shl 9
-    windowNoInput = 1 shl 10
+    padding*: Vec2
+    imagePadding*: Vec2
+    touchPadding*: Vec2
   NuklearException* = object of CatchableError
     ## An exception thrown when there is an issue with Nuklear library
-  PopupType* = enum
-    ## The types of popup windows
-    staticPopup, dynamicPopup
-  TextAlignment* {.size: sizeof(cint).} = enum
-    ## The alignments of a text
-    left = textMiddle.int or textLeft.int,
-    centered = textMiddle.int or textCentered.int,
-    right = textMiddle.int or textRight.int
-  EditFlags* {.size: sizeof(cint).} = enum
-    ## The edit fields' flags
-    default = 0,
-    readOnly = 1 shl 0,
-    autoSelect = 1 shl 1,
-    sigEnter = 1 shl 2,
-    allowTab = 1 shl 3,
-    noCursor = 1 shl 4,
-    selectable = 1 shl 5,
-    clipboard = 1 shl 6,
-    ctrlEnterNewLine = 1 shl 7,
-    noHorizontalScroll = 1 shl 8,
-    alwaysInsertMode = 1 shl 9,
-    multiline = 1 shl 10,
-    gotoEndOnActivate = 1 shl 11
-  EditEvent* {.size: sizeof(cint).} = enum
-    ## The events which happen in a text field
-    none = 0,
-    active = 1 shl 0,
-    inactive = 1 shl 1,
-    activated = 1 shl 2,
-    deactivated = 1 shl 3,
-    commited = 1 shl 4
-  EditTypes* {.size: sizeof(cint).} = enum
-    ## The types of edit fields
-    simple = alwaysInsertMode,
-    field = simple.int or selectable.int or clipboard.int,
-    editor = allowTab.int or selectable.int or clipboard.int or multiline.int,
-    box = alwaysInsertMode.int or selectable.int or multiline.int or
-        allowTab.int or clipboard.int
   PluginFilter* = proc (box: ptr nk_text_edit;
       unicode: nk_rune): nk_bool {.cdecl.}
     ## The procedure used to filter input in edit fields
-  StyleColors* = enum
-    ## Names of the colors for UI's elements which can be set. The last value
-    ## is special, it defines the amount of available colors' settings.
-    textColor, windowColor, headerColor, borderColor, buttonColor,
-      buttonHoverColor, buttonActiveColor, toggleColor, toggleHoverColor,
-      toggleCursorColor, selectColor, selectActiveColor, sliderColor,
-      sliderCursorColor, sliderCursorHoverColor, sliderCursorActiveColor,
-      propertyColor, editColor, editCursorColor, comboColor, chartColor,
-      colorChartColor, colorChartHighlightColor, scrollbarColor,
-      scrollbarCursorColor, scrollbarCursorHoverColor,
-      scrollbarCursorActiveColor, tabHeaderColor, knobColor, knobCursorColor,
-      knobCursorHoverColor, knobCursorActiveColor, buttonTextColor,
-      buttonHoverTextColor, buttonActiveTextColor, editTextColor,
-      comboTextColor, tooltipColor, tooltipBorderColor, groupBorderColor,
-      headerTextColor, groupTextColor, selectActiveTextColor, propertyTextColor,
-      popupColor, popupBorderColor, progressbarColor, progressbarBorderColor,
-      countColors
-  PanelSet* {.size: sizeof(cint).} = enum
-    ## The setting of panels
-    panelSetNonBlock = panelContextual.int or panelCombo.int or panelMenu.int or
-        panelTooltip.int,
-    panelSetPopup = panelSetNonBlock.int or panelPopup.int,
-    panelSetSub = panelSetPopup.int or panelGroup.int
-  UserEvents* = enum
-    ## The UI events caused by the user
-    noEvent, quitEvent, sizeChangedEvent, keyEvent, mouseButtonEvent, anyEvent
-  ShowStates* = enum
-    ## When to change the state of a window
-    hidden, shown
   MouseButton* = object
     ## Used to store information about a mouse button.
     down*, clicked*: bool
-    clickedPos*: NimVec2
+    clickedPos*: Vec2
   Mouse* = object
     ## Used to store information about a mouse
-    delta*, pos*, prev*, scrollDelta*, : NimVec2
+    delta*, pos*, prev*, scrollDelta*, : Vec2
     buttons*: array[Buttons.max, MouseButton]
     grab*, grabbed*, ungrab*: bool
   Input* = object
     ## Used to store information about the user's input
     mouse*: Mouse
-{.pop ruleOn: "namedParams".}
+  Handle* = object
+    ## Used to store a handle to various elements
+    case handleType: HandleType
+    of handlePtr:
+      ptrValue*: pointer
+    of handleInt:
+      intValue*: int
+  BufferMarker* = object
+    ## Used to store Nuklear buffer's markers
+    active*: bool
+    offset*: nk_size
+  Memory* = object
+    ## Used to store Nuklear buffer's memory info
+    memPtr*: pointer
+    size*: nk_size
+  PluginAlloc* = proc (handle: Handle; old: pointer; size: nk_size): pointer {.cdecl.}
+    ## The procedure executed when plugin is allocated
+  PluginFree* = proc (handle: Handle; old: pointer) {.cdecl.}
+    ## The procedure executed when plugin is removed
+  Allocator* = object
+    ## Used to store data for memory allocation
+    alloc*: PluginAlloc
+    free*: PluginFree
+    userData*: Handle
+  Buffer* = object
+    ## Used to store Nuklear buffer data
+    allocated*, needed*, size*, calls*: nk_size
+    memory*: Memory
+    allocType*: AllocationType
+    growFactor*: float
+    pool*: Allocator
+    marker*: array[bufferMax, BufferMarker]
+  CommandBuffer* = object
+    ## Used to store Nuklear command buffer data
+    begin*, cmdEnd*, last*: nk_size
+    clip*: Rect
+    base*: Buffer
+    useClipping*: bool
+    userData*: Handle
+  Command* = object
+    ## Used to store Nuklear command data
+    cmdType*: CommandType
+    next*: nk_size
+    when defined(nkIncludeCommandUserData):
+      userdata*: Handle ## Interna Nuklear data
 
 # ---------
 # Constants
 # ---------
 const
-  nkNullRect*: NimRect = NimRect(x: -8192.0, y: -8192.0, w: -8192.0, h: -8192.0)
+  nkNullRect*: Rect = Rect(x: -8192.0, y: -8192.0, w: -8192.0, h: -8192.0)
     ## An empty rectangle
 
 # ----------

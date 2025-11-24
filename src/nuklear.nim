@@ -254,15 +254,15 @@ proc stringToCharArray(str: string; length: int): tuple[charArray: seq[char];
       result.charArray.add(y = '\0')
   result.length = str.len.cint
 
-proc getWidgetBounds*(): NimRect {.raises: [], tags: [], contractual.} =
+proc getWidgetBounds*(): Rect {.raises: [], tags: [], contractual.} =
   ## Get the rectable with the current Nuklear widget coordinates
   ##
   ## Returns a rectangle with the current Nuklear widget coordinates
-  ## converted to NimRect
+  ## converted to Rect
   proc nk_widget_bounds(ctx): nk_rect {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
   let rect: nk_rect = nk_widget_bounds(ctx = ctx)
-  return NimRect(x: rect.x, y: rect.y, w: rect.w, h: rect.h)
+  return Rect(x: rect.x, y: rect.y, w: rect.w, h: rect.h)
 
 proc createWin(title: cstring; wx, wy, ww, wh: cfloat;
     wFlags: nk_flags): bool {.raises: [], tags: [], contractual.} =
@@ -453,7 +453,7 @@ proc windowShow*(name: string; state: ShowStates) {.raises: [], tags: [], contra
 # ----
 # Misc
 # ----
-proc nkPushScissor(b: PNkCommandBuffer; r: NimRect) {.raises: [], tags: [
+proc nkPushScissor(b: PNkCommandBuffer; r: Rect) {.raises: [], tags: [
     RootEffect], contractual.} =
   ## Clear the rectangle. Internal use only
   ##
@@ -473,7 +473,7 @@ proc nkPushScissor(b: PNkCommandBuffer; r: NimRect) {.raises: [], tags: [
     cmd.w = max(x = 0.cushort, y = r.w.cushort)
     cmd.h = max(x = 0.cushort, y = r.h.cushort)
 
-proc nkStrokeRect(b: PNkCommandBuffer, rect: NimRect, rounding,
+proc nkStrokeRect(b: PNkCommandBuffer, rect: Rect, rounding,
   lineThickness: float, c: nk_color) {.raises: [], tags: [RootEffect],
   contractual.} =
   ## Draw a rectangle. Internal use only
@@ -537,7 +537,7 @@ proc nkStrokeTriangle(b: PNkCommandBuffer; x0, y0, x1, y1, x2, y2,
   cmd.c.y = y2.cshort
   cmd.color = c
 
-proc nkFillCircle(b: PNkCommandBuffer; rect: NimRect; c: nk_color)
+proc nkFillCircle(b: PNkCommandBuffer; rect: Rect; c: nk_color)
   {.raises: [], tags: [RootEffect], contractual.} =
   ## Fill the circle with the selected color
   ##
@@ -598,7 +598,7 @@ proc nkFillTriangle(b: PNkCommandBuffer, x0, y0, x1, y1, x2, y2: cfloat,
   cmd.c.y = y2.cshort
   cmd.color = c
 
-proc nkDrawImage(b: PNkCommandBuffer; r: NimRect; img: PImage; col: nk_color)
+proc nkDrawImage(b: PNkCommandBuffer; r: Rect; img: PImage; col: nk_color)
   {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw the selected image
   ##
@@ -626,7 +626,7 @@ proc nkDrawImage(b: PNkCommandBuffer; r: NimRect; img: PImage; col: nk_color)
   cmd.img = cast[nk_image](img)
   cmd.col = col
 
-proc nkDrawNineSlice(b: PNkCommandBuffer; r: NimRect; slc: ptr nk_nine_slice; col: nk_color)
+proc nkDrawNineSlice(b: PNkCommandBuffer; r: Rect; slc: ptr nk_nine_slice; col: nk_color)
   {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw the selected fragments of an image
   ##
@@ -649,39 +649,39 @@ proc nkDrawNineSlice(b: PNkCommandBuffer; r: NimRect; slc: ptr nk_nine_slice; co
   img.h = slcImg.h
   img.region = [rgnX, rgnY, slc.l, slc.t]
 
-  nkDrawImage(b = b, r = NimRect(x: r.x, y: r.y, w: slc.l.float, h: slc.t.float), img = img.addr, col = col)
+  nkDrawImage(b = b, r = Rect(x: r.x, y: r.y, w: slc.l.float, h: slc.t.float), img = img.addr, col = col)
 
   # top-center
   img.region = [rgnX + slc.l, rgnY, rgnW - slc.l - slc.r, slc.t]
-  nkDrawImage(b = b, r = NimRect(x: r.x + slc.l.float, y: r.y, w: r.w - slc.l.float - slc.r.float, h: slc.t.float), img = img.addr, col = col)
+  nkDrawImage(b = b, r = Rect(x: r.x + slc.l.float, y: r.y, w: r.w - slc.l.float - slc.r.float, h: slc.t.float), img = img.addr, col = col)
 
   # top-right
   img.region = [rgnX + rgnW - slc.r, rgnY, slc.r, slc.t]
-  nkDrawImage(b = b, r = NimRect(x: r.x + r.w - slc.r.float, y: r.y, w: slc.r.float, h: slc.t.float), img = img.addr, col = col)
+  nkDrawImage(b = b, r = Rect(x: r.x + r.w - slc.r.float, y: r.y, w: slc.r.float, h: slc.t.float), img = img.addr, col = col)
 
   # center-left
   img.region = [rgnX, rgnY + slc.t, slc.l, rgnH - slc.t - slc.b]
-  nkDrawImage(b = b, r = NimRect(x: r.x, y: r.y + slc.t.float, w: slc.l.float, h: r.h - slc.t.float - slc.b.float), img = img.addr, col = col)
+  nkDrawImage(b = b, r = Rect(x: r.x, y: r.y + slc.t.float, w: slc.l.float, h: r.h - slc.t.float - slc.b.float), img = img.addr, col = col)
 
   # center
   img.region = [rgnX + slc.l, rgnY + slc.t, rgnW - slc.l - slc.r, rgnH - slc.t - slc.b]
-  nkDrawImage(b = b, r = NimRect(x: r.x + slc.l.float, y: r.y + slc.t.float, w: r.w - slc.l.float - slc.r.float, h: r.h - slc.t.float - slc.b.float), img = img.addr, col = col)
+  nkDrawImage(b = b, r = Rect(x: r.x + slc.l.float, y: r.y + slc.t.float, w: r.w - slc.l.float - slc.r.float, h: r.h - slc.t.float - slc.b.float), img = img.addr, col = col)
 
   # center-right
   img.region = [rgnX + rgnW - slc.r, rgnY + slc.t, slc.r, rgnH - slc.t - slc.b]
-  nkDrawImage(b = b, r = NimRect(x: r.x + r.w - slc.r.float, y: r.y - slc.t.float, w: slc.r.float, h: r.h - slc.t.float - slc.b.float), img = img.addr, col = col)
+  nkDrawImage(b = b, r = Rect(x: r.x + r.w - slc.r.float, y: r.y - slc.t.float, w: slc.r.float, h: r.h - slc.t.float - slc.b.float), img = img.addr, col = col)
 
   # bottom-left
   img.region = [rgnX, rgnY + rgnH - slc.b, slc.l, slc.b]
-  nkDrawImage(b = b, r = NimRect(x: r.x, y: r.y + r.h - slc.b.float, w: slc.l.float, h: slc.b.float), img = img.addr, col = col)
+  nkDrawImage(b = b, r = Rect(x: r.x, y: r.y + r.h - slc.b.float, w: slc.l.float, h: slc.b.float), img = img.addr, col = col)
 
   # bottom-center
   img.region = [rgnX + slc.l, rgnY + rgnH - slc.b, rgnW - slc.l - slc.r, slc.b]
-  nkDrawImage(b = b, r = NimRect(x: r.x + slc.l.float, y: r.y + r.h - slc.b.float, w: r.w - slc.l.float - slc.r.float, h: slc.b.float), img = img.addr, col = col)
+  nkDrawImage(b = b, r = Rect(x: r.x + slc.l.float, y: r.y + r.h - slc.b.float, w: r.w - slc.l.float - slc.r.float, h: slc.b.float), img = img.addr, col = col)
 
   # bottom-right
   img.region = [rgnX + rgnW - slc.r, rgnY + rgnH - slc.b, slc.r, slc.b]
-  nkDrawImage(b = b, r = NimRect(x: r.x + r.w - slc.r.float, y: r.y + r.h - slc.b.float, w: slc.r.float, h: slc.b.float), img = img.addr, col = col)
+  nkDrawImage(b = b, r = Rect(x: r.x + r.w - slc.r.float, y: r.y + r.h - slc.b.float, w: slc.r.float, h: slc.b.float), img = img.addr, col = col)
 
 proc nkTextClamp(font: ptr nk_user_font; text: string; textLen: int;
   space: float; glyphs: var int; textWidth: var float; sepList: seq[nk_rune];
@@ -741,7 +741,7 @@ proc nkTextClamp(font: ptr nk_user_font; text: string; textLen: int;
   textWidth = sepWidth
   return if sepLen == 0: len else: sepLen
 
-proc nkDrawText(b: PNkCommandBuffer; r: NimRect; str: string; length: var int;
+proc nkDrawText(b: PNkCommandBuffer; r: Rect; str: string; length: var int;
   font: ptr nk_user_font; bg, fg: nk_color) {.raises: [], tags: [RootEffect],
   contractual.} =
   ## Draw the selected text
@@ -795,7 +795,7 @@ proc nkDrawText(b: PNkCommandBuffer; r: NimRect; str: string; length: var int;
 # -----
 # Input
 # -----
-proc isMouseHovering*(rect: NimRect): bool {.raises: [], tags: [],
+proc isMouseHovering*(rect: Rect): bool {.raises: [], tags: [],
     contractual.} =
   ## Check if mouse is hovering over the selected rectangle
   ##
@@ -807,7 +807,7 @@ proc isMouseHovering*(rect: NimRect): bool {.raises: [], tags: [],
   return nkInbox(px = ctx.input.mouse.pos.x, py = ctx.input.mouse.pos.y,
     x = rect.x, y = rect.y, w = rect.w, h = rect.h)
 
-proc isMousePrevHovering*(rect: NimRect): bool {.raises: [], tags: [],
+proc isMousePrevHovering*(rect: Rect): bool {.raises: [], tags: [],
     contractual.} =
   ## Check if the mouse was previously hovering over the selected rectangle
   ##
@@ -831,13 +831,13 @@ proc isMouseDown*(id: Buttons): bool {.raises: [], tags: [], contractual.} =
     ## A binding to Nuklear's function. Internal use only
   return nk_input_is_mouse_down(i = ctx.input.addr, id = id)
 
-proc getMouseDelta*(): NimVec2 {.raises: [], tags: [], contractual.} =
+proc getMouseDelta*(): Vec2 {.raises: [], tags: [], contractual.} =
   ## Get the mouse vector between last check and current position of the mouse
   ##
   ## Returns vector with information about the mouse movement delta
-  return NimVec2(x: ctx.input.mouse.delta.x, y: ctx.input.mouse.delta.y)
+  return Vec2(x: ctx.input.mouse.delta.x, y: ctx.input.mouse.delta.y)
 
-proc mouseClicked*(id: Buttons; rect: NimRect): bool {.raises: [], tags: [],
+proc mouseClicked*(id: Buttons; rect: Rect): bool {.raises: [], tags: [],
     contractual.} =
   ## Check if the selected mouse button was clicked in the selected area
   ##
@@ -901,7 +901,7 @@ proc isMouseReleased*(id: Buttons): bool {.raises: [], tags: [], contractual.} =
 # ----
 # Text
 # ----
-proc nkWidgetText(o: PNkCommandBuffer; b: var NimRect; str: string; len: var int;
+proc nkWidgetText(o: PNkCommandBuffer; b: var Rect; str: string; len: var int;
   t: ptr nk_text; a: nk_flags; f: ptr nk_user_font) {.raises: [], tags: [RootEffect],
   contractual.} =
   ## Draw a text widget. Internal use only
@@ -919,7 +919,7 @@ proc nkWidgetText(o: PNkCommandBuffer; b: var NimRect; str: string; len: var int
     if o == nil or t == nil:
       return
     b.h = max(x = b.h, y = 2 * t.padding.y)
-    var label: NimRect = NimRect()
+    var label: Rect = Rect()
     label.x = 0
     label.w = 0
     label.y = b.y + t.padding.y
@@ -965,7 +965,7 @@ proc nkWidgetText(o: PNkCommandBuffer; b: var NimRect; str: string; len: var int
 # -------
 # Buttons
 # -------
-proc nkButtonBehavior(state: var nk_flags; r: NimRect; i: ptr nk_input;
+proc nkButtonBehavior(state: var nk_flags; r: Rect; i: ptr nk_input;
   behavior: ButtonBehavior): bool {.raises: [], tags: [], contractual.} =
   ## Set the button's behavior. Internal use only
   ##
@@ -996,9 +996,9 @@ proc nkButtonBehavior(state: var nk_flags; r: NimRect; i: ptr nk_input;
   elif isMousePrevHovering(rect = r):
     state = state or widgetStateLeft.ord
 
-proc nkDoButton(state: var nk_flags; `out`: PNkCommandBuffer; r: NimRect;
+proc nkDoButton(state: var nk_flags; `out`: PNkCommandBuffer; r: Rect;
   style: ptr nk_style_button; `in`: ptr nk_input; behavior: ButtonBehavior;
-  content: var NimRect): bool {.raises: [], tags: [], contractual.} =
+  content: var Rect): bool {.raises: [], tags: [], contractual.} =
   ## Draw a button. Internal use only
   ##
   ## * state    - the state of the button
@@ -1023,14 +1023,14 @@ proc nkDoButton(state: var nk_flags; `out`: PNkCommandBuffer; r: NimRect;
     content.h = r.h - (2 * (style.padding.y + style.border + style.rounding))
 
     # execute button behavior
-    var bounds: NimRect = NimRect()
+    var bounds: Rect = Rect()
     bounds.x = r.x - style.touch_padding.x
     bounds.y = r.y - style.touch_padding.y
     bounds.w = r.w + 2 * style.touch_padding.x
     bounds.h = r.h + 2 * style.touch_padding.y
     return nkButtonBehavior(state = state, r = bounds, i = `in`, behavior = behavior)
 
-proc nkDrawButton(`out`: PNkCommandBuffer; bounds: NimRect;
+proc nkDrawButton(`out`: PNkCommandBuffer; bounds: Rect;
   state: nk_flags; style: ptr nk_style_button): nk_style_item {.raises: [],
   tags: [RootEffect], contractual.} =
   ## Draw a button. Internal use only
@@ -1065,7 +1065,7 @@ proc nkDrawButton(`out`: PNkCommandBuffer; bounds: NimRect;
       factor = style.color_factor_background))
 
 proc nkDrawSymbol(`out`: PNkCommandBuffer; `type`: SymbolType;
-  content: var NimRect; background, foreground: nk_color; borderWidth: float;
+  content: var Rect; background, foreground: nk_color; borderWidth: float;
   font: ptr nk_user_font) {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw the selected symbol
   ##
@@ -1098,7 +1098,7 @@ proc nkDrawSymbol(`out`: PNkCommandBuffer; `type`: SymbolType;
     nkWidgetText(o = `out`, b = content, str = $ch, len = length, t = text.addr,
       a = centered, f = font)
   of circleSolid, circleOutline, rectSolid, rectOutline:
-    var drawRect: NimRect = content
+    var drawRect: Rect = content
     drawRect = nkShrinkRect(r = drawRect, amount = borderWidth)
     # simple empty/filled shapes
     if `type` in [rectSolid, rectOutline]:
@@ -1111,7 +1111,7 @@ proc nkDrawSymbol(`out`: PNkCommandBuffer; `type`: SymbolType;
         nkFillCircle(b = `out`, rect = drawRect, c = background)
   of triangleUp, triangleDown, triangleLeft, triangleRight:
     var heading: Heading = right
-    var points: array[3, NimRect] = [NimRect(), NimRect(), NimRect()]
+    var points: array[3, Rect] = [Rect(), Rect(), Rect()]
     case `type`
       of triangleRight:
         heading = right
@@ -1129,7 +1129,7 @@ proc nkDrawSymbol(`out`: PNkCommandBuffer; `type`: SymbolType;
   of triangleUpOutline, triangleDownOutline, triangleLeftOutline,
     triangleRightOutline:
     var heading: Heading = right
-    var points: array[3, NimRect] = [NimRect(), NimRect(), NimRect()]
+    var points: array[3, Rect] = [Rect(), Rect(), Rect()]
     case `type`
       of triangleRightOutline:
         heading = right
@@ -1147,7 +1147,7 @@ proc nkDrawSymbol(`out`: PNkCommandBuffer; `type`: SymbolType;
   else:
     discard
 
-proc nkDrawButtonSymbol(`out`: PNkCommandBuffer; bounds, content: var NimRect;
+proc nkDrawButtonSymbol(`out`: PNkCommandBuffer; bounds, content: var Rect;
   state: nk_flags; style: ptr nk_style_button; `type`: SymbolType;
   font: ptr nk_user_font) {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw a button with the selected symbol on it. Internal use only
@@ -1173,7 +1173,7 @@ proc nkDrawButtonSymbol(`out`: PNkCommandBuffer; bounds, content: var NimRect;
   nkDrawSymbol(`out` = `out`, `type` = `type`, content = content,
     background = bg, foreground = sym, borderWidth = 1, font = font)
 
-proc nkDoButtonSymbol(state: var nk_flags; `out`: PNkCommandBuffer; bounds: var NimRect,
+proc nkDoButtonSymbol(state: var nk_flags; `out`: PNkCommandBuffer; bounds: var Rect,
   symbol: SymbolType; behavior: ButtonBehavior; style: ptr nk_style_button;
   `in`: ptr nk_input; font: ptr nk_user_font): bool {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw a button with the selected symbol on it. Internal use only
@@ -1192,7 +1192,7 @@ proc nkDoButtonSymbol(state: var nk_flags; `out`: PNkCommandBuffer; bounds: var 
     style != nil
     font != nil
   body:
-    var content: NimRect = NimRect()
+    var content: Rect = Rect()
     result = nkDoButton(state = state, `out` = `out`, r = bounds, style = style,
       `in` = `in`, behavior = behavior, content = content)
     # TODO
@@ -1227,7 +1227,7 @@ proc panelHeader(win: ptr nkWindow; title: string; style: nk_style;
   ## Returns true if the header was drawn, otherwise false
   if nkPanelHasHeader(flags = win.flags, title = title):
     var
-      header: NimRect = NimRect()
+      header: Rect = Rect()
       background: nk_style_item = nk_style_item()
       text: nk_text = nk_text()
 
@@ -1281,7 +1281,7 @@ proc panelHeader(win: ptr nkWindow; title: string; style: nk_style;
       nkFillRect(b = `out`.addr, rect = header, rounding = 0, c = bg.color)
 
     # window close button
-    var button: NimRect = NimRect()
+    var button: Rect = Rect()
     button.y = header.y + style.window.header.padding.y
     button.h = header.h - 2 * style.window.header.padding.y
     button.w = button.h
@@ -1331,7 +1331,7 @@ proc panelHeader(win: ptr nkWindow; title: string; style: nk_style;
       except Exception:
         return false
     text.padding = new_nk_vec2(x = 0, y = 0)
-    var label: NimRect = NimRect(x: 0, y: 0, w: 0, h: 0)
+    var label: Rect = Rect(x: 0, y: 0, w: 0, h: 0)
 
     label.x = header.x + style.window.header.padding.x
     label.x += style.window.header.label_padding.x
@@ -1385,7 +1385,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     if (win.flags and windowMovable.cint) == 1 and (win.flags and
         windowRom.cint) != 1:
       # calculate draggable window space
-      var header: NimRect = NimRect(x: win.bounds.x, y: win.bounds.y,
+      var header: Rect = Rect(x: win.bounds.x, y: win.bounds.y,
           w: win.bounds.w, h: 0)
       if nkPanelHasHeader(flags = win.flags, title = title):
         header.h = font.height + 2.0 * style.window.header.padding.y
@@ -1415,7 +1415,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     layout.bounds.w -= (2 * panelPadding.x)
     if (win.flags and windowBorder.cint).nk_bool:
       layout.border = nkPanelGetBorder(style = style, flags = win.flags, `type` = panelType)
-      var shrinked: NimRect = NimRect(x: layout.bounds.x, y: layout.bounds.y,
+      var shrinked: Rect = Rect(x: layout.bounds.x, y: layout.bounds.y,
         w: layout.bounds.w, h: layout.bounds.h)
       shrinked = nkShrinkRect(r = shrinked, amount = layout.border)
       layout.bounds = new_nk_rect(x = shrinked.x, y = shrinked.y,
@@ -1452,7 +1452,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     # draw window background
     if not (layout.flags and windowMinimized.cint).nk_bool and not
       (layout.flags and windowDynamic.cint).nk_bool:
-      var body: NimRect = NimRect()
+      var body: Rect = Rect()
       body.x = win.bounds.x
       body.w = win.bounds.w
       body.y = (win.bounds.y + layout.header_height)
@@ -1471,9 +1471,9 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
           rounding = style.window.rounding, c = bg.color)
 
     # set clipping rectangle
-    var clip: NimRect = NimRect(x: 0, y: 0, w: 0, h: 0)
+    var clip: Rect = Rect(x: 0, y: 0, w: 0, h: 0)
     layout.clip = layout.bounds
-    let aClip: NimRect = NimRect(x: win.buffer.clip.x, y: win.buffer.clip.y,
+    let aClip: Rect = Rect(x: win.buffer.clip.x, y: win.buffer.clip.y,
       w: win.buffer.clip.w, h: win.buffer.clip.h)
     nkUnify(clip = clip, a = aClip, x0 = layout.clip.x,
       y0 = layout.clip.y, x1 = layout.clip.x + layout.clip.w,
@@ -2332,7 +2332,7 @@ proc setButtonStyle*(field: ButtonStyleTypes; color: Color = colWhite; a: Natura
   else:
     discard
 
-proc setButtonStyle*(field: ButtonStyleTypes; value: NimVec2) {.raises: [],
+proc setButtonStyle*(field: ButtonStyleTypes; value: Vec2) {.raises: [],
     tags: [], contractual.} =
   ## Set the vector for the selected field of the Nuklear buttons style
   ##
@@ -2379,7 +2379,7 @@ proc setButtonStyle2*(source, destination: ButtonStyleTypes) {.raises: [],
     if destination == normal:
       ctx.style.button.normal = ctx.style.button.active
 
-proc getButtonStyle*(field: ButtonStyleTypes): NimVec2 {.raises: [], tags: [],
+proc getButtonStyle*(field: ButtonStyleTypes): Vec2 {.raises: [], tags: [],
     contractual.} =
   ## Get the value of the selected field of Nuklear buttons style
   ##
@@ -2387,7 +2387,7 @@ proc getButtonStyle*(field: ButtonStyleTypes): NimVec2 {.raises: [], tags: [],
   ##
   ## Returns vector with the value of the selected field
   if field == padding:
-    return NimVec2(x: ctx.style.button.padding.x, y: ctx.style.button.padding.y)
+    return Vec2(x: ctx.style.button.padding.x, y: ctx.style.button.padding.y)
 
 proc stylePushVec2(fld: WindowStyleTypes; x1,
     y1: cfloat): bool {.discardable, raises: [], tags: [], contractual.} =
@@ -2460,7 +2460,7 @@ proc stylePushStyleItem(fld: StyleStyleTypes; col: Color): bool {.raises: [], ta
     return nk_style_push_style_item(ctx = ctx, dest = ctx.style.progress.cursor_normal,
       source = nk_style_item_color(col = nk_rgb(r = r.cint, g = g.cint, b = b.cint)))
 
-proc styleFromTable*(table: openArray[NimColor]) {.raises: [], tags: [],
+proc styleFromTable*(table: openArray[NkColor]) {.raises: [], tags: [],
     contractual.} =
   ## Set the Nuklear style colors from the table
   ##
@@ -2598,7 +2598,7 @@ proc comboList*(items: openArray[string]; selected, itemHeight: int; x,
       1, selected = selected.cint, itemHeight = itemHeight.cint,
           size = new_nk_vec2(x = x.cfloat, y = y.cfloat)).int
 
-proc createColorCombo(ctx; color1: NimColor; x1, y1: cfloat): bool {.raises: [],
+proc createColorCombo(ctx; color1: NkColor; x1, y1: cfloat): bool {.raises: [],
     tags: [], contractual.} =
   ## Create a Nuklear combo widget which display color as the value, internal
   ## use only, temporary code
@@ -2612,7 +2612,7 @@ proc createColorCombo(ctx; color1: NimColor; x1, y1: cfloat): bool {.raises: [],
   return nk_combo_begin_color(ctx = ctx, color = nk_rgb(r = color1.r.cint,
       g = color1.g.cint, b = color1.b.cint), size = new_nk_vec2(x = x1, y = y1))
 
-template colorCombo*(color: NimColor; x, y: float; content: untyped) =
+template colorCombo*(color: NkColor; x, y: float; content: untyped) =
   ## Create a Nuklear combo widget which display color as the value, internal
   ## use only, temporary code
   ##
@@ -2624,7 +2624,7 @@ template colorCombo*(color: NimColor; x, y: float; content: untyped) =
     content
     nk_combo_end(ctx = ctx)
 
-proc createColorCombo(ctx; color1: NimColorF; x1, y1: cfloat): bool {.raises: [
+proc createColorCombo(ctx; color1: NkColorF; x1, y1: cfloat): bool {.raises: [
     ], tags: [], contractual.} =
   ## Create a Nuklear combo widget which display color with float values as
   ## the value, internal use only, temporary code
@@ -2640,7 +2640,7 @@ proc createColorCombo(ctx; color1: NimColorF; x1, y1: cfloat): bool {.raises: [
           a: color1.a.cfloat)), size = new_nk_vec2(x = x1, y = y1))
 
 
-template colorCombo*(color: NimColorF; x, y: float; content: untyped) =
+template colorCombo*(color: NkColorF; x, y: float; content: untyped) =
   ## Create a Nuklear combo widget which display color with float values as
   ## the value
   ##
@@ -2691,7 +2691,7 @@ proc comboClose*() {.raises: [], tags: [], contractual.} =
 # Charts
 # ------
 proc createColorChart(ctx; ctype1: ChartType; color1,
-    higlight1: NimColor; count1: cint; minValue1,
+    higlight1: NkColor; count1: cint; minValue1,
         maxValue1: cfloat): bool {.raises: [], tags: [], contractual.} =
   ## Create a colored chart, internal use only, temporary code
   ##
@@ -2715,7 +2715,7 @@ proc createColorChart(ctx; ctype1: ChartType; color1,
       b = higlight1.b.cint), count = count1, minValue = minValue1,
       maxValue = maxValue1)
 
-template colorChart*(cType: ChartType; color, highlight: NimColor; count: int;
+template colorChart*(cType: ChartType; color, highlight: NkColor; count: int;
     minValue, maxValue: float; content: untyped) =
   ## Create a colored chart
   ##
@@ -2733,7 +2733,7 @@ template colorChart*(cType: ChartType; color, highlight: NimColor; count: int;
     nk_chart_end(ctx = ctx)
 
 proc addColorChartSlot*(ctype: ChartType; color,
-    higlight: NimColor; count: cint; minValue, maxValue: cfloat) {.raises: [],
+    higlight: NkColor; count: cint; minValue, maxValue: cfloat) {.raises: [],
         tags: [], contractual.} =
   ## Add another chart to the existing one
   ##
@@ -2822,7 +2822,7 @@ proc chartPushSlot*(value: float; slot: int): ChartEvent {.discardable,
 # Contextual
 # ----------
 proc createContextual(ctx; flags1: nk_flags; x1, y1: cfloat;
-    triggerBounds1: NimRect; btn: Buttons): bool {.raises: [], tags: [], contractual.} =
+    triggerBounds1: Rect; btn: Buttons): bool {.raises: [], tags: [], contractual.} =
   ## Create a contextual menu, internal use only, temporary code
   ##
   ## * ctx            - the Nuklear context
@@ -2844,7 +2844,7 @@ proc createContextual(ctx; flags1: nk_flags; x1, y1: cfloat;
       cButton = btn.cint.Buttons)
 
 template contextualMenu*(flags: set[PanelFlags]; x, y;
-    triggerBounds: NimRect; button: Buttons; content: untyped) =
+    triggerBounds: Rect; button: Buttons; content: untyped) =
   ## Create a contextual menu
   ##
   ## * flags         - the flags for the menu
@@ -2983,7 +2983,7 @@ proc selectableSymbolLabel*(sym: SymbolType; title: string; value: var bool;
 # ------
 # Images
 # ------
-proc image*(image: PImage; padding: NimVec2 = NimVec2(x: 0, y: 0)) {.raises: [], tags: [], contractual.} =
+proc image*(image: PImage; padding: Vec2 = Vec2(x: 0, y: 0)) {.raises: [], tags: [], contractual.} =
   ## Draw an image
   ##
   ## * image   - pointer to the image which will be drawn
@@ -2995,7 +2995,7 @@ proc image*(image: PImage; padding: NimVec2 = NimVec2(x: 0, y: 0)) {.raises: [],
     ## A binding to Nuklear's function. Internal use only
   var bounds: nk_rect = nk_rect(x: padding.x, y: 0, w: 0, h: 0)
   discard nk_state_widget(bounds = bounds, ctx = ctx)
-  if padding != NimVec2(x: 0, y: 0):
+  if padding != Vec2(x: 0, y: 0):
     bounds.x += padding.x
     bounds.y += padding.y
     bounds.w -= 2 * padding.x
@@ -3044,8 +3044,8 @@ template tooltip*(x, y, width: float; content: untyped) =
 # -------
 # Widgets
 # -------
-proc colorPicker*(color: NimColorF;
-    format: colorFormat): NimColorF {.raises: [], tags: [], contractual.} =
+proc colorPicker*(color: NkColorF;
+    format: colorFormat): NkColorF {.raises: [], tags: [], contractual.} =
   ## Create the color picker widget. Temporary here due to problems with importing nk_colorf.
   ##
   ## * color  - the starting color for the widget
@@ -3057,7 +3057,7 @@ proc colorPicker*(color: NimColorF;
     ## A binding to Nuklear's function. Internal use only
   let newColor: nk_colorf = nk_color_picker(ctx = ctx, color = nk_colorf(
       r: color.r, g: color.g, b: color.b, a: color.a), fmt = format)
-  result = NimColorF(r: newColor.r, g: newColor.g, b: newColor.b, a: newColor.a)
+  result = NkColorF(r: newColor.r, g: newColor.g, b: newColor.b, a: newColor.a)
 
 proc ruleHorizontal*(color: Color, rounding: bool) {.raises: [], tags: [], contractual.} =
   ## Draw a horizontal rule with selected color
@@ -3072,7 +3072,7 @@ proc ruleHorizontal*(color: Color, rounding: bool) {.raises: [], tags: [], contr
 # ------
 # Colors
 # ------
-proc colorfToHsva*(hsva: var array[4, float]; color: NimColorF) {.raises: [],
+proc colorfToHsva*(hsva: var array[4, float]; color: NkColorF) {.raises: [],
     tags: [], contractual.} =
   ## Convert Nim float color object to HSVA values
   ##
@@ -3086,7 +3086,7 @@ proc colorfToHsva*(hsva: var array[4, float]; color: NimColorF) {.raises: [],
   nk_colorf_hsva_fv(hsva = hsva.addr, color = nk_colorf(r: color.r, g: color.g,
       b: color.b, a: color.a))
 
-proc hsvaToColorf*(hsva: array[4, float]): NimColorF {.raises: [], tags: [],
+proc hsvaToColorf*(hsva: array[4, float]): NkColorF {.raises: [], tags: [],
     contractual.} =
   ## Convert HSVA values to Nim color with float values
   ##
@@ -3098,4 +3098,4 @@ proc hsvaToColorf*(hsva: array[4, float]): NimColorF {.raises: [], tags: [],
     ## A binding to Nuklear's function. Internal use only
   let newColor: nk_colorf = nk_hsva_colorf(h = hsva[0], s = hsva[1], v = hsva[
       2], a = hsva[3])
-  result = NimColorF(r: newColor.r, g: newColor.g, b: newColor.b, a: newColor.a)
+  result = NkColorF(r: newColor.r, g: newColor.g, b: newColor.b, a: newColor.a)
