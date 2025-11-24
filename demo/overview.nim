@@ -73,8 +73,8 @@ var
     false, true, false, false, false, false, true,
     false, false, false, false, true]
   currentWeapon: int = 0
-  comboColor: NimColor = NimColor(r: 130, g: 50, b: 50, a: 255)
-  comboColor2: NimColorF = NimColorF(r: 0.509, g: 0.705, b: 0.2, a: 1.0)
+  comboColor: NkColor = NkColor(r: 130, g: 50, b: 50, a: 255)
+  comboColor2: NkColorF = NkColorF(r: 0.509, g: 0.705, b: 0.2, a: 1.0)
   colMode: ColorMode
   progA: nk_size = 20
   progB: nk_size = 40
@@ -92,7 +92,7 @@ var
   boxBuffer: string
   boxActive: EditEvent
   lineIndex, colIndex = -1
-  popupColor: NimColor = NimColor(r: 255, g: 0, b: 0, a: 255)
+  popupColor: NkColor = NkColor(r: 255, g: 0, b: 0, a: 255)
   groupWidth: int = 320
   groupHeight: int = 200
   rootSelected: bool
@@ -512,12 +512,12 @@ proc overview*() =
           chartPushSlot(sin(chartId), 2)
           chartId = chartId + chartStep
       setLayoutRowDynamic(100, 1)
-      colorChart(lines, NimColor(r: 255, g: 0, b: 0),
-          NimColor(r: 150, g: 0, b: 0), 32, 0.0, 1.0):
-        addColorChartSlot(lines, NimColor(r: 0, g: 0, b: 255),
-            NimColor(r: 0, g: 0, b: 150), 32, -1.0, 1.0)
-        addColorChartSlot(lines, NimColor(r: 0, g: 255, b: 0),
-            NimColor(r: 0, g: 150, b: 0), 32, -1.0, 1.0)
+      colorChart(lines, NkColor(r: 255, g: 0, b: 0),
+          NkColor(r: 150, g: 0, b: 0), 32, 0.0, 1.0):
+        addColorChartSlot(lines, NkColor(r: 0, g: 0, b: 255),
+            NkColor(r: 0, g: 0, b: 150), 32, -1.0, 1.0)
+        addColorChartSlot(lines, NkColor(r: 0, g: 255, b: 0),
+            NkColor(r: 0, g: 150, b: 0), 32, -1.0, 1.0)
         chartId = 0
         for i in 0 .. 31:
           chartPushSlot(abs(sin(chartId)), 0)
@@ -741,10 +741,10 @@ proc overview*() =
           case currentTab
           of 0:
             setLayoutRowDynamic(100, 1)
-            colorChart(lines, NimColor(r: 255, g: 0, b: 0, a: 255), NimColor(
+            colorChart(lines, NkColor(r: 255, g: 0, b: 0, a: 255), NkColor(
                 r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
-              addColorChartSlot(lines, NimColor(r: 0, g: 0, b: 255, a: 255),
-                  NimColor(r: 0, g: 0, b: 150, a: 255), 32, -1.0, 1.0)
+              addColorChartSlot(lines, NkColor(r: 0, g: 0, b: 255, a: 255),
+                  NkColor(r: 0, g: 0, b: 150, a: 255), 32, -1.0, 1.0)
               id = 0.0
               for i in 0 .. 31:
                 chartPushSlot(abs(sin(id)), 0)
@@ -752,7 +752,7 @@ proc overview*() =
                 id = id + step
           of 1:
             setLayoutRowDynamic(100, 1)
-            colorChart(column, NimColor(r: 255, g: 0, b: 0, a: 255), NimColor(
+            colorChart(column, NkColor(r: 255, g: 0, b: 0, a: 255), NkColor(
                 r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
               id = 0.0
               for i in 0 .. 31:
@@ -760,11 +760,11 @@ proc overview*() =
                 id = id + step
           of 2:
             setLayoutRowDynamic(100, 1)
-            colorChart(lines, NimColor(r: 255, g: 0, b: 0, a: 255), NimColor(
+            colorChart(lines, NkColor(r: 255, g: 0, b: 0, a: 255), NkColor(
                 r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
-              addColorChartSlot(lines, NimColor(r: 0, g: 0, b: 255, a: 255),
-                  NimColor(r: 0, g: 0, b: 150, a: 255), 32, -1.0, 1.0)
-              addColorChartSlot(column, NimColor(r: 0, g: 255, b: 0), NimColor(
+              addColorChartSlot(lines, NkColor(r: 0, g: 0, b: 255, a: 255),
+                  NkColor(r: 0, g: 0, b: 150, a: 255), 32, -1.0, 1.0)
+              addColorChartSlot(column, NkColor(r: 0, g: 255, b: 0), NkColor(
                   r: 0, g: 150, b: 0), 32, 0.0, 1.0)
               id = 0.0
               for i in 0 .. 31:
