@@ -28,28 +28,23 @@
 import contracts
 import nk_buffer, nk_math, nk_types
 
-proc nkCommandBufferPush*(b: PNkCommandBuffer; t: CommandType;
+proc nkCommandBufferPush*(b: var CommandBuffer; t: CommandType;
     size: nk_size): pointer {.raises: [], tags: [RootEffect], contractual.} =
   ## Add a command to the commands buffer. Internal use only
   ##
   ## * b    - the buffer to which to command will be added
   ## * t    - the type of command
   ## * size - the size of command to add
-  require:
-    b != nil
-    b.base != nil
   body:
-    if b == nil:
-      return nil
     const align: nk_size = alignof(x = Command)
     let cmd: ptr Command = cast[ptr Command](nkBufferAlloc(b = b.base,
-        `type` = bufferFront, size = size, align = align))
+        bufferAlloc = bufferFront, size = size, align = align))
     if cmd == nil:
       return nil
 
     # make sure the offset to the next command is aligned
     b.last = cast[nk_size](cast[ptr nk_byte](cmd)) - cast[nk_size](cast[
-        ptr nk_byte](b.base.memory.`ptr`))
+        ptr nk_byte](b.base.memory.memPtr))
     let
       unaligned: pointer = cast[ptr nk_byte](cmd) + size
       memory: pointer = cast[pointer]((cast[nk_size](unaligned) + (align -
@@ -60,10 +55,10 @@ proc nkCommandBufferPush*(b: PNkCommandBuffer; t: CommandType;
     cmd.next = b.base.allocated + alignment
     when defined(nkIncludeCommandUserData):
       cmd.userdata = b.userdata
-    b.`end` = cmd.next
+    b.cmdEnd = cmd.next
     return cmd
 
-proc nkFillRect*(b: PNkCommandBuffer; rect: Rect; rounding: float;
+proc nkFillRect*(b: var CommandBuffer; rect: Rect; rounding: float;
   c: nk_color) {.raises: [], tags: [RootEffect], contractual.} =
   ## Fill the rectangle with the selected color
   ##
@@ -71,12 +66,11 @@ proc nkFillRect*(b: PNkCommandBuffer; rect: Rect; rounding: float;
   ## * rect     - the rectangle which will be filled with color
   ## * rounding - if bigger than zero, round the corners of the rectangle
   ## * c        - the color to fill the rectangle
-  if b == nil or rect.w == 0 or rect.h == 0:
+  if rect.w == 0 or rect.h == 0:
     return
-  if b.use_clipping == 1:
-    let clip: nk_rect = b.clip
+  if b.useClipping:
     if not nkIntersect(x0 = rect.x, y0 = rect.y, w0 = rect.w, h0 = rect.h,
-      x1 = clip.x, y1 = clip.y, w1 = clip.w, h1 = clip.h):
+      x1 = b.clip.x, y1 = b.clip.y, w1 = b.clip.w, h1 = b.clip.h):
       return
 
   var cmd: ptr nk_command_rect_filled = nil

@@ -1113,7 +1113,8 @@ type
     ## Used to store Nuklear buffer's memory info
     memPtr*: pointer
     size*: nk_size
-  PluginAlloc* = proc (handle: Handle; old: pointer; size: nk_size): pointer {.cdecl.}
+  PluginAlloc* = proc (handle: Handle; old: pointer;
+      size: nk_size): pointer {.cdecl.}
     ## The procedure executed when plugin is allocated
   PluginFree* = proc (handle: Handle; old: pointer) {.cdecl.}
     ## The procedure executed when plugin is removed
@@ -1143,6 +1144,18 @@ type
     next*: nk_size
     when defined(nkIncludeCommandUserData):
       userdata*: Handle ## Interna Nuklear data
+  CommandRectFilled* = object
+    ## Used to store Nuklear command data for draw filled rectangles
+    header*: Command
+    rounding*, w*, h*: uint16
+    x*, y*: int16
+    color*: NkColor
+  Panel* = object
+    ## Used to store Nuklear panel data
+    pType*: PanelType
+    clip*, bounds*: Rect
+    flags*: int
+    border*, atY*, atX*, maxX*, headerHeight*, footerHeight*: float
 
 # ---------
 # Constants
