@@ -26,6 +26,7 @@
 # Nuklear overview demo translated to Nim (for Xlib binding)
 
 import std/[colors, math, strformat, times]
+import contracts
 when defined(xlib):
   import nuklear_xlib
 else:
@@ -101,37 +102,39 @@ var
   selected4: array[32, bool]
   a, b, c: float = 100
 
-proc overview*() =
+proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
+  ## Show the most features of the library
   windowFlags = {}
-  headerAlign(headerRight)
+  headerAlign(value = headerRight)
   if border:
-    windowFlags.incl(windowBorder)
+    windowFlags.incl(y = windowBorder)
   if resize:
-    windowFlags.incl(windowScalable)
+    windowFlags.incl(y = windowScalable)
   if movable:
-    windowFlags.incl(windowMovable)
+    windowFlags.incl(y = windowMovable)
   if noScrollbar:
-    windowFlags.incl(windowNoScrollbar)
+    windowFlags.incl(y = windowNoScrollbar)
   if scaleLeft:
-    windowFlags.incl(windowScaleLeft)
+    windowFlags.incl(y = windowScaleLeft)
   if minimizable:
-    windowFlags.incl(windowMinimizable)
-  window("Overview", 275, 10, 400, 600, windowFlags):
+    windowFlags.incl(y = windowMinimizable)
+  window(name = "Overview", x = 275, y = 10, w = 400, h = 600,
+      flags = windowFlags):
     if showMenu:
       # menubar
       menuBar:
-        layoutStatic(25, 5):
+        layoutStatic(height = 25, cols = 5):
           # menu #1
-          row(45):
-            menu("MENU", left, 120, 200):
-              setLayoutRowDynamic(25, 1)
-              menuItem("Hide", left):
+          row(width = 45):
+            menu(text = "MENU", align = left, x = 120, y = 200):
+              setLayoutRowDynamic(height = 25, cols = 1)
+              menuItem(label = "Hide", align = left):
                 showMenu = false
-              menuItem("About", left):
+              menuItem(label = "About", align = left):
                 showAppAbout = true
-              progressBar(prog, 100)
-              slider(0, slider, 16, 1)
-              checkbox("check", check)
+              progressBar(value = prog, maxValue = 100)
+              slider(min = 0, val = slider, max = 16, step = 1)
+              checkbox(label = "check", checked = check)
           # menu 2
           row(60):
             menu("ADVANCED", left, 200, 600):
