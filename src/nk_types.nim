@@ -1150,12 +1150,92 @@ type
     rounding*, w*, h*: uint16
     x*, y*: int16
     color*: NkColor
+  RowLayout* = object
+    ## Used to store Nuklear row layout data
+    index*, columns*, treeDepth*: int
+    ratio*, itemWidth*, itemHeight*, height*, minHeight*, itemOffset*,
+      filled*: float
+    templates*: array[nkMaxLayoutRowTemplateColumns, float]
+    rlType*: PanelRowLayoutType
+  Scroll* = object
+    ## Used to store Nuklear scroll widget data
+    x*, y*: uint
+  MenuState* = object
+    ## Used to store Nuklear menu widget data
+    x*, y*, w*, h*: float
+    offset*: Scroll
+  ChartSlot* = object
+    ## Used to store Nuklear charts' slots data
+    cType*: ChartType
+    color*, higlight*: NkColor
+    last*: Vec2
+    showMarkers*: bool
+  Chart* = object
+    ## Used to store Nuklear charts data
+    slot*: int
+    x*, y*, w*, h*: float
+    slots: seq[ChartSlot]
   Panel* = object
     ## Used to store Nuklear panel data
     pType*: PanelType
     clip*, bounds*: Rect
     flags*: int
     border*, atY*, atX*, maxX*, headerHeight*, footerHeight*: float
+    row*: RowLayout
+    parent*: ref Panel
+    hasScrolling*: bool
+    offsetX*, offsetY*: uint
+    menu*: MenuState
+    chart*: Chart
+    buffer*: CommandBuffer
+  PopupBuffer* = object
+    ## Used to store Nuklear popup buffer data
+    begin*, buffEnd*, parent*, last*: int
+    active*: bool
+  PopupState* = object
+    ## Used to store Nuklear popup data
+    win*: Window
+    active*: bool
+    pType*: PanelType
+    name*: nk_hash
+    buf*: PopupBuffer
+    comboCount*, conCount*, colOld*, activeCon*: uint
+    header*: Rect
+    seq*, old*: uint
+    scrollbar*: Scroll
+    mode*, singleLine*: uint8
+  EditState* = object
+    ## Used to store Nuklear edit data
+    active*, prev*, cursor*, selStart*, selEnd*: int
+    name*: nk_hash
+  PropertyState* = object
+    ## Used to store Nuklear property widget data
+    active*, prev*, length*, cursor*, selectStart*, selectEnd*, state*: int
+    buffer*: array[nkMaxNumberBuffer, char]
+    name*: nk_hash
+    seq*, old*: uint
+  NkTable* = object
+    ## Used to store Nuklear table widget data
+    seq*, size*: uint
+    keys*, values*: pointer
+    next*, prev*: ref NkTable
+  Window* = object
+    ## Used to store Nuklear window data
+    layout*: Panel
+    popup*: ref PopupState
+    parent*, next*, prev*: ref Window
+    bounds*: Rect
+    seq*, scrolled*, tableCount: uint
+    flags*: nk_flags
+    buffer*: CommandBuffer
+    edit*: EditState
+    property*: PropertyState
+    scrollbar*: Scroll
+    name*: nk_hash
+    nameString*: array[nkWindowMaxName, char]
+    scrollbarHidingTimer*: float
+    widgetsDisabled*: bool
+    tables*: NkTable
 
 # ---------
 # Constants
