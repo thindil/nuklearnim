@@ -26,7 +26,7 @@
 # Nuklear overview demo translated to Nim (for Xlib binding)
 
 import std/[colors, math, strformat, times]
-import contracts
+import contracts, nimalyzer
 when defined(xlib):
   import nuklear_xlib
 else:
@@ -136,145 +136,158 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
               slider(min = 0, val = slider, max = 16, step = 1)
               checkbox(label = "check", checked = check)
           # menu 2
-          row(60):
-            menu("ADVANCED", left, 200, 600):
-              treeTab("FILE", state, menuState, menuFile.ord):
-                menuItem("New", left):
+          row(width = 60):
+            menu(text = "ADVANCED", align = left, x = 200, y = 600):
+              treeTab(title = "FILE", state = state, current = menuState,
+                  index = menuFile.ord):
+                menuItem(label = "New", align = left):
                   discard
-                menuItem("Open", left):
+                menuItem(label = "Open", align = left):
                   discard
-                menuItem("Save", left):
+                menuItem(label = "Save", align = left):
                   discard
-                menuItem("Close", left):
+                menuItem(label = "Close", align = left):
                   discard
-                menuItem("Exit", left):
+                menuItem(label = "Exit", align = left):
                   discard
-              treeTab("EDIT", state, menuState, menuEdit.ord):
-                menuItem("Copy", left):
+              treeTab(title = "EDIT", state = state, current = menuState,
+                  index = menuEdit.ord):
+                menuItem(label = "Copy", align = left):
                   discard
-                menuItem("Delete", left):
+                menuItem(label = "Delete", align = left):
                   discard
-                menuItem("Cut", left):
+                menuItem(label = "Cut", align = left):
                   discard
-                menuItem("Paste", left):
+                menuItem(label = "Paste", align = left):
                   discard
-              treeTab("VIEW", state, menuState, menuView.ord):
-                menuItem("About", left):
+              treeTab(title = "VIEW", state = state, current = menuState,
+                  index = menuView.ord):
+                menuItem(label = "About", align = left):
                   discard
-                menuItem("Options", left):
+                menuItem(label = "Options", align = left):
                   discard
-                menuItem("Customize", left):
+                menuItem(label = "Customize", align = left):
                   discard
-              treeTab("CHART", state, menuState, menuChart.ord):
-                setLayoutRowDynamic(150, 1)
-                chart(column, values.len, 0, 50):
+              treeTab(title = "CHART", state = state, current = menuState,
+                  index = menuChart.ord):
+                setLayoutRowDynamic(height = 150, cols = 1)
+                chart(cType = column, num = values.len, min = 0, max = 50):
                   for value in values:
-                    chartPush(value)
+                    chartPush(value = value)
           # menu widgets
-          row(70):
-            progressBar(mprog, 100)
-            slider(0, mslider, 16, 1)
-            checkbox("check", mcheck)
+          row(width = 70):
+            progressBar(value = mprog, maxValue = 100)
+            slider(min = 0, val = mslider, max = 16, step = 1)
+            checkbox(label = "check", checked = mcheck)
     if showAppAbout:
       try:
-        popup(staticPopup, "About", {windowClosable}, 20, 100,
-            300, 190):
-          setLayoutRowDynamic(20, 1)
-          label("Nuklear")
-          label("By Micha Mettke")
-          label("nuklear is licensed under the public domain License.")
+        popup(pType = staticPopup, title = "About", flags = {windowClosable},
+            x = 20, y = 100, w = 300, h = 190):
+          setLayoutRowDynamic(height = 20, cols = 1)
+          label(str = "Nuklear")
+          label(str = "By Micha Mettke")
+          label(str = "nuklear is licensed under the public domain License.")
       except:
         showAppAbout = false
-    treeTab("Window", minimized, 1):
-      setLayoutRowDynamic(30, 2)
-      checkbox("Titlebar", titlebar)
-      checkbox("Menu", showMenu)
-      checkbox("Border", border)
-      checkbox("Resizable", resize)
-      checkbox("Movable", movable)
-      checkbox("No Scrollbar", noScrollbar)
-      checkbox("Minimizable", minimizable)
-      checkbox("Scale Left", scaleLeft)
-    treeTab("Widgets", minimized, 2):
-      treeNode("Text", minimized, 3):
-        setLayoutRowDynamic(20, 1)
-        label("Label aligned left")
-        label("Label aligned centered", centered)
-        label("Label aligned right", right)
-        colorLabel("Blue text", color = colBlue)
-        colorLabel("Yellow text", color = colYellow)
-        text("Text without /0", alignment = right)
-        setLayoutRowStatic(100, 200, 1)
-        wrapLabel("This is a very long line to hopefully get this text to be wrapped into multiple lines to show line wrapping")
-        setLayoutRowDynamic(100, 1)
-        wrapLabel("This is another long text to show dynamic window changes on multiline text")
-      treeNode("Button", minimized, 4):
-        setLayoutRowStatic(30, 100, 3)
-        labelButton("Button"):
+    treeTab(title = "Window", state = minimized, index = 1):
+      setLayoutRowDynamic(height = 30, cols = 2)
+      checkbox(label = "Titlebar", checked = titlebar)
+      checkbox(label = "Menu", checked = showMenu)
+      checkbox(label = "Border", checked = border)
+      checkbox(label = "Resizable", checked = resize)
+      checkbox(label = "Movable", checked = movable)
+      checkbox(label = "No Scrollbar", checked = noScrollbar)
+      checkbox(label = "Minimizable", checked = minimizable)
+      checkbox(label = "Scale Left", checked = scaleLeft)
+    treeTab(title = "Widgets", state = minimized, index = 2):
+      treeNode(title = "Text", state = minimized, index = 3):
+        setLayoutRowDynamic(height = 20, cols = 1)
+        label(str = "Label aligned left")
+        label(str = "Label aligned centered", alignment = centered)
+        label(str = "Label aligned right", alignment = right)
+        colorLabel(str = "Blue text", color = colBlue)
+        colorLabel(str = "Yellow text", color = colYellow)
+        text(str = "Text without /0", alignment = right)
+        setLayoutRowStatic(height = 100, width = 200, cols = 1)
+        wrapLabel(str = "This is a very long line to hopefully get this text to be wrapped into multiple lines to show line wrapping")
+        setLayoutRowDynamic(height = 100, cols = 1)
+        wrapLabel(str = "This is another long text to show dynamic window changes on multiline text")
+      treeNode(title = "Button", state = minimized, index = 4):
+        setLayoutRowStatic(height = 30, width = 100, cols = 3)
+        labelButton(title = "Button"):
           echo "Button pressed!"
-        setButtonBehavior(repeater)
-        labelButton("Repeater"):
+        setButtonBehavior(behavior = repeater)
+        labelButton(title = "Repeater"):
           echo "Repeater is being pressed!"
-        setButtonBehavior(default)
-        colorButton(0, 0, 255):
+        setButtonBehavior(behavior = default)
+        colorButton(r = 0, g = 0, b = 255):
           discard
-        setLayoutRowStatic(25, 25, 8)
-        symbolButton(circleSolid):
+        setLayoutRowStatic(height = 25, width = 25, cols = 8)
+        symbolButton(symbol = circleSolid):
           discard
-        symbolButton(circleOutline):
+        symbolButton(symbol = circleOutline):
           discard
-        symbolButton(rectSolid):
+        symbolButton(symbol = rectSolid):
           discard
-        symbolButton(rectOutline):
+        symbolButton(symbol = rectOutline):
           discard
-        symbolButton(triangleUp):
+        symbolButton(symbol = triangleUp):
           discard
-        symbolButton(triangleDown):
+        symbolButton(symbol = triangleDown):
           discard
-        symbolButton(triangleLeft):
+        symbolButton(symbol = triangleLeft):
           discard
-        symbolButton(triangleRight):
+        symbolButton(symbol = triangleRight):
           discard
-        setLayoutRowStatic(30, 100, 2)
-        symbolLabelButton(triangleLeft, "prev", right):
+        setLayoutRowStatic(height = 30, width = 100, cols = 2)
+        symbolLabelButton(symbol = triangleLeft, label = "prev", align = right):
           discard
-        symbolLabelButton(triangleRight, "next", left):
+        symbolLabelButton(symbol = triangleRight, label = "next", align = left):
           discard
-      treeNode("Basic", minimized, 5):
-        setLayoutRowStatic(30, 100, 1)
-        checkbox("Checkbox", checkbox)
-        setLayoutRowStatic(30, 80, 3)
-        if option("optionA", option == A):
+      treeNode(title = "Basic", state = minimized, index = 5):
+        setLayoutRowStatic(height = 30, width = 100, cols = 1)
+        checkbox(label = "Checkbox", checked = checkbox)
+        setLayoutRowStatic(height = 30, width = 80, cols = 3)
+        if option(label = "optionA", selected = option == A):
           option = A
-        if option("optionB", option == B):
+        if option(label = "optionB", selected = option == B):
           option = B
-        if option("optionC", option == C):
+        if option(label = "optionC", selected = option == C):
           option = C
-        setLayoutRowStatic(30, 2, ratio)
+        setLayoutRowStatic(height = 30, cols = 2, ratio = ratio)
+        {.push ruleOff: "namedParams".}
         fmtLabel(left, "Slider int")
-        slider(0, intSlider, 10, 1)
-        label("Slider float")
-        slider(0, float_slider, 5.0, 0.5)
+        slider(min = 0, val = intSlider, max = 10, step = 1)
+        label(str = "Slider float")
+        slider(min = 0, val = float_slider, max = 5.0, step = 0.5)
         fmtLabel(left, "Progressbar: %u", progValue)
+        {.push ruleOn: "namedParams".}
         progressBar(prog_value, 100)
-        setLayoutRowStatic(25, 2, ratio)
-        label("Property float:")
-        property("Float:", 0, propertyFloat, 64.0, 0.1, 0.2)
-        label("Property int:")
-        property("Int:", 0, propertyInt, 100, 1, 1)
-        label("Property neg:")
-        property("Neg:", -10, propertyNeg, 10, 1, 1)
-        setLayoutRowDynamic(25, 1)
-        label("Range:")
-        setLayoutRowDynamic(25, 3)
-        property("#min:", 0, rangeFloatMin, rangeFloatMax, 1.0, 0.2)
-        property("#float:", rangeFloatMin, rangeFloatValue,
-            rangeFloatMax, 1.0, 0.2)
-        property("#max:", rangeFloatMin, rangeFloatMax, 100, 1.0, 0.2)
-        property("#min:", cint.low, rangeIntMin, rangeIntMax, 1, 10)
-        property("#neg:", rangeIntMin, rangeIntValue, rangeIntMax,
-            1, 10)
-        property("#max:", rangeIntMin, rangeIntMax, cint.high, 1, 10)
+        setLayoutRowStatic(height = 25, cols = 2, ratio = ratio)
+        label(str = "Property float:")
+        property(name = "Float:", min = 0, val = propertyFloat, max = 64.0,
+            step = 0.1, incPerPixel = 0.2)
+        label(str = "Property int:")
+        property(name = "Int:", min = 0, val = propertyInt, max = 100, step = 1,
+            incPerPixel = 1)
+        label(str = "Property neg:")
+        property(name = "Neg:", min = -10, val = propertyNeg, max = 10,
+            step = 1, incPerPixel = 1)
+        setLayoutRowDynamic(height = 25, cols = 1)
+        label(str = "Range:")
+        setLayoutRowDynamic(height = 25, cols = 3)
+        property(name = "#min:", min = 0, val = rangeFloatMin,
+            max = rangeFloatMax, step = 1.0, incPerPixel = 0.2)
+        property(name = "#float:", min = rangeFloatMin, val = rangeFloatValue,
+            max = rangeFloatMax, step = 1.0, incPerPixel = 0.2)
+        property(name = "#max:", min = rangeFloatMin, val = rangeFloatMax,
+            max = 100, step = 1.0, incPerPixel = 0.2)
+        property(name = "#min:", min = cint.low, val = rangeIntMin,
+            max = rangeIntMax, step = 1, incPerPixel = 10)
+        property(name = "#neg:", min = rangeIntMin, val = rangeIntValue,
+            max = rangeIntMax, step = 1, incPerPixel = 10)
+        property(name = "#max:", min = rangeIntMin, val = rangeIntMax,
+            max = cint.high, step = 1, incPerPixel = 10)
       treeNode("Inactive", minimized, 6):
         setLayoutRowDynamic(30, 1)
         checkbox("Inactive", inactive)
