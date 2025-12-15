@@ -262,7 +262,7 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
         slider(min = 0, val = float_slider, max = 5.0, step = 0.5)
         fmtLabel(left, "Progressbar: %u", progValue)
         {.push ruleOn: "namedParams".}
-        progressBar(prog_value, 100)
+        progressBar(value = prog_value, maxValue = 100)
         setLayoutRowStatic(height = 25, cols = 2, ratio = ratio)
         label(str = "Property float:")
         property(name = "Float:", min = 0, val = propertyFloat, max = 64.0,
@@ -288,29 +288,29 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
             max = rangeIntMax, step = 1, incPerPixel = 10)
         property(name = "#max:", min = rangeIntMin, val = rangeIntMax,
             max = cint.high, step = 1, incPerPixel = 10)
-      treeNode("Inactive", minimized, 6):
-        setLayoutRowDynamic(30, 1)
-        checkbox("Inactive", inactive)
-        setLayoutRowStatic(30, 80, 1)
+      treeNode(title = "Inactive", state = minimized, index = 6):
+        setLayoutRowDynamic(height = 30, cols = 1)
+        checkbox(label = "Inactive", checked = inactive)
+        setLayoutRowStatic(height = 30, width = 80, cols = 1)
         if inactive == 1:
           disabled:
-            labelButton("button"):
+            labelButton(title = "button"):
               discard
         else:
-          labelButton("button"):
+          labelButton(title = "button"):
             echo "button pressed"
-      treeNode("Selectable", minimized, 7):
-        treeNode("List", minimized, 8):
-          setLayoutRowStatic(18, 100, 1)
-          selectableLabel("Selectable", selected[0])
-          selectableLabel("Selectable", selected[1])
-          label("Not Selectable")
-          selectableLabel("Selectable", selected[2])
-          selectableLabel("Selectable", selected[3])
-        treeNode("Grid", minimized, 9):
-          setLayoutRowStatic(50, 50, 4)
+      treeNode(title = "Selectable", state = minimized, index = 7):
+        treeNode(title = "List", state = minimized, index = 8):
+          setLayoutRowStatic(height = 18, width = 100, cols = 1)
+          selectableLabel(str = "Selectable", value = selected[0])
+          selectableLabel(str = "Selectable", value = selected[1])
+          label(str = "Not Selectable")
+          selectableLabel(str = "Selectable", value = selected[2])
+          selectableLabel(str = "Selectable", value = selected[3])
+        treeNode(title = "Grid", state = minimized, index = 9):
+          setLayoutRowStatic(height = 50, width = 50, cols = 4)
           for index, value in selected2.mpairs:
-            if selectableLabel("Z", value, centered):
+            if selectableLabel(str = "Z", value = value, align = centered):
               let
                 x = index mod 4
                 y = (index / 4).int
@@ -322,257 +322,291 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
                   4].cint xor 1).nk_bool
               if y < 3: selected2[index + 4] = (selected2[index +
                   4].cint xor 1).nk_bool
-      treeNode("Combo", minimized, 10):
-        setLayoutRowStatic(25, 200, 1);
-        currentWeapon = comboList(weapons, currentWeapon, 25, 200, 200)
-        colorCombo(comboColor, 200, 200):
+      treeNode(title = "Combo", state = minimized, index = 10):
+        setLayoutRowStatic(height = 25, width = 200, cols = 1);
+        currentWeapon = comboList(items = weapons, selected = currentWeapon,
+            itemHeight = 25, x = 200, y = 200)
+        colorCombo(color = comboColor, x = 200, y = 200):
           let ratios: array[2, cfloat] = [0.15.cfloat, 0.85]
-          setLayoutRowDynamic(30, 2, ratios)
-          label("R:")
-          comboColor.r = slide(0, comboColor.r, 255, 5)
-          label("G:")
-          comboColor.g = slide(0, comboColor.g, 255, 5)
-          label("B:")
-          comboColor.b = slide(0, comboColor.b, 255, 5)
-          label("A:")
-          comboColor.a = slide(0, comboColor.a, 255, 5)
-        colorCombo(comboColor2, 200, 400):
-          setLayoutRowDynamic(120, 1)
-          comboColor2 = colorPicker(comboColor2, rgba)
-          setLayoutRowDynamic(25, 2)
-          if option("RGB", colMode == rgb):
+          setLayoutRowDynamic(height = 30, cols = 2, ratio = ratios)
+          label(str = "R:")
+          comboColor.r = slide(min = 0, val = comboColor.r, max = 255, step = 5)
+          label(str = "G:")
+          comboColor.g = slide(min = 0, val = comboColor.g, max = 255, step = 5)
+          label(str = "B:")
+          comboColor.b = slide(min = 0, val = comboColor.b, max = 255, step = 5)
+          label(str = "A:")
+          comboColor.a = slide(min = 0, val = comboColor.a, max = 255, step = 5)
+        colorCombo(color = comboColor2, x = 200, y = 400):
+          setLayoutRowDynamic(height = 120, cols = 1)
+          comboColor2 = colorPicker(color = comboColor2, format = rgba)
+          setLayoutRowDynamic(height = 25, cols = 2)
+          if option(label = "RGB", selected = colMode == rgb):
             colMode = rgb
-          if option("HSV", colMode == hsv):
+          if option(label = "HSV", selected = colMode == hsv):
             colMode = hsv
-          setLayoutRowDynamic(25, 1)
+          setLayoutRowDynamic(height = 25, cols = 1)
           if colMode == rgb:
-            comboColor2.r = property2("#R:", 0, comboColor2.r, 1.0,
-                0.01, 0.005)
-            comboColor2.g = property2("#G:", 0, comboColor2.g, 1.0,
-                0.01, 0.005)
-            comboColor2.b = property2("#B:", 0, comboColor2.b, 1.0,
-                0.01, 0.005)
-            comboColor2.a = property2("#A:", 0, comboColor2.a, 1.0,
-                0.01, 0.005)
+            comboColor2.r = property2(name = "#R:", min = 0,
+                val = comboColor2.r, max = 1.0, step = 0.01,
+                incPerPixel = 0.005)
+            comboColor2.g = property2(name = "#G:", min = 0,
+                val = comboColor2.g, max = 1.0, step = 0.01,
+                incPerPixel = 0.005)
+            comboColor2.b = property2(name = "#B:", min = 0,
+                val = comboColor2.b, max = 1.0, step = 0.01,
+                incPerPixel = 0.005)
+            comboColor2.a = property2(name = "#A:", min = 0,
+                val = comboColor2.a, max = 1.0, step = 0.01,
+                incPerPixel = 0.005)
           else:
-            var hsva: array[4, float]
-            colorfToHsva(hsva, comboColor2)
-            hsva[0] = property2("#H:", 0, hsva[0], 1.0, 0.01, 0.05)
-            hsva[1] = property2("#S:", 0, hsva[1], 1.0, 0.01, 0.05)
-            hsva[2] = property2("#V:", 0, hsva[2], 1.0, 0.01, 0.05)
-            hsva[3] = property2("#A:", 0, hsva[3], 1.0, 0.01, 0.05)
-            comboColor2 = hsvaToColorf(hsva)
+            var hsva: array[4, float] = [0.0, 0.0, 0.0, 0.0]
+            colorfToHsva(hsva = hsva, color = comboColor2)
+            hsva[0] = property2(name = "#H:", min = 0, val = hsva[0], max = 1.0,
+                step = 0.01, incPerPixel = 0.05)
+            hsva[1] = property2(name = "#S:", min = 0, val = hsva[1], max = 1.0,
+                step = 0.01, incPerPixel = 0.05)
+            hsva[2] = property2(name = "#V:", min = 0, val = hsva[2], max = 1.0,
+                step = 0.01, incPerPixel = 0.05)
+            hsva[3] = property2(name = "#A:", min = 0, val = hsva[3], max = 1.0,
+                step = 0.01, incPerPixel = 0.05)
+            comboColor2 = hsvaToColorf(hsva = hsva)
         var sum = $(progA + progB + progC + progD)
-        labelCombo(sum, 200, 200):
-          setLayoutRowDynamic(30, 1)
-          progressBar(progA, 100)
-          progressBar(progB, 100)
-          progressBar(progC, 100)
-          progressBar(progD, 100)
+        labelCombo(selected = sum, x = 200, y = 200):
+          setLayoutRowDynamic(height = 30, cols = 1)
+          progressBar(value = progA, maxValue = 100)
+          progressBar(value = progB, maxValue = 100)
+          progressBar(value = progC, maxValue = 100)
+          progressBar(value = progD, maxValue = 100)
         sum = $(checkValues[0] + checkValues[1] + checkValues[2] + checkValues[
             3] + checkValues[4])
-        labelCombo(sum, 200, 200):
-          setLayoutRowDynamic(30, 1)
-          checkBox(weapons[0], checkValues[0])
-          checkBox(weapons[1], checkValues[1])
-          checkBox(weapons[2], checkValues[2])
-          checkBox(weapons[3], checkValues[3])
-          checkBox(weapons[4], checkValues[4])
+        labelCombo(selected = sum, x = 200, y = 200):
+          setLayoutRowDynamic(height = 30, cols = 1)
+          checkBox(label = weapons[0], checked = checkValues[0])
+          checkBox(label = weapons[1], checked = checkValues[1])
+          checkBox(label = weapons[2], checked = checkValues[2])
+          checkBox(label = weapons[3], checked = checkValues[3])
+          checkBox(label = weapons[4], checked = checkValues[4])
         sum = $position[0] & " " & $position[1] & " " & $position[2]
-        labelCombo(sum, 200, 200):
-          setLayoutRowDynamic(25, 1)
-          property("#X:", -1024.0, position[0], 1024.0, 1, 0.5)
-          property("#Y:", -1024.0, position[1], 1024.0, 1, 0.5)
-          property("#Z:", -1024.0, position[2], 1024.0, 1, 0.5)
+        labelCombo(selected = sum, x = 200, y = 200):
+          setLayoutRowDynamic(height = 25, cols = 1)
+          property(name = "#X:", min = -1024.0, val = position[0], max = 1024.0,
+              step = 1, incPerPixel = 0.5)
+          property(name = "#Y:", min = -1024.0, val = position[1], max = 1024.0,
+              step = 1, incPerPixel = 0.5)
+          property(name = "#Z:", min = -1024.0, val = position[2], max = 1024.0,
+              step = 1, incPerPixel = 0.5)
         sum = $chartSelection
-        labelCombo(sum, 200, 250):
-          setLayoutRowDynamic(150, 1)
-          chart(column, values.len, 0, 50):
+        labelCombo(selected = sum, x = 200, y = 250):
+          setLayoutRowDynamic(height = 150, cols = 1)
+          chart(cType = column, num = values.len, min = 0, max = 50):
             for value in values:
-              if chartPush(value) == clicked:
+              if chartPush(value = value) == clicked:
                 chartSelection = value
                 comboClose()
         if not timeSelected and not dateSelected:
           selectedDate = now()
         sum = $selectedDate.hour & ":" & $selectedDate.minute & ":" &
             $selectedDate.second
-        labelCombo(sum, 200, 250):
+        labelCombo(selected = sum, x = 200, y = 250):
           timeSelected = true
-          setLayoutRowDynamic(25, 1)
+          setLayoutRowDynamic(height = 25, cols = 1)
           {.warning[Deprecated]: off.}
-          selectedDate.second = property2("#S:", 0, selectedDate.second,
-              60, 1, 1)
-          selectedDate.minute = property2("#M:", 0, selectedDate.minute,
-              60, 1, 1)
-          selectedDate.hour = property2("#H:", 0, selectedDate.hour, 23,
-              1, 1)
+          selectedDate.second = property2(name = "#S:", min = 0,
+              val = selectedDate.second, max = 60, step = 1, incPerPixel = 1)
+          selectedDate.minute = property2(name = "#M:", min = 0,
+              val = selectedDate.minute, max = 60, step = 1, incPerPixel = 1)
+          selectedDate.hour = property2(name = "#H:", min = 0,
+              val = selectedDate.hour, max = 23, step = 1, incPerPixel = 1)
         sum = $selectedDate.monthday & "-" & $selectedDate.month & "-" &
             $selectedDate.year
-        labelCombo(sum, 350, 400):
+        labelCombo(selected = sum, x = 350, y = 400):
           dateSelected = true
-          layoutDynamic(20, 3):
-            row(0.05):
-              symbolButton(triangleLeft):
+          layoutDynamic(height = 20, cols = 3):
+            row(width = 0.05):
+              symbolButton(symbol = triangleLeft):
                 if selectedDate.month == mJan:
                   selectedDate.monthZero = 12
                   selectedDate.year = selectedDate.year - 1
                 else:
                   selectedDate.monthZero = selectedDate.month.ord - 1
-            row(0.9):
+            row(width = 0.9):
               sum = $selectedDate.month & " " & $selectedDate.year
-              label(sum, centered)
-            row(0.05):
-              symbolButton(triangleRight):
+              label(str = sum, alignment = centered)
+            row(width = 0.05):
+              symbolButton(symbol = triangleRight):
                 if selectedDate.month == mDec:
                   selectedDate.monthZero = 1
                   selectedDate.year = selectedDate.year + 1
                 else:
                   selectedDate.monthZero = selectedDate.month.ord + 1
-          setLayoutRowDynamic(35, 7)
+          setLayoutRowDynamic(height = 35, cols = 7)
           for day in WeekDay:
             sum = $day
-            label(sum, centered)
-          var spacing = getDayOfWeek(1, selectedDate.month,
-              selectedDate.year).ord - dMon.ord
+            label(str = sum, alignment = centered)
+          var spacing = getDayOfWeek(monthday = 1, month = selectedDate.month,
+              year = selectedDate.year).ord - dMon.ord
           if spacing > 0:
-            addSpacing(spacing)
-          for i in 1 .. getDaysInMonth(selectedDate.month, selectedDate.year):
+            addSpacing(cols = spacing)
+          for i in 1 .. getDaysInMonth(month = selectedDate.month,
+              year = selectedDate.year):
             sum = $i
-            labelButton(sum):
+            labelButton(title = sum):
               selectedDate.monthdayZero = i
               comboClose()
           {.warning[Deprecated]: on.}
-      treeNode("Input", minimized, 11):
-        setLayoutRowStatic(25, 2, ratio)
-        label("Default:")
-        editString(text[0], 64)
-        label("Int:")
-        editString(text[1], 64, filter = nk_filter_decimal)
-        label("Float:")
-        editString(text[2], 64, filter = nk_filter_float)
-        label("Hex:")
-        editString(text[4], 64, filter = nk_filter_hex)
-        label("Octal:")
-        editString(text[5], 64, filter = nk_filter_oct)
-        label("Binary:")
-        editString(text[6], 64, filter = nk_filter_binary)
-        label("Password:")
+      treeNode(title = "Input", state = minimized, index = 11):
+        setLayoutRowStatic(height = 25, cols = 2, ratio = ratio)
+        label(str = "Default:")
+        editString(text = text[0], maxLen = 64)
+        label(str = "Int:")
+        editString(text = text[1], maxLen = 64, filter = nk_filter_decimal)
+        label(str = "Float:")
+        editString(text = text[2], maxLen = 64, filter = nk_filter_float)
+        label(str = "Hex:")
+        editString(text = text[4], maxLen = 64, filter = nk_filter_hex)
+        label(str = "Octal:")
+        editString(text = text[5], maxLen = 64, filter = nk_filter_oct)
+        label(str = "Binary:")
+        editString(text = text[6], maxLen = 64, filter = nk_filter_binary)
+        label(str = "Password:")
         var buffer = text[8]
         for ch in buffer.mitems:
           ch = '*'
-        editString(buffer, 64, field)
+        editString(text = buffer, maxLen = 64, editType = field)
         text[8] = buffer
-        label("Field:")
-        editString(fieldBuffer, 64, field)
-        label("Box:")
-        setLayoutRowStatic(180, 278, 1)
-        editString(boxBuffer, 512, box)
-        setLayoutRowStatic(25, 2, ratio)
-        boxActive = editString(text[7], 64, field, nk_filter_ascii, {sigEnter})
-        labelButton("Submit"):
+        label(str = "Field:")
+        editString(text = fieldBuffer, maxLen = 64, editType = field)
+        label(str = "Box:")
+        setLayoutRowStatic(height = 180, width = 278, cols = 1)
+        editString(text = boxBuffer, maxLen = 512, editType = box)
+        setLayoutRowStatic(height = 25, cols = 2, ratio = ratio)
+        boxActive = editString(text = text[7], maxLen = 64, editType = field,
+            filter = nk_filter_ascii, flags = {sigEnter})
+        labelButton(title = "Submit"):
           text_len[7].inc
-          boxBuffer.add(text[7] & "\n")
+          boxBuffer.add(y = text[7] & "\n")
           boxLen = boxLen + textLen[7] + 1
           text[7] = ""
           textLen[7] = 0
         if boxActive == commited:
           text_len[7].inc
-          boxBuffer.add(text[7] & "\n")
+          boxBuffer.add(y = text[7] & "\n")
           boxLen = boxLen + textLen[7] + 1
           text[7] = ""
           textLen[7] = 0
-    treeTab("Charts", minimized, 12):
+    treeTab(title = "Charts", state = minimized, index = 12):
       var
         chartId: cfloat = 0
         chartIndex = -1
-      setLayoutRowDynamic(100, 1)
-      chart(lines, 32, -1.0, 1.0):
+      setLayoutRowDynamic(height = 100, cols = 1)
+      chart(cType = lines, num = 32, min = -1.0, max = 1.0):
         for i in 0 .. 31:
-          let res = chartPush(cos(chartId))
+          let res = chartPush(value = cos(x = chartId))
           if res == hovering:
             chartIndex = i
           if res == clicked:
             lineIndex = i
           chartId = chartId + chartStep
       if chartIndex != -1:
-        fmtTooltip("Value: %.2f", cos(chartIndex.cfloat *
-            chartStep).cfloat)
+        {.push ruleOff: "namedParams".}
+        fmtTooltip("Value: %.2f", cos(x = chartIndex.cfloat * chartStep).cfloat)
+        {.push ruleOn: "namedParams".}
       if lineIndex != 1:
-        setLayoutRowDynamic(20, 1)
-        fmtLabel(left, "Selected value: %.2f", cos(
-            chartIndex.cfloat * chartStep).cfloat)
-      setLayoutRowDynamic(100, 1)
-      chart(column, 32, 0.0, 1.0):
+        setLayoutRowDynamic(height = 20, cols = 1)
+        {.push ruleOff: "namedParams".}
+        fmtLabel(left, "Selected value: %.2f", cos(x = chartIndex.cfloat *
+            chartStep).cfloat)
+        {.push ruleOn: "namedParams".}
+      setLayoutRowDynamic(height = 100, cols = 1)
+      chart(cType = column, num = 32, min = 0.0, max = 1.0):
         for i in 0 .. 31:
-          let res = chartPush(abs(sin(chartId)))
+          let res = chartPush(value = abs(x = sin(x = chartId)))
           if res == hovering:
             chartIndex = i
           if res == clicked:
             colIndex = i
           chartId = chartId + chartStep
       if chartIndex != -1:
-        fmtTooltip("Value: %.2f", abs(sin(chartStep *
+        {.push ruleOff: "namedParams".}
+        fmtTooltip("Value: %.2f", abs(x = sin(x = chartStep *
             chartIndex.cfloat).cfloat))
+        {.push ruleOn: "namedParams".}
       if col_index != -1:
-        setLayoutRowDynamic(20, 1)
-        fmtLabel(left, "Selected value: %.2f", abs(sin(
-            chartStep * colIndex.cfloat).cfloat))
-      setLayoutRowDynamic(100, 1)
-      chart(column, 32, 0.0, 1.0):
-        addChartSlot(lines, 32, -1.0, 1.0)
-        addChartSlot(lines, 32, -1.0, 1.0)
+        setLayoutRowDynamic(height = 20, cols = 1)
+        {.push ruleOff: "namedParams".}
+        fmtLabel(left, "Selected value: %.2f", abs(x = sin(x = chartStep *
+            colIndex.cfloat).cfloat))
+        {.push ruleOn: "namedParams".}
+      setLayoutRowDynamic(height = 100, cols = 1)
+      chart(cType = column, num = 32, min = 0.0, max = 1.0):
+        addChartSlot(cType = lines, count = 32, minValue = -1.0, maxValue = 1.0)
+        addChartSlot(cType = lines, count = 32, minValue = -1.0, maxValue = 1.0)
         chartId = 0
         for i in 0 .. 31:
-          chartPushSlot(abs(sin(chartId)), 0)
-          chartPushSlot(cos(chartId), 1)
-          chartPushSlot(sin(chartId), 2)
+          chartPushSlot(value = abs(x = sin(x = chartId)), slot = 0)
+          chartPushSlot(value = cos(x = chartId), slot = 1)
+          chartPushSlot(value = sin(x = chartId), slot = 2)
           chartId = chartId + chartStep
-      setLayoutRowDynamic(100, 1)
-      colorChart(lines, NkColor(r: 255, g: 0, b: 0),
-          NkColor(r: 150, g: 0, b: 0), 32, 0.0, 1.0):
-        addColorChartSlot(lines, NkColor(r: 0, g: 0, b: 255),
-            NkColor(r: 0, g: 0, b: 150), 32, -1.0, 1.0)
-        addColorChartSlot(lines, NkColor(r: 0, g: 255, b: 0),
-            NkColor(r: 0, g: 150, b: 0), 32, -1.0, 1.0)
+      setLayoutRowDynamic(height = 100, cols = 1)
+      colorChart(cType = lines, color = NkColor(r: 255, g: 0, b: 0),
+          highlight = NkColor(r: 150, g: 0, b: 0), count = 32, minValue = 0.0,
+          maxValue = 1.0):
+        addColorChartSlot(ctype = lines, color = NkColor(r: 0, g: 0, b: 255),
+            highlight = NkColor(r: 0, g: 0, b: 150), count = 32,
+            minValue = -1.0, maxValue = 1.0)
+        addColorChartSlot(ctype = lines, color = NkColor(r: 0, g: 255, b: 0),
+            highlight = NkColor(r: 0, g: 150, b: 0), count = 32,
+            minValue = -1.0, maxValue = 1.0)
         chartId = 0
         for i in 0 .. 31:
-          chartPushSlot(abs(sin(chartId)), 0)
-          chartPushSlot(cos(chartId), 1)
-          chartPushSlot(sin(chartId), 2)
+          chartPushSlot(value = abs(x = sin(x = chartId)), slot = 0)
+          chartPushSlot(value = cos(x = chartId), slot = 1)
+          chartPushSlot(value = sin(x = chartId), slot = 2)
           chartId = chartId + chartStep
-    treeTab("Popup", minimized, 13):
-      setLayoutRowStatic(30, 160, 1)
-      var bounds = getWidgetBounds()
-      label("Right click me for menu")
-      contextualMenu({windowNoFlags}, 100, 300, bounds, right):
-        setLayoutRowDynamic(25, 1);
-        checkbox("Menu", showMenu)
-        progressBar(prog, 100)
-        slider(0, slider, 16, 1)
-        contextualItemLabel("About", centered):
+    treeTab(title = "Popup", state = minimized, index = 13):
+      setLayoutRowStatic(height = 30, width = 160, cols = 1)
+      var bounds: Rect = getWidgetBounds()
+      label(str = "Right click me for menu")
+      contextualMenu(flags = {windowNoFlags}, x = 100, y = 300,
+          triggerBounds = bounds, button = right):
+        setLayoutRowDynamic(height = 25, cols = 1)
+        checkbox(label = "Menu", checked = showMenu)
+        progressBar(value = prog, maxValue = 100)
+        slider(min = 0, val = slider, max = 16, step = 1)
+        contextualItemLabel(label = "About", align = centered):
           showAppAbout = true
-        selectableLabel((if selected[0]: "Uns" else: "S") & "elect", selected[0])
-        selectableLabel((if selected[1]: "Uns" else: "S") & "elect", selected[1])
-        selectableLabel((if selected[2]: "Uns" else: "S") & "elect", selected[2])
-        selectableLabel((if selected[3]: "Uns" else: "S") & "elect", selected[3])
-      layoutStatic(30, 2):
-        row(120):
-          label("Right Click here:")
-        row(50):
+        selectableLabel(str = (if selected[0]: "Uns" else: "S") & "elect",
+            value = selected[0])
+        selectableLabel(str = (if selected[1]: "Uns" else: "S") & "elect",
+            value = selected[1])
+        selectableLabel(str = (if selected[2]: "Uns" else: "S") & "elect",
+            value = selected[2])
+        selectableLabel(str = (if selected[3]: "Uns" else: "S") & "elect",
+            value = selected[3])
+      layoutStatic(height = 30, cols = 2):
+        row(width = 120):
+          label(str = "Right Click here:")
+        row(width = 50):
           bounds = getWidgetBounds()
-          colorButton(popupColor.r, popupColor.g, popupColor.b):
+          colorButton(r = popupColor.r, g = popupColor.g, b = popupColor.b):
             discard
-      contextualMenu({windowNoFlags}, 350, 60, bounds, right):
-        setLayoutRowDynamic(30, 4);
-        popupColor.r = property2("#r", 0, popupColor.r, 255, 1, 1)
-        popupColor.g = property2("#g", 0, popupColor.g, 255, 1, 1)
-        popupColor.b = property2("#b", 0, popupColor.b, 255, 1, 1)
-        popupColor.a = property2("#a", 0, popupColor.a, 255, 1, 1)
-      layoutStatic(30, 2):
-        row(120):
-          label("Popup:")
-        row(50):
-          labelButton("Popup"):
+      contextualMenu(flags = {windowNoFlags}, x = 350, y = 60,
+          triggerBounds = bounds, button = right):
+        setLayoutRowDynamic(height = 30, cols = 4)
+        popupColor.r = property2(name = "#r", min = 0, val = popupColor.r,
+            max = 255, step = 1, incPerPixel = 1)
+        popupColor.g = property2(name = "#g", min = 0, val = popupColor.g,
+            max = 255, step = 1, incPerPixel = 1)
+        popupColor.b = property2(name = "#b", min = 0, val = popupColor.b,
+            max = 255, step = 1, incPerPixel = 1)
+        popupColor.a = property2(name = "#a", min = 0, val = popupColor.a,
+            max = 255, step = 1, incPerPixel = 1)
+      layoutStatic(height = 30, cols = 2):
+        row(width = 120):
+          label(str = "Popup:")
+        row(width = 50):
+          labelButton(title = "Popup"):
             popup_active = true
       if popupActive:
         try:
