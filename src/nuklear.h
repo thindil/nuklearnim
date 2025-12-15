@@ -3280,7 +3280,7 @@ NK_API nk_bool nk_knob_int(struct nk_context*, int min, int *val, int max, int s
  *                                  PROGRESSBAR
  *
  * ============================================================================= */
-NK_API nk_bool nk_progress(struct nk_context*, nk_size *cur, nk_size max, nk_bool modifyable);
+NK_API nk_bool nk_progress(struct nk_context*, nk_size *cur, nk_size max, nk_bool modifyable, nk_bool reversed);
 NK_API nk_size nk_prog(struct nk_context*, nk_size cur, nk_size max, nk_bool modifyable);
 
 /* =============================================================================
@@ -6177,7 +6177,7 @@ NK_LIB nk_bool nk_do_toggle(nk_flags *state, struct nk_command_buffer *out, stru
 /* progress */
 NK_LIB nk_size nk_progress_behavior(nk_flags *state, struct nk_input *in, struct nk_rect r, struct nk_rect cursor, nk_size max, nk_size value, nk_bool modifiable);
 NK_LIB void nk_draw_progress(struct nk_command_buffer *out, nk_flags state, const struct nk_style_progress *style, const struct nk_rect *bounds, const struct nk_rect *scursor, nk_size value, nk_size max);
-NK_LIB nk_size nk_do_progress(nk_flags *state, struct nk_command_buffer *out, struct nk_rect bounds, nk_size value, nk_size max, nk_bool modifiable, const struct nk_style_progress *style, struct nk_input *in);
+NK_LIB nk_size nk_do_progress(nk_flags *state, struct nk_command_buffer *out, struct nk_rect bounds, nk_size value, nk_size max, nk_bool modifiable, const struct nk_style_progress *style, struct nk_input *in, nk_bool reversed);
 
 /* slider */
 NK_LIB float nk_slider_behavior(nk_flags *state, struct nk_rect *logical_cursor, struct nk_rect *visual_cursor, struct nk_input *in, struct nk_rect bounds, float slider_min, float slider_max, float slider_value, float slider_step, float slider_steps);
@@ -26426,7 +26426,8 @@ NK_LIB nk_size
 nk_do_progress(nk_flags *state,
     struct nk_command_buffer *out, struct nk_rect bounds,
     nk_size value, nk_size max, nk_bool modifiable,
-    const struct nk_style_progress *style, struct nk_input *in)
+    const struct nk_style_progress *style, struct nk_input *in,
+    nk_bool reversed)
 {
     float prog_scale;
     nk_size prog_value;
@@ -26446,6 +26447,10 @@ nk_do_progress(nk_flags *state,
     prog_value = NK_MIN(value, max);
     prog_value = nk_progress_behavior(state, in, bounds, cursor,max, prog_value, modifiable);
     cursor.w = cursor.w * prog_scale;
+    if (reversed == nk_true)
+    {
+      cursor.x = (bounds.x + bounds.w) - cursor.w;
+    }
 
     /* draw progressbar */
     if (style->draw_begin) style->draw_begin(out, style->userdata);
@@ -26454,7 +26459,8 @@ nk_do_progress(nk_flags *state,
     return prog_value;
 }
 NK_API nk_bool
-nk_progress(struct nk_context *ctx, nk_size *cur, nk_size max, nk_bool is_modifyable)
+nk_progress(struct nk_context *ctx, nk_size *cur, nk_size max,
+    nk_bool is_modifyable, nk_bool reversed)
 {
     struct nk_window *win;
     struct nk_panel *layout;
@@ -26481,13 +26487,13 @@ nk_progress(struct nk_context *ctx, nk_size *cur, nk_size max, nk_bool is_modify
     in = (state == NK_WIDGET_ROM || state == NK_WIDGET_DISABLED || layout->flags & NK_WINDOW_ROM) ? 0 : &ctx->input;
     old_value = *cur;
     *cur = nk_do_progress(&ctx->last_widget_state, &win->buffer, bounds,
-            *cur, max, is_modifyable, &style->progress, in);
+            *cur, max, is_modifyable, &style->progress, in, reversed);
     return (*cur != old_value);
 }
 NK_API nk_size
 nk_prog(struct nk_context *ctx, nk_size cur, nk_size max, nk_bool modifyable)
 {
-    nk_progress(ctx, &cur, max, modifyable);
+    nk_progress(ctx, &cur, max, modifyable, nk_false);
     return cur;
 }
 

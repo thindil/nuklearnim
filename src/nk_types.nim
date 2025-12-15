@@ -1236,6 +1236,107 @@ type
     scrollbarHidingTimer*: float
     widgetsDisabled*: bool
     tables*: NkTable
+  Image* = object
+    ## Used to store Nuklear image data
+    handle*: Handle
+    w*, h*: uint16
+    region*: array[4, uint16]
+  NineSlice* = object
+    ## Used to store Nuklear nine slice data
+    image*: Image
+    l*, t*, r*, b*: uint16
+  StyleItemData* = object
+    ## Used to store Nuklear style item's data
+    case iType: StyleItemType
+    of itemColor:
+      color: NkColor
+    of itemImage:
+      image: Image
+    of itemNineSlice:
+      slice: NineSlice
+  StyleItem* = object
+    ## Used to store Nuklear style item's data
+    iType*: StyleItemType
+    data*: StyleItemData
+  DrawF* = proc(b: var CommandBuffer; userData: Handle)
+    ## Used to execute additional code when drawing widgets
+  StyleButton* = object
+    ## Used to store Nuklear style data for buttons
+    normal*, hover*, active*: StyleItem
+    borderColor*, textBackground*, textNormal*, textHover*, textActive: NkColor
+    rounding*, border*, colorFactorBackground*, colorFactorText*,
+      disabledFactor*: float
+    padding*, imagePadding*, touchPadding*: Vec2
+    alignment*: nk_flags
+    userData*: Handle
+    drawBegin*, drawEnd*: DrawF
+  StyleWindowHeader* = object
+    ## Used to store Nuklear style data for windows' headers
+    align*: StyleHeaderAlign
+    padding*, labelPadding*, spacing*: Vec2
+    active*, hover*, normal*: StyleItem
+    labelActive*, labelHover*, labelNormal: NkColor
+    closeSymbol*, minimizeSymbol*, maximizeSymbol*: SymbolType
+    closeButton*, minimizeButton*: StyleButton
+  StyleWindow* = object
+    ## Used to store Nuklear style data for windows widgets
+    header*: StyleWindowHeader
+    fixedBackground*, scaler*: StyleItem
+    spacing*, scrollbarSize*, padding*, groupPadding*, popupPadding*,
+      contextualPadding*, comboPadding*, menuPadding*, tooltipPadding*, minSize*: Vec2
+    background*, groupTextColor*, borderColor*, popupBorderColor*,
+      popupBackground*, comboBorderColor*, contextualBorderColor*,
+      menuBorderColor*, groupBorderColor*, tooltipBorderColor*,
+      tooltipBackground*: NkColor
+    border*, comboBorder*, contextualBorder*, menuBorder*, groupBorder*,
+      tooltipBorder*, popupBorder*, rounding*: float
+  StyleProgress* = object
+    ## Used to store Nuklear style data for progress bar widgets
+    cursorNormal*, cursorHover*, cursorActive*, normal*, hover*,
+      active*: StyleItem
+    borderColor*, cursorBorderColor*: NkColor
+    rounding*, border*, cursorBorder*, cursorRounding*, colorFactor*,
+      disabledFactor*: float
+    padding*: Vec2
+    userData*: Handle
+    drawBegin*, drawEnd*: DrawF
+  TextWidthF* = proc(arg1: Handle; h: float; arg3: string; len: int): cfloat
+    ## Used to count width of the selected text
+  UserFontGlyph* = object
+    ## Used to store Nuklear data about user's font's glyps
+    uv*: array[2, Vec2]
+    offset*: Vec2
+    width*, height*, xAdvance*: float
+  QueryFontGlyphF* = proc(handle: Handle; fontHeight: float;
+      glyph: UserFontGlyph; codepoint, nextCodepoint: nk_rune)
+    ## Used to query glyphs in a font
+  UserFont* = object
+    ## Used to store Nuklear data for user's font
+    userData*: Handle
+    height*: float
+    width*: TextWidthF
+    when defined(nkIncludeVertexBufferOutput):
+      query*: QueryFontGlyphF
+      texture*: Handle
+  StyleText* = object
+    ## Used to store Nuklear style data for text widgets
+    padding*: Vec2
+    color*: NkColor
+    colorFactor*, disabledFactor*: float
+  Cursor* = object
+    ## Used to store Nuklear style data for mouse's cursor
+    img*: Image
+    size*, offset*: Vec2
+  Style* = object
+    ## Used to store Nuklear style data
+    window*: StyleWindow
+    button*, contextualButton*, menuButton*: StyleButton
+    progress*, property*: StyleProgress
+    font*: UserFont
+    text*: StyleText
+    cursorActive*, cursorLast*: Cursor
+    cursors*: array[cursorCount, Cursor]
+    cursorVisible*: int
 
 # ---------
 # Constants
