@@ -1327,8 +1327,78 @@ type
     ## Used to store Nuklear style data for mouse's cursor
     img*: Image
     size*, offset*: Vec2
+  StyleToggle* = object
+    ## Used to store Nuklear style data for toggle widgets
+    normal*, hover*, active*, cursorNormal*, cursorHover*: StyleItem
+    borderColor*, textNormal*, textHover*, textActive*, textBackground*: NkColor
+    textAlignment*: nk_flags
+    padding*, touchPadding*: Vec2
+    spacing*, border*, colorFactor*, disabledFactor*: float
+  StyleSelectable* = object
+    ## Used to store Nuklear style data for selectable widgets
+    normal*, hover*, pressed*, normalActive*, hoverActive*,
+      pressedActive*: StyleItem
+    textNormal*, textHover*, textPressed*, textNormalActive*, textHoverActive*,
+      textPressedActive*, textBackground*: NkColor
+    textAlignment*: nk_flags
+    rounding*, colorFactor*, disabledFactor*: float
+    padding*, touchPadding*, imagePadding*: Vec2
+    userData*: Handle
+    drawBegin*, drawEnd*: DrawF
+  StyleSlider* = object
+    ## Used to store Nuklear style data for slider widgets
+    normal*, hover*, active*, barNormal*, barHover*, barActive*, cursorNormal*,
+      cursorHover*, cursorActive*: StyleItem
+    borderColor*, barFilled*: NkColor
+    border*, rounding*, barHeight*, colorFactor*, disabledFactor*: float
+    padding*, spacing*, cursorSize*: Vec2
+  StyleKnob* = object
+    ## Used to store Nuklear style data for knob widgets
+    normal*, hover*, active*: StyleItem
+    borderColor*, knobNormal*, knobHover*, knobActive*, knobBorderColor*,
+      cursorNormal*, cursorHover*, cursorActive*: NkColor
+    border*, knobBorder*, cursorWidth*, colorFactor*, disabledFactor*: float
+    padding*, spacing*: Vec2
+  StyleScrollbar* = object
+    ## Used to store Nuklear style data for scrollbar widgets
+    normal*, hover*, active*, cursorNormal*, cursorHover*,
+      cursorActive*: StyleItem
+    borderColor*, cursorBorderColor*: NkColor
+    border*, rounding*, borderCursor*, colorFactor*, disabledFactor*: float
+    padding*: Vec2
+    showButtons: int
+    incButton*, decButton*: StyleButton
+    incSymbol*, decSymbol*: SymbolType
+    userData*: Handle
+    drawBegin*, drawEnd*: DrawF
+  StyleEdit* = object
+    ## Used to store Nuklear style data for edit widgets
+    normal*, hover*, active*: StyleItem
+    borderColor*, cursorNormal*, cursorHover*, cursorTextNormal*,
+      cursorTextHover*, textNormal*, textHover*, textActive*, selectedNormal*,
+      selectedHover*, selectedTextNormal*, selectedTextHover*: NkColor
+    scrollbar*: StyleScrollbar
+    border*, rounding*, cursorSize*, rowPadding*, colorFactor*,
+      disabledFactor*: float
+    scrollbarSize*, padding*: Vec2
+  StyleChart* = object
+    ## Used to store Nuklear style data for chart widgets
+    background*: StyleItem
+    borderColor*, selectedColor*, color*: NkColor
+    border*, rounding*, colorFactor*, disabledFactor*: float
+    padding*: Vec2
+    showMarkers*: bool
+  StyleTab* = object
+    ## Used to store Nuklear style data for tab widgets
+    background*: StyleItem
+    borderColor*, text*: NkColor
+    tabMaximizeButton*, tabMinimizeButton*, nodeMaximizeButton*,
+      nodeMinimizeButton*: StyleButton
+    symMinimize*, symMaximize*: SymbolType
+    border*, rounding*, indent*, colorFactor*, disabledFactor*: float
+    padding*, spacing*: Vec2
   Style* = object
-    ## Used to store Nuklear style data
+    ## Used to store Nuklear style data slider widgets
     window*: StyleWindow
     button*, contextualButton*, menuButton*: StyleButton
     progress*, property*: StyleProgress
@@ -1337,6 +1407,14 @@ type
     cursorActive*, cursorLast*: Cursor
     cursors*: array[cursorCount, Cursor]
     cursorVisible*: int
+    option*, checkbox*: StyleToggle
+    selectable*: StyleSelectable
+    slider*: StyleSlider
+    knob*: StyleKnob
+    edit*: StyleEdit
+    chart*: StyleChart
+    scrollH*, scrollV: StyleScrollbar
+    tab*: StyleTab
 
 # ---------
 # Constants
