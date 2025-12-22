@@ -610,420 +610,437 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
             popup_active = true
       if popupActive:
         try:
-          popup(staticPopup, "Error", {windowNoFlags}, 20, 100, 220, 90):
-            setLayoutRowDynamic(25, 1)
-            label("A terrible error as occurred")
-            setLayoutRowDynamic(25, 2)
-            labelButton("OK"):
+          popup(pType = staticPopup, title = "Error", flags = {windowNoFlags},
+              x = 20, y = 100, w = 220, h = 90):
+            setLayoutRowDynamic(height = 25, cols = 1)
+            label(str = "A terrible error as occurred")
+            setLayoutRowDynamic(height = 25, cols = 2)
+            labelButton(title = "OK"):
               popupActive = false
               closePopup()
-            labelButton("Cancel"):
+            labelButton(title = "Cancel"):
               popupActive = false
               closePopup()
         except:
           popupActive = false
-      setLayoutRowStatic(30, 150, 1)
+      setLayoutRowStatic(height = 30, width = 150, cols = 1)
       bounds = getWidgetBounds()
-      label("Hover me for tooltip")
-      if isMouseHovering(bounds):
-        tooltip("This is a tooltip")
-    treeTab("Layout", minimized, 14):
-      treeNode("Widget", minimized, 15):
-        setLayoutRowDynamic(30, 1)
-        label("Dynamic fixed column layout with generated position and size:")
-        setLayoutRowDynamic(30, 3)
-        labelButton("button"):
+      label(str = "Hover me for tooltip")
+      if isMouseHovering(rect = bounds):
+        tooltip(text = "This is a tooltip")
+    treeTab(title = "Layout", state = minimized, index = 14):
+      treeNode(title = "Widget", state = minimized, index = 15):
+        setLayoutRowDynamic(height = 30, cols = 1)
+        label(str = "Dynamic fixed column layout with generated position and size:")
+        setLayoutRowDynamic(height = 30, cols = 3)
+        labelButton(title = "button"):
           discard
-        labelButton("button"):
+        labelButton(title = "button"):
           discard
-        labelButton("button"):
+        labelButton(title = "button"):
           discard
-        setLayoutRowDynamic(30, 1)
-        label("Static fixed column layout with generated position and size:")
-        setLayoutRowStatic(30, 100, 3)
-        labelButton("button"):
+        setLayoutRowDynamic(height = 30, cols = 1)
+        label(str = "Static fixed column layout with generated position and size:")
+        setLayoutRowStatic(height = 30, width = 100, cols = 3)
+        labelButton(title = "button"):
           discard
-        labelButton("button"):
+        labelButton(title = "button"):
           discard
-        labelButton("button"):
+        labelButton(title = "button"):
           discard
-        setLayoutRowDynamic(30, 1)
-        label("Dynamic array-based custom column layout with generated position and custom size:")
-        setLayoutRowDynamic(30, 3, ratioTwo)
-        labelButton("button"):
+        setLayoutRowDynamic(height = 30, cols = 1)
+        label(str = "Dynamic array-based custom column layout with generated position and custom size:")
+        setLayoutRowDynamic(height = 30, cols = 3, ratio = ratioTwo)
+        labelButton(title = "button"):
           discard
-        labelButton("button"):
+        labelButton(title = "button"):
           discard
-        labelButton("button"):
+        labelButton(title = "button"):
           discard
-        setLayoutRowDynamic(30, 1)
-        label("Static array-based custom column layout with generated position and custom size:")
-        setLayoutRowStatic(30, 3, widthTwo)
-        labelButton("button"):
+        setLayoutRowDynamic(height = 30, cols = 1)
+        label(str = "Static array-based custom column layout with generated position and custom size:")
+        setLayoutRowStatic(height = 30, cols = 3, ratio = widthTwo)
+        labelButton(title = "button"):
           discard
-        labelButton("button"):
+        labelButton(title = "button"):
           discard
-        labelButton("button"):
+        labelButton(title = "button"):
           discard
-        setLayoutRowDynamic(30, 1)
-        label("Dynamic immediate mode custom column layout with generated position and custom size:")
-        layoutDynamic(30, 3):
-          row(0.2):
-            labelButton("button"):
+        setLayoutRowDynamic(height = 30, cols = 1)
+        label(str = "Dynamic immediate mode custom column layout with generated position and custom size:")
+        layoutDynamic(height = 30, cols = 3):
+          row(width = 0.2):
+            labelButton(title = "button"):
               discard
-          row(0.6):
-            labelButton("button"):
+          row(width = 0.6):
+            labelButton(title = "button"):
               discard
-          row(0.2):
-            labelButton("button"):
+          row(width = 0.2):
+            labelButton(title = "button"):
               discard
-        setLayoutRowDynamic(30, 1)
-        label("Static immediate mode custom column layout with generated position and custom size:")
-        layoutStatic(30, 3):
-          row(100):
-            labelButton("button"):
+        setLayoutRowDynamic(height = 30, cols = 1)
+        label(str = "Static immediate mode custom column layout with generated position and custom size:")
+        layoutStatic(height = 30, cols = 3):
+          row(width = 100):
+            labelButton(title = "button"):
               discard
-          row(200):
-            labelButton("button"):
+          row(width = 200):
+            labelButton(title = "button"):
               discard
-          row(50):
-            labelButton("button"):
+          row(width = 50):
+            labelButton(title = "button"):
               discard
-        setLayoutRowDynamic(30, 1)
-        label("Static free space with custom position and custom size:")
-        layoutSpaceStatic(60, 4):
-          row(100, 0, 100, 30):
-            labelButton("button"):
+        setLayoutRowDynamic(height = 30, cols = 1)
+        label(str = "Static free space with custom position and custom size:")
+        layoutSpaceStatic(height = 60, widgetsCount = 4):
+          row(x = 100, y = 0, w = 100, h = 30):
+            labelButton(title = "button"):
               discard
-          row(0, 15, 100, 30):
-            labelButton("button"):
+          row(x = 0, y = 15, w = 100, h = 30):
+            labelButton(title = "button"):
               discard
-          row(200, 15, 100, 30):
-            labelButton("button"):
+          row(x = 200, y = 15, w = 100, h = 30):
+            labelButton(title = "button"):
               discard
-          row(100, 30, 100, 30):
-            labelButton("button"):
+          row(x = 100, y = 30, w = 100, h = 30):
+            labelButton(title = "button"):
               discard
-        setLayoutRowDynamic(30, 1)
-        label("Row template:")
-        setRowTemplate(30):
+        setLayoutRowDynamic(height = 30, cols = 1)
+        label(str = "Row template:")
+        setRowTemplate(height = 30):
           rowTemplateDynamic()
-          rowTemplateVariable(80)
-          rowTemplateStatic(80)
-        labelButton("button"):
+          rowTemplateVariable(minWidth = 80)
+          rowTemplateStatic(width = 80)
+        labelButton(title = "button"):
           discard
-        labelButton("button"):
+        labelButton(title = "button"):
           discard
-        labelButton("button"):
+        labelButton(title = "button"):
           discard
-      treeNode("Group", minimized, 16):
-        var groupFlags: set[PanelFlags]
+      treeNode(title = "Group", state = minimized, index = 16):
+        var groupFlags: set[PanelFlags] = {}
         if groupBorder:
-          groupFlags.incl(windowBorder)
+          groupFlags.incl(y = windowBorder)
         if groupNoScrollbar:
-          groupFlags.incl(windowNoScrollbar)
+          groupFlags.incl(y = windowNoScrollbar)
         if groupTitlebar:
-          groupFlags.incl(windowTitle)
-        setLayoutRowDynamic(30, 3)
-        checkbox("Titlebar", groupTitlebar)
-        checkbox("Border", groupBorder)
-        checkbox("No Scrollbar", groupNoScrollbar)
-        layoutStatic(22, 3):
-          row(50):
-            label("size:")
-          row(130):
-            property("#Width:", 100, groupWidth, 500, 10, 1)
-          row(130):
-            property("#Height:", 100, groupHeight, 500, 10, 1)
-        setLayoutRowStatic(groupHeight.cfloat, groupWidth, 2)
-        group("Group", groupFlags):
-          setLayoutRowStatic(18, 100, 1)
+          groupFlags.incl(y = windowTitle)
+        setLayoutRowDynamic(height = 30, cols = 3)
+        checkbox(label = "Titlebar", checked = groupTitlebar)
+        checkbox(label = "Border", checked = groupBorder)
+        checkbox(label = "No Scrollbar", checked = groupNoScrollbar)
+        layoutStatic(height = 22, cols = 3):
+          row(width = 50):
+            label(str = "size:")
+          row(width = 130):
+            property(name = "#Width:", min = 100, val = groupWidth, max = 500,
+                step = 10, incPerPixel = 1)
+          row(width = 130):
+            property(name = "#Height:", min = 100, val = groupHeight, max = 500,
+                step = 10, incPerPixel = 1)
+        setLayoutRowStatic(height = groupHeight.cfloat, width = groupWidth, cols = 2)
+        group(title = "Group", flags = groupFlags):
+          setLayoutRowStatic(height = 18, width = 100, cols = 1)
           for i in 0 .. 15:
-            selectableLabel((if selected2[i]: "Selected" else: "Unselected"),
-                selected2[i], centered)
-      treeNode("Tree", minimized, 17):
+            selectableLabel(str = (if selected2[
+                i]: "Selected" else: "Unselected"), value = selected2[i],
+                align = centered)
+      treeNode(title = "Tree", state = minimized, index = 17):
         var sel = rootSelected
-        treeElement(node, "Root", minimized, sel, 1):
+        treeElement(eType = node, title = "Root", state = minimized,
+            selected = sel, index = 1):
           var nodeSelect = selected3[0]
           if sel != rootSelected:
             rootSelected = sel
             for i in 0 .. 7:
               selected3[i] = sel
-          treeElement(node, "Node", minimized, nodeSelect, 2):
+          treeElement(eType = node, title = "Node", state = minimized,
+              selected = nodeSelect, index = 2):
             if nodeSelect != selected3[0]:
               selected3[0] = nodeSelect
               for i in 0 .. 3:
                 selected[i] = nodeSelect
-            setLayoutRowStatic(18, 100, 1)
+            setLayoutRowStatic(height = 18, width = 100, cols = 1)
             for j in 0 .. 3:
-              selectableSymbolLabel(circleSolid, (
-                  if selected[j]: "Selected" else: "Unselected"),
-                  selected[j], right)
-          setLayoutRowStatic(18, 100, 1)
+              selectableSymbolLabel(sym = circleSolid, title = (if selected[
+                  j]: "Selected" else: "Unselected"), value = selected[j], align = right)
+          setLayoutRowStatic(height = 18, width = 100, cols = 1)
           for i in 0 .. 7:
-            selectableSymbolLabel(circleSolid, (
-                if selected3[i]: "Selected" else: "Unselected"),
-                selected3[i], right)
-      treeNode("Notebook", minimized, 18):
+            selectableSymbolLabel(sym = circleSolid, title = (if selected3[
+                i]: "Selected" else: "Unselected"), value = selected3[i], align = right)
+      treeNode(title = "Notebook", state = minimized, index = 18):
         changeStyle(field = spacing, x = 0, y = 0):
           changeStyle(field = buttonRounding, value = 0):
-            layoutStatic(20, 3):
+            layoutStatic(height = 20, cols = 3):
               for i in 0 .. 2:
                 let
-                  textWidth = getTextWidth(names[i])
-                  widgetWidth = textWidth + 3 * getButtonStyle(padding).x;
-                row(widgetWidth):
+                  textWidth = getTextWidth(text = names[i])
+                  widgetWidth = textWidth + 3 * getButtonStyle(
+                      field = padding).x
+                row(width = widgetWidth):
                   if currentTab == i:
                     saveButtonStyle()
-                    setButtonStyle2(active, normal)
+                    setButtonStyle2(source = active, destination = normal)
                     currentTab = current_tab
-                    labelButton(names[i]):
+                    labelButton(title = names[i]):
                       currentTab = i.cint
                     restoreButtonStyle()
                   else:
                     currentTab = current_tab
-                    labelButton(names[i]):
+                    labelButton(title = names[i]):
                       currentTab = i.cint
-        setLayoutRowDynamic(140, 1)
-        group("Notebook", {windowBorder}):
+        setLayoutRowDynamic(height = 140, cols = 1)
+        group(title = "Notebook", flags = {windowBorder}):
           var id: cfloat
           let step: cfloat = (2 * 3.141592654f) / 32
           case currentTab
           of 0:
-            setLayoutRowDynamic(100, 1)
-            colorChart(lines, NkColor(r: 255, g: 0, b: 0, a: 255), NkColor(
-                r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
-              addColorChartSlot(lines, NkColor(r: 0, g: 0, b: 255, a: 255),
-                  NkColor(r: 0, g: 0, b: 150, a: 255), 32, -1.0, 1.0)
+            setLayoutRowDynamic(height = 100, cols = 1)
+            colorChart(cType = lines, color = NkColor(r: 255, g: 0, b: 0,
+                a: 255), highlight = NkColor(r: 150, g: 0, b: 0, a: 255),
+                count = 32, minValue = 0.0, maxValue = 1.0):
+              addColorChartSlot(cType = lines, color = NkColor(r: 0, g: 0,
+                  b: 255, a: 255), highlight = NkColor(r: 0, g: 0, b: 150,
+                  a: 255), count = 32, minValue = -1.0, maxValue = 1.0)
               id = 0.0
               for i in 0 .. 31:
-                chartPushSlot(abs(sin(id)), 0)
-                chartPushSlot(cos(id), 1)
-                id = id + step
+                chartPushSlot(value = abs(x = sin(x = id)), slot = 0)
+                chartPushSlot(value = cos(x = id), slot = 1)
+                id += step
           of 1:
-            setLayoutRowDynamic(100, 1)
-            colorChart(column, NkColor(r: 255, g: 0, b: 0, a: 255), NkColor(
-                r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
+            setLayoutRowDynamic(height = 100, cols = 1)
+            colorChart(cType = column, color = NkColor(r: 255, g: 0, b: 0,
+                a: 255), highlight = NkColor(r: 150, g: 0, b: 0, a: 255),
+                count = 32, minValue = 0.0, maxValue = 1.0):
               id = 0.0
               for i in 0 .. 31:
-                chartPushSlot(abs(sin(id)), 0)
-                id = id + step
+                chartPushSlot(value = abs(x = sin(x = id)), slot = 0)
+                id += step
           of 2:
-            setLayoutRowDynamic(100, 1)
-            colorChart(lines, NkColor(r: 255, g: 0, b: 0, a: 255), NkColor(
-                r: 150, g: 0, b: 0, a: 255), 32, 0.0, 1.0):
-              addColorChartSlot(lines, NkColor(r: 0, g: 0, b: 255, a: 255),
-                  NkColor(r: 0, g: 0, b: 150, a: 255), 32, -1.0, 1.0)
-              addColorChartSlot(column, NkColor(r: 0, g: 255, b: 0), NkColor(
-                  r: 0, g: 150, b: 0), 32, 0.0, 1.0)
+            setLayoutRowDynamic(height = 100, cols = 1)
+            colorChart(cType = lines, color = NkColor(r: 255, g: 0, b: 0,
+                a: 255), highlight = NkColor(r: 150, g: 0, b: 0, a: 255),
+                count = 32, minValue = 0.0, maxValue = 1.0):
+              addColorChartSlot(cType = lines, color = NkColor(r: 0, g: 0,
+                  b: 255, a: 255), highlight = NkColor(r: 0, g: 0, b: 150,
+                  a: 255), count = 32, minValue = -1.0, maxValue = 1.0)
+              addColorChartSlot(cType = column, color = NkColor(r: 0, g: 255,
+                  b: 0), highlight = NkColor(r: 0, g: 150, b: 0), count = 32,
+                  minValue = 0.0, maxValue = 1.0)
               id = 0.0
               for i in 0 .. 31:
-                chartPushSlot(abs(sin(id)), 0)
-                chartPushSlot(abs(cos(id)), 1)
-                chartPushSlot(abs(sin(id)), 2)
-                id = id + step
+                chartPushSlot(value = abs(x = sin(x = id)), slot = 0)
+                chartPushSlot(value = abs(x = cos(x = id)), slot = 1)
+                chartPushSlot(value = abs(x = sin(x = id)), slot = 2)
+                id += step
           else:
             discard
-      treeNode("Simple", minimized, 19):
-        setLayoutRowDynamic(300, 2)
-        group("Group_Without_Border", {windowNoFlags}):
-          setLayoutRowStatic(18, 150, 1)
+      treeNode(title = "Simple", state = minimized, index = 19):
+        setLayoutRowDynamic(height = 300, cols = 2)
+        group(title = "Group_Without_Border", flags = {windowNoFlags}):
+          setLayoutRowStatic(height = 18, width = 150, cols = 1)
           for i in 0 .. 63:
+            {.push ruleOff: "namedParams".}
             fmtLabel(left, "%s: scrollable region",
                 fmt"{i:#X}".cstring)
-        group("Group_With_Border", {windowBorder}):
-          setLayoutRowDynamic(25, 2)
+            {.push ruleOn: "namedParams".}
+        group(title = "Group_With_Border", flags = {windowBorder}):
+          setLayoutRowDynamic(height = 25, cols = 2)
           for i in 0 .. 63:
             let number = (((i mod 7) * 10)) + (64 + (i mod 2) * 2)
-            labelButton(fmt"{number:08}"):
+            labelButton(title = fmt"{number:08}"):
               discard
-      treeNode("Complex", minimized, 20):
-        layoutSpaceStatic(500, 64):
-          row(0, 0, 150, 500):
-            group("Group_left", {windowBorder}):
-              setLayoutRowStatic(18, 100, 1)
+      treeNode(title = "Complex", state = minimized, index = 20):
+        layoutSpaceStatic(height = 500, widgetsCount = 64):
+          row(x = 0, y = 0, w = 150, h = 500):
+            group(title = "Group_left", flags = {windowBorder}):
+              setLayoutRowStatic(height = 18, width = 100, cols = 1)
               for i in 0 .. 31:
-                selectableLabel((if selected4[
-                    i]: "Selected" else: "Unselected"), selected4[i], centered)
-          row(160, 0, 150, 240):
-            group("Group_top", {windowBorder}):
-              setLayoutRowDynamic(25, 1)
-              labelButton("#FFAA"):
+                selectableLabel(str = (if selected4[
+                    i]: "Selected" else: "Unselected"), value = selected4[i],
+                    align = centered)
+          row(x = 160, y = 0, w = 150, h = 240):
+            group(title = "Group_top", flags = {windowBorder}):
+              setLayoutRowDynamic(height = 25, cols = 1)
+              labelButton(title = "#FFAA"):
                 discard
-              labelButton("#FFBB"):
+              labelButton(title = "#FFBB"):
                 discard
-              labelButton("#FFCC"):
+              labelButton(title = "#FFCC"):
                 discard
-              labelButton("#FFDD"):
+              labelButton(title = "#FFDD"):
                 discard
-              labelButton("#FFEE"):
+              labelButton(title = "#FFEE"):
                 discard
-              labelButton("#FFFF"):
+              labelButton(title = "#FFFF"):
                 discard
-          row(160, 250, 150, 250):
-            group("Group_buttom", {windowBorder}):
-              setLayoutRowDynamic(25, 1)
-              labelButton("#FFAA"):
+          row(x = 160, y = 250, w = 150, h = 250):
+            group(title = "Group_buttom", flags = {windowBorder}):
+              setLayoutRowDynamic(height = 25, cols = 1)
+              labelButton(title = "#FFAA"):
                 discard
-              labelButton("#FFBB"):
+              labelButton(title = "#FFBB"):
                 discard
-              labelButton("#FFCC"):
+              labelButton(title = "#FFCC"):
                 discard
-              labelButton("#FFDD"):
+              labelButton(title = "#FFDD"):
                 discard
-              labelButton("#FFEE"):
+              labelButton(title = "#FFEE"):
                 discard
-              labelButton("#FFFF"):
+              labelButton(title = "#FFFF"):
                 discard
-          row(320, 0, 150, 150):
-            group("Group_right_top", {windowBorder}):
-              setLayoutRowStatic(18, 100, 1)
+          row(x = 320, y = 0, w = 150, h = 150):
+            group(title = "Group_right_top", flags = {windowBorder}):
+              setLayoutRowStatic(height = 18, width = 100, cols = 1)
               for i in 0 .. 3:
-                selectableLabel((if selected[i]: "Selected" else: "Unselected"),
-                    selected[i], centered)
-          row(320, 160, 150, 150):
-            group("Group_right_center", {windowBorder}):
-              setLayoutRowStatic(18, 100, 1)
+                selectableLabel(str = (if selected[
+                    i]: "Selected" else: "Unselected"), value = selected[i],
+                    align = centered)
+          row(x = 320, y = 160, w = 150, h = 150):
+            group(title = "Group_right_center", flags = {windowBorder}):
+              setLayoutRowStatic(height = 18, width = 100, cols = 1)
               for i in 0 .. 3:
-                selectableLabel((if selected[i]: "Selected" else: "Unselected"),
-                    selected[i], centered)
-          row(320, 320, 150, 150):
-            group("Group_right_bottom", {windowBorder}):
-              setLayoutRowStatic(18, 100, 1)
+                selectableLabel(str = (if selected[
+                    i]: "Selected" else: "Unselected"), value = selected[i],
+                    align = centered)
+          row(x = 320, y = 320, w = 150, h = 150):
+            group(title = "Group_right_bottom", flags = {windowBorder}):
+              setLayoutRowStatic(height = 18, width = 100, cols = 1)
               for i in 0 .. 3:
-                selectableLabel((if selected[i]: "Selected" else: "Unselected"),
-                    selected[i], centered)
-      treeNode("Splitter", minimized, 21):
-        setLayoutRowStatic(20, 320, 1)
-        label("Use slider and spinner to change tile size")
-        label("Drag the space between tiles to change tile ratio")
-        treeNode("Vertical", minimized, 21):
+                selectableLabel(str = (if selected[
+                    i]: "Selected" else: "Unselected"), value = selected[i],
+                    align = centered)
+      treeNode(title = "Splitter", state = minimized, index = 21):
+        setLayoutRowStatic(height = 20, width = 320, cols = 1)
+        label(str = "Use slider and spinner to change tile size")
+        label(str = "Drag the space between tiles to change tile ratio")
+        treeNode(title = "Vertical", state = minimized, index = 22):
           let rowLayout: array[5, cfloat] = [a.cfloat, 8, b.cfloat, 8, c.cfloat]
-          setLayoutRowStatic(30, 100, 2)
-          label("left:")
-          slider(10.0, a, 200.0, 10.0)
-          label("middle:")
-          slider(10.0, b, 200.0, 10.0)
-          label("right:")
-          slider(10.0, c, 200.0, 10.0)
-          setLayoutRowStatic(200, 5, rowLayout)
-          group("left", {windowNoScrollbar, windowBorder}):
-            setLayoutRowDynamic(25, 1)
-            labelButton("#FFAA"):
+          setLayoutRowStatic(height = 30, width = 100, cols = 2)
+          label(str = "left:")
+          slider(min = 10.0, val = a, max = 200.0, step = 10.0)
+          label(str = "middle:")
+          slider(min = 10.0, val = b, max = 200.0, step = 10.0)
+          label(str = "right:")
+          slider(min = 10.0, val = c, max = 200.0, step = 10.0)
+          setLayoutRowStatic(height = 200, cols = 5, ratio = rowLayout)
+          group(title = "left", flags = {windowNoScrollbar, windowBorder}):
+            setLayoutRowDynamic(height = 25, cols = 1)
+            labelButton(title = "#FFAA"):
               discard
-            labelButton("#FFBB"):
+            labelButton(title = "#FFBB"):
               discard
-            labelButton("#FFCC"):
+            labelButton(title = "#FFCC"):
               discard
-            labelButton("#FFDD"):
+            labelButton(title = "#FFDD"):
               discard
-            labelButton("#FFEE"):
+            labelButton(title = "#FFEE"):
               discard
-            labelButton("#FFFF"):
+            labelButton(title = "#FFFF"):
               discard
           var bounds = getWidgetBounds()
-          addSpacing(1)
-          if (isMouseHovering(bounds) or
-              isMousePrevHovering(bounds)) and isMouseDown(left):
+          addSpacing(cols = 1)
+          if (isMouseHovering(rect = bounds) or isMousePrevHovering(
+              rect = bounds)) and isMouseDown(id = left):
             a = rowLayout[0] + getMouseDelta().x
             b = rowLayout[2] - getMouseDelta().x
-          group("center", {windowBorder, windowNoScrollbar}):
-            setLayoutRowDynamic(25, 1)
-            labelButton("#FFAA"):
+          group(title = "center", flags = {windowBorder, windowNoScrollbar}):
+            setLayoutRowDynamic(height = 25, cols = 1)
+            labelButton(title = "#FFAA"):
               discard
-            labelButton("#FFBB"):
+            labelButton(title = "#FFBB"):
               discard
-            labelButton("#FFCC"):
+            labelButton(title = "#FFCC"):
               discard
-            labelButton("#FFDD"):
+            labelButton(title = "#FFDD"):
               discard
-            labelButton("#FFEE"):
+            labelButton(title = "#FFEE"):
               discard
-            labelButton("#FFFF"):
+            labelButton(title = "#FFFF"):
               discard
           bounds = getWidgetBounds()
-          addSpacing(1)
-          if (isMouseHovering(bounds) or
-              isMousePrevHovering(bounds)) and isMouseDown(left):
+          addSpacing(cols = 1)
+          if (isMouseHovering(rect = bounds) or isMousePrevHovering(
+              rect = bounds)) and isMouseDown(id = left):
             b = rowLayout[2] + getMouseDelta().x
             c = rowLayout[4] - getMouseDelta().x
-          group("right", {windowBorder, windowNoScrollbar}):
-            setLayoutRowDynamic(25, 1)
-            labelButton("#FFAA"):
+          group(title = "right", flags = {windowBorder, windowNoScrollbar}):
+            setLayoutRowDynamic(height = 25, cols = 1)
+            labelButton(title = "#FFAA"):
               discard
-            labelButton("#FFBB"):
+            labelButton(title = "#FFBB"):
               discard
-            labelButton("#FFCC"):
+            labelButton(title = "#FFCC"):
               discard
-            labelButton("#FFDD"):
+            labelButton(title = "#FFDD"):
               discard
-            labelButton("#FFEE"):
+            labelButton(title = "#FFEE"):
               discard
-            labelButton("#FFFF"):
+            labelButton(title = "#FFFF"):
               discard
-        treeNode("Horizontal", minimized, 22):
-          setLayoutRowStatic(30, 100, 2)
-          label("top:")
-          slider(10.0, a, 200.0, 10.0)
-          label("middle:")
-          slider(10.0, b, 200.0, 10.0)
-          label("bottom:")
-          slider(10.0, c, 200.0, 10.0)
-          setLayoutRowDynamic(a, 1)
-          group("top", {windowBorder, windowNoScrollbar}):
-            setLayoutRowDynamic(25, 3)
-            labelButton("#FFAA"):
+        treeNode(title = "Horizontal", state = minimized, index = 23):
+          setLayoutRowStatic(height = 30, width = 100, cols = 2)
+          label(str = "top:")
+          slider(min = 10.0, val = a, max = 200.0, step = 10.0)
+          label(str = "middle:")
+          slider(min = 10.0, val = b, max = 200.0, step = 10.0)
+          label(str = "bottom:")
+          slider(min = 10.0, val = c, max = 200.0, step = 10.0)
+          setLayoutRowDynamic(height = a, cols = 1)
+          group(title = "top", flags = {windowBorder, windowNoScrollbar}):
+            setLayoutRowDynamic(height = 25, cols = 3)
+            labelButton(title = "#FFAA"):
               discard
-            labelButton("#FFBB"):
+            labelButton(title = "#FFBB"):
               discard
-            labelButton("#FFCC"):
+            labelButton(title = "#FFCC"):
               discard
-            labelButton("#FFDD"):
+            labelButton(title = "#FFDD"):
               discard
-            labelButton("#FFEE"):
+            labelButton(title = "#FFEE"):
               discard
-            labelButton("#FFFF"):
+            labelButton(title = "#FFFF"):
               discard
-          setLayoutRowDynamic(8, 1)
+          setLayoutRowDynamic(height = 8, cols = 1)
           var bounds = getWidgetBounds()
-          addSpacing(1)
-          if (isMouseHovering(bounds) or
-              isMousePrevHovering(bounds)) and isMouseDown(left):
+          addSpacing(cols = 1)
+          if (isMouseHovering(rect = bounds) or isMousePrevHovering(
+              rect = bounds)) and isMouseDown(id = left):
             a = a + getMouseDelta().y
             b = b - getMouseDelta().y
-          setLayoutRowDynamic(b, 1)
-          group("middle", {windowBorder, windowNoScrollbar}):
-            setLayoutRowDynamic(25, 3)
-            labelButton("#FFAA"):
+          setLayoutRowDynamic(height = b, cols = 1)
+          group(title = "middle", flags = {windowBorder, windowNoScrollbar}):
+            setLayoutRowDynamic(height = 25, cols = 3)
+            labelButton(title = "#FFAA"):
               discard
-            labelButton("#FFBB"):
+            labelButton(title = "#FFBB"):
               discard
-            labelButton("#FFCC"):
+            labelButton(title = "#FFCC"):
               discard
-            labelButton("#FFDD"):
+            labelButton(title = "#FFDD"):
               discard
-            labelButton("#FFEE"):
+            labelButton(title = "#FFEE"):
               discard
-            labelButton("#FFFF"):
+            labelButton(title = "#FFFF"):
               discard
-          setLayoutRowDynamic(8, 1)
+          setLayoutRowDynamic(height = 8, cols = 1)
           bounds = getWidgetBounds()
-          if (isMouseHovering(bounds) or
-              isMousePrevHovering(bounds)) and isMouseDown(left):
+          if (isMouseHovering(rect = bounds) or isMousePrevHovering(
+              rect = bounds)) and isMouseDown(id = left):
             b = b + getMouseDelta().y
             c = c - getMouseDelta().y
-          setLayoutRowDynamic(c, 1)
-          group("bottom", {windowBorder, windowNoScrollbar}):
-            setLayoutRowDynamic(25, 3)
-            labelButton("#FFAA"):
+          setLayoutRowDynamic(height = c, cols = 1)
+          group(title = "bottom", flags = {windowBorder, windowNoScrollbar}):
+            setLayoutRowDynamic(height = 25, cols = 3)
+            labelButton(title = "#FFAA"):
               discard
-            labelButton("#FFBB"):
+            labelButton(title = "#FFBB"):
               discard
-            labelButton("#FFCC"):
+            labelButton(title = "#FFCC"):
               discard
-            labelButton("#FFDD"):
+            labelButton(title = "#FFDD"):
               discard
-            labelButton("#FFEE"):
+            labelButton(title = "#FFEE"):
               discard
-            labelButton("#FFFF"):
+            labelButton(title = "#FFFF"):
               discard
