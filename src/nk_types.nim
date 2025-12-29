@@ -284,6 +284,9 @@ type
   HandleType* = enum
     ## Types of handle
     handlePtr, handleInt
+  PageDataType* = enum
+    ## Types of page data
+    tableType, panelType, windowType
 
 # ---------
 # Constants
@@ -323,6 +326,12 @@ const
     ## The size of the stack of flags
   nkColorStackSize*: Positive = 32
     ## The size of the stack of colors
+  nkFontStackSize*: Positive = 8
+    ## The size of the stack of user fonts
+  nkButtonBehaviorStackSize*: Positive = 8
+    ## The size of the stack of user fonts
+  nkInputMax*: Positive = 16
+    ## The max size of the user's input
 
 # -------
 # Objects
@@ -597,8 +606,6 @@ type
     ## Internal Nuklear type
     down*: nk_bool
     clicked*: cuint
-  KeysArray* = array[keyMax, nk_key]
-    ## The array of keyboard keys
   nk_keyboard* {.importc: "struct nk_keyboard", completeStruct.} = object
     ## Internal Nuklear type
     keys*, text*: pointer
@@ -1095,9 +1102,21 @@ type
     delta*, pos*, prev*, scrollDelta*, : Vec2
     buttons*: array[Buttons.max, MouseButton]
     grab*, grabbed*, ungrab*: bool
+  Key* = object
+    ## Internal Nuklear type
+    down*: bool
+    clicked*: uint
+  KeysArray* = array[keyMax, Key]
+    ## The array of keyboard keys
+  Keyboard* = object
+    ## Used to store Nuklear data about keyboard
+    keys*: KeysArray
+    text*: array[nkInputMax, char]
+    textLen*: Natural
   Input* = object
     ## Used to store information about the user's input
     mouse*: Mouse
+    keyboard*: Keyboard
   Handle* = object
     ## Used to store a handle to various elements
     case handleType: HandleType
@@ -1217,7 +1236,8 @@ type
   NkTable* = object
     ## Used to store Nuklear table widget data
     seq*, size*: uint
-    keys*, values*: pointer
+    keys*: seq[nk_hash]
+    values*: seq[uint]
     next*, prev*: ref NkTable
   Window* = object
     ## Used to store Nuklear window data
@@ -1397,6 +1417,15 @@ type
     symMinimize*, symMaximize*: SymbolType
     border*, rounding*, indent*, colorFactor*, disabledFactor*: float
     padding*, spacing*: Vec2
+  StyleCombo* = object
+    ## Used to store Nuklear style data for combo widgets
+    normal*, hover*, active*: StyleItem
+    borderColor*, labelNormal*, labelHover*, labelActive*, symbolNormal*,
+      symbolHover*, symbolActive*: NkColor
+    button*: StyleButton
+    symNormal*, symHover*, symActive*: SymbolType
+    border*, rounding*, colorFactor*, disabledFactor*: float
+    contentPadding*, buttonPadding*, spacing*: Vec2
   Style* = object
     ## Used to store Nuklear style data slider widgets
     window*: StyleWindow
@@ -1415,6 +1444,130 @@ type
     chart*: StyleChart
     scrollH*, scrollV: StyleScrollbar
     tab*: StyleTab
+    combo*: StyleCombo
+  PageData* = object
+    ## Used to store memory page's data
+    case pageDataType: PageDataType
+    of tableType:
+      tbl*: NkTable
+    of panelType:
+      pan*: Panel
+    of windowType:
+      win: Window
+  PageElement* = object
+    ## Used to store memory page's elements
+    data*: PageData
+    next*, prev*: ref PageElement
+  Str* = object
+    ## Used to store string, replace it later with normal string
+    buffer*: Buffer
+    len*: int
+  TextUndoRecord* = object
+    ## Used to store data about one undo record in text edit widgets
+    where*: int
+    insertLength*, deleteLength*, charStorage*: int16
+  TextUndoState* = object
+    ## Used to store data about text edit undo state
+    undoRec*: array[nkTextEditUndoStateCount, TextUndoRecord]
+    undoPoint*, redoPoint*, undoCharPoint*, redoCharPoint*: int16
+  TextEdit* = object
+    ## Used to store data about edit widgets
+    clip*: Clipboard
+    string*: Str
+    filter*: PluginFilter
+    scrolbar*: Vec2
+    cursor*, selectStart*, selectEnd*: int
+    mode*, cursorAtEndOfLine*, initialized*, hasPreferredX*, singleLine*,
+      active*, padding1*: uint8
+    preferredX*: float
+    undo*: TextUndoState
+  PluginPaste* = proc(handle: Handle; edit: TextEdit)
+  PluginCopy* = proc(handle: Handle; text: string; len: int)
+  Clipboard* = object
+    ## Used to store clipboard data
+    userData*: Handle
+    copy*: PluginCopy
+    paste*: PluginPaste
+  ConfigStackStyleItemElement* = object
+    ## Used to store data about style element on the stack
+    address*: ref StyleItem
+    oldValue*: StyleItem
+  ConfigStackFloatElement* = object
+    ## Used to store data about float element on the stack
+    address*: ref float
+    oldValue*: float
+  ConfigStackVec2Element* = object
+    ## Used to store data about vec2 element on the stack
+    address*: ref Vec2
+    oldValue*: Vec2
+  ConfigStackFlagsElement* = object
+    ## Used to store data about flag element on the stack
+    address*: ref nk_flags
+    oldValue*: nk_flags
+  ConfigStackColorElement* = object
+    ## Used to store data about color element on the stack
+    address*: ref NkColor
+    oldValue*: NkColor
+  ConfigStackUserFontElement* = object
+    ## Used to store data about user font element on the stack
+    address*: ref UserFont
+    oldValue*: UserFont
+  ConfigStackButtonBehaviorElement* = object
+    ## Used to store data about button behavior element on the stack
+    address*: ref UserFont
+    oldValue*: UserFont
+  ConfigStackStyleItem* = object
+    ## Used to store stack of style elements
+    head*: int
+    elements*: array[nkStyleItemStackSize, ConfigStackStyleItemElement]
+  ConfigStackFloat* = object
+    ## Used to store stack of float elements
+    head*: int
+    elements*: array[nkFloatStackSize, ConfigStackFloatElement]
+  ConfigStackVec2* = object
+    ## Used to store stack of Vec2 elements
+    head*: int
+    elements*: array[nkVectorStackSize, ConfigStackVec2Element]
+  ConfigStackFlags* = object
+    ## Used to store stack of flags elements
+    head*: int
+    elements*: array[nkFlagsStackSize, ConfigStackFlagsElement]
+  ConfigStackColors* = object
+    ## Used to store stack of color elements
+    head*: int
+    elements*: array[nkColorStackSize, ConfigStackColorElement]
+  ConfigStackUserFont* = object
+    ## Used to store stack of user font elements
+    head*: int
+    elements*: array[nkFontStackSize, ConfigStackUserFontElement]
+  ConfigStackButtonBehavior* = object
+    ## Used to store stack of user font elements
+    head*: int
+    elements*: array[nkButtonBehaviorStackSize, ConfigStackButtonBehaviorElement]
+  ConfigurationStacks* = object
+    ## Used to store configuration stacks
+    styleItems*: ConfigStackStyleItem
+    floats*: ConfigStackFloat
+    vectors*: ConfigStackVec2
+    flags*: ConfigStackFlags
+    colors*: ConfigStackColors
+    fonts*: ConfigStackUserFont
+    buttonBehaviors*: ConfigStackButtonBehavior
+  Context* = object
+    ## The main context of the Nuklear library
+    style*: Style
+    input*: Input
+    begin*, last*, current*, active*: Window
+    seq*, count*: uint
+    memory: Buffer
+    usePool*: bool
+    freeList*: PageElement
+    clip*: Clipboard
+    lastWidgetState*: nk_flags
+    buttonBehavior*: ButtonBehavior
+    stacks*: ConfigurationStacks
+    when defined(nkIncludeCommandUserData):
+      userData*: Handle ## Interna Nuklear data
 
 # ---------
 # Constants
