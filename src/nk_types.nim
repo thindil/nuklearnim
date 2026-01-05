@@ -1169,6 +1169,11 @@ type
     rounding*, w*, h*: uint16
     x*, y*: int16
     color*: NkColor
+  CommandScissor* = object
+    ## Used to store Nuklear command data for clearing rectangles
+    header*: Command
+    x*, y*: int16
+    w*, h*: uint16
   RowLayout* = object
     ## Used to store Nuklear row layout data
     index*, columns*, treeDepth*: int
@@ -1295,7 +1300,7 @@ type
     align*: StyleHeaderAlign
     padding*, labelPadding*, spacing*: Vec2
     active*, hover*, normal*: StyleItem
-    labelActive*, labelHover*, labelNormal: NkColor
+    labelActive*, labelHover*, labelNormal*: NkColor
     closeSymbol*, minimizeSymbol*, maximizeSymbol*: SymbolType
     closeButton*, minimizeButton*: StyleButton
   StyleWindow* = object
@@ -1553,6 +1558,48 @@ type
     colors*: ConfigStackColors
     fonts*: ConfigStackUserFont
     buttonBehaviors*: ConfigStackButtonBehavior
+  DrawNullTexture* = object
+    ## Used to store data about null textures
+    texture*: Handle
+    uv*: Vec2
+  DrawVertexLayoutElement* = object
+    ## Used to store data about vertex layout elements
+    attribute*: DrawVertexLayoutAttribute
+    format*: DrawVertexLayoutFormat
+    offset*: int
+  ConvertConfig* = object
+    ## Used to store data for convert config
+    globalAlpha: float
+    lineAA*, shapeAA*: AntiAliasing
+    circleSegmentCount*, arcSegmentCount*, curveSegmentCount*: uint
+    texNull*: DrawNullTexture
+    vertexLayout*: DrawVertexLayoutElement
+    vertexSize*, vertexAlignment*: int
+  DrawList* = object
+    ## Used to store data for drawing
+    clipRect*: Rect
+    circleVtx*: array[12, Vec2]
+    config*: ConvertConfig
+    buffer*, vertices*, elements*: Buffer
+    elementCount*, vertexCount*, cmdCount*, pathCount*, pathOffset*: uint
+    cmdOffset*: nk_size
+    lineAA*, shapeAA*: AntiAliasing
+    when defined(nkIncludeCommandUserData):
+      userdata*: Handle
+        ## Internal Nuklear type
+  Page* = object
+    ## Used to store data for page memory
+    size*: uint
+    next*: ref Page
+    win*: array[1, PageElement]
+  Pool* = object
+    ## Used to store data for memory pool
+    alloc*: Allocator
+    aType*: AllocationType
+    pageCount*, capacity*: uint
+    pages*: Page
+    freeList*: PageElement
+    size*, cap*: nk_size
   Context* = object
     ## The main context of the Nuklear library
     style*: Style
@@ -1567,7 +1614,19 @@ type
     buttonBehavior*: ButtonBehavior
     stacks*: ConfigurationStacks
     when defined(nkIncludeCommandUserData):
-      userData*: Handle ## Interna Nuklear data
+      userData*: Handle
+        ## Interna Nuklear data
+    when defined(nkIncludeVertexBufferOutput):
+      drawList*: DrawList
+        ## Internal Nuklear type
+    textEdit*: TextEdit
+    overlay*: CommandBuffer
+    build*: int
+    pool*: Pool
+  Text* = object
+    ## Used to store data for text
+    padding*: Vec2
+    background*, text*: NkColor
 
 # ---------
 # Constants
