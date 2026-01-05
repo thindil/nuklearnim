@@ -40,26 +40,27 @@ type
   ColorMode = enum
     rgb, hsv
 const
-  values = [26.0, 13.0, 30.0, 15.0, 25.0, 10.0, 20.0, 40.0, 12.0, 8.0, 22.0,
-      28.0, 5.0]
-  ratio = [120.0.cfloat, 150.0]
-  weapons = ["Fist", "Pistol", "Shotgun", "Plasma", "BFG"]
-  chartStep = ((2.0 * 3.141592654) / 32.0).float
-  ratioTwo = [0.2.cfloat, 0.6, 0.2]
-  widthTwo = [100.0.cfloat, 200.0, 50.0]
-  names = ["Lines", "Columns", "Mixed"]
+  values: array[13, float] = [26.0, 13.0, 30.0, 15.0, 25.0, 10.0, 20.0, 40.0,
+      12.0, 8.0, 22.0, 28.0, 5.0]
+  ratio: array[2, cfloat] = [120.0.cfloat, 150.0]
+  weapons: array[5, string] = ["Fist", "Pistol", "Shotgun", "Plasma", "BFG"]
+  chartStep: float = ((2.0 * 3.141592654) / 32.0).float
+  ratioTwo: array[3, cfloat] = [0.2.cfloat, 0.6, 0.2]
+  widthTwo: array[3, cfloat] = [100.0.cfloat, 200.0, 50.0]
+  names: array[3, string] = ["Lines", "Columns", "Mixed"]
+{.push ruleOff: "varUplevel".}
 var
   showMenu, titlebar, border, resize, movable, noScrollbar, scaleLeft,
     minimizable, check, mcheck, checkbox, inactive, groupBorder: bool = true
-  windowFlags: set[PanelFlags]
+  windowFlags: set[PanelFlags] = {}
   showAppAbout, groupTitlebar, groupNoScrollbar: bool = false
-  prog, progValue = 40
+  prog, progValue: int = 40
   slider, mslider: int = 10
   propertyInt, propertyNeg: int = 10
-  mprog = 60
+  mprog: int = 60
   menuState: Natural = menuNone.ord
-  state = minimized
-  option = A
+  state: CollapseStates = minimized
+  option: Options = A
   intSlider: int = 5
   floatSlider: float = 2.5
   propertyFloat: float = 2.0
@@ -76,31 +77,35 @@ var
   currentWeapon: int = 0
   comboColor: NkColor = NkColor(r: 130, g: 50, b: 50, a: 255)
   comboColor2: NkColorF = NkColorF(r: 0.509, g: 0.705, b: 0.2, a: 1.0)
-  colMode: ColorMode
+  colMode: ColorMode = rgb
   progA: nk_size = 20
   progB: nk_size = 40
   progC: nk_size = 10
   progD: nk_size = 90
-  checkValues: array[5, bool]
-  position: array[3, float]
+  checkValues: array[5, bool] = [false, false, false, false, false]
+  position: array[3, float] = [0.0, 0.0, 0.0]
   chartSelection: cfloat = 8.0
   timeSelected, dateSelected, popupActive: bool = false
-  selectedDate: DateTime
-  text: array[9, string]
+  selectedDate: DateTime = now()
+  text: array[9, string] = ["", "", "", "", "", "", "", "", ""]
   textLen: array[9, cint] = [0.cint, 0, 0, 0, 0, 0, 0, 0, 0]
-  boxLen: cint
-  fieldBuffer: string
-  boxBuffer: string
-  boxActive: EditEvent
-  lineIndex, colIndex = -1
+  boxLen: cint = 0
+  fieldBuffer: string = ""
+  boxBuffer: string = ""
+  boxActive: EditEvent = none
+  lineIndex, colIndex: int = -1
   popupColor: NkColor = NkColor(r: 255, g: 0, b: 0, a: 255)
   groupWidth: int = 320
   groupHeight: int = 200
-  rootSelected: bool
-  selected3: array[8, bool]
+  rootSelected: bool = false
+  selected3: array[8, bool] = [false, false, false, false, false, false, false, false]
   currentTab: cint = 0
-  selected4: array[32, bool]
+  selected4: array[32, bool] = [false, false, false, false, false, false, false,
+      false, false, false, false, false, false, false, false, false, false,
+      false, false, false, false, false, false, false, false, false, false,
+      false, false, false, false, false]
   a, b, c: float = 100
+{.push ruleOn: "varUplevel".}
 
 proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
   ## Show the most features of the library
@@ -259,7 +264,7 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
         fmtLabel(left, "Slider int")
         slider(min = 0, val = intSlider, max = 10, step = 1)
         label(str = "Slider float")
-        slider(min = 0, val = float_slider, max = 5.0, step = 0.5)
+        slider(min = 0, val = floatSlider, max = 5.0, step = 0.5)
         fmtLabel(left, "Progressbar: %u", progValue)
         {.push ruleOn: "namedParams".}
         progressBar(value = prog_value, maxValue = 100)
@@ -312,8 +317,8 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
           for index, value in selected2.mpairs:
             if selectableLabel(str = "Z", value = value, align = centered):
               let
-                x = index mod 4
-                y = (index / 4).int
+                x: int = index mod 4
+                y: int = (index / 4).int
               if x > 0: selected2[index - 1] = (selected2[index -
                   1].cint xor 1).nk_bool
               if x < 3: selected2[index + 1] = (selected2[index +
@@ -371,7 +376,7 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
             hsva[3] = property2(name = "#A:", min = 0, val = hsva[3], max = 1.0,
                 step = 0.01, incPerPixel = 0.05)
             comboColor2 = hsvaToColorf(hsva = hsva)
-        var sum = $(progA + progB + progC + progD)
+        var sum: string = $(progA + progB + progC + progD)
         labelCombo(selected = sum, x = 200, y = 200):
           setLayoutRowDynamic(height = 30, cols = 1)
           progressBar(value = progA, maxValue = 100)
@@ -444,8 +449,8 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
           for day in WeekDay:
             sum = $day
             label(str = sum, alignment = centered)
-          var spacing = getDayOfWeek(monthday = 1, month = selectedDate.month,
-              year = selectedDate.year).ord - dMon.ord
+          var spacing: int = getDayOfWeek(monthday = 1,
+              month = selectedDate.month, year = selectedDate.year).ord - dMon.ord
           if spacing > 0:
             addSpacing(cols = spacing)
           for i in 1 .. getDaysInMonth(month = selectedDate.month,
@@ -470,7 +475,7 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
         label(str = "Binary:")
         editString(text = text[6], maxLen = 64, filter = nk_filter_binary)
         label(str = "Password:")
-        var buffer = text[8]
+        var buffer: string = text[8]
         for ch in buffer.mitems:
           ch = '*'
         editString(text = buffer, maxLen = 64, editType = field)
@@ -498,11 +503,11 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
     treeTab(title = "Charts", state = minimized, index = 12):
       var
         chartId: cfloat = 0
-        chartIndex = -1
+        chartIndex: int = -1
       setLayoutRowDynamic(height = 100, cols = 1)
       chart(cType = lines, num = 32, min = -1.0, max = 1.0):
         for i in 0 .. 31:
-          let res = chartPush(value = cos(x = chartId))
+          let res: ChartEvent = chartPush(value = cos(x = chartId))
           if res == hovering:
             chartIndex = i
           if res == clicked:
@@ -521,7 +526,7 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
       setLayoutRowDynamic(height = 100, cols = 1)
       chart(cType = column, num = 32, min = 0.0, max = 1.0):
         for i in 0 .. 31:
-          let res = chartPush(value = abs(x = sin(x = chartId)))
+          let res: ChartEvent = chartPush(value = abs(x = sin(x = chartId)))
           if res == hovering:
             chartIndex = i
           if res == clicked:
@@ -746,10 +751,10 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
                 i]: "Selected" else: "Unselected"), value = selected2[i],
                 align = centered)
       treeNode(title = "Tree", state = minimized, index = 17):
-        var sel = rootSelected
+        var sel: bool = rootSelected
         treeElement(eType = node, title = "Root", state = minimized,
             selected = sel, index = 1):
-          var nodeSelect = selected3[0]
+          var nodeSelect: bool = selected3[0]
           if sel != rootSelected:
             rootSelected = sel
             for i in 0 .. 7:
@@ -774,8 +779,8 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
             layoutStatic(height = 20, cols = 3):
               for i in 0 .. 2:
                 let
-                  textWidth = getTextWidth(text = names[i])
-                  widgetWidth = textWidth + 3 * getButtonStyle(
+                  textWidth: float = getTextWidth(text = names[i])
+                  widgetWidth: float = textWidth + 3 * getButtonStyle(
                       field = padding).x
                 row(width = widgetWidth):
                   if currentTab == i:
@@ -791,7 +796,7 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
                       currentTab = i.cint
         setLayoutRowDynamic(height = 140, cols = 1)
         group(title = "Notebook", flags = {windowBorder}):
-          var id: cfloat
+          var id: cfloat = 0.0
           let step: cfloat = (2 * 3.141592654f) / 32
           case currentTab
           of 0:
@@ -847,7 +852,7 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
         group(title = "Group_With_Border", flags = {windowBorder}):
           setLayoutRowDynamic(height = 25, cols = 2)
           for i in 0 .. 63:
-            let number = (((i mod 7) * 10)) + (64 + (i mod 2) * 2)
+            let number: int = (((i mod 7) * 10)) + (64 + (i mod 2) * 2)
             labelButton(title = fmt"{number:08}"):
               discard
       treeNode(title = "Complex", state = minimized, index = 20):
@@ -938,7 +943,7 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
               discard
             labelButton(title = "#FFFF"):
               discard
-          var bounds = getWidgetBounds()
+          var bounds: Rect = getWidgetBounds()
           addSpacing(cols = 1)
           if (isMouseHovering(rect = bounds) or isMousePrevHovering(
               rect = bounds)) and isMouseDown(id = left):
@@ -1002,7 +1007,7 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
             labelButton(title = "#FFFF"):
               discard
           setLayoutRowDynamic(height = 8, cols = 1)
-          var bounds = getWidgetBounds()
+          var bounds: Rect = getWidgetBounds()
           addSpacing(cols = 1)
           if (isMouseHovering(rect = bounds) or isMousePrevHovering(
               rect = bounds)) and isMouseDown(id = left):
