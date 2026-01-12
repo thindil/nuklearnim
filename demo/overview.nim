@@ -432,7 +432,9 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
               symbolButton(symbol = triangleLeft):
                 if selectedDate.month == mJan:
                   selectedDate.monthZero = 12
+                  {.ruleOff: "assignments".}
                   selectedDate.year = selectedDate.year - 1
+                  {.ruleOn: "assignments".}
                 else:
                   selectedDate.monthZero = selectedDate.month.ord - 1
             row(width = 0.9):
@@ -442,7 +444,9 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
               symbolButton(symbol = triangleRight):
                 if selectedDate.month == mDec:
                   selectedDate.monthZero = 1
+                  {.ruleOff: "assignments".}
                   selectedDate.year = selectedDate.year + 1
+                  {.ruleOn: "assignments".}
                 else:
                   selectedDate.monthZero = selectedDate.month.ord + 1
           setLayoutRowDynamic(height = 35, cols = 7)
@@ -512,7 +516,7 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
             chartIndex = i
           if res == clicked:
             lineIndex = i
-          chartId = chartId + chartStep
+          chartId += chartStep
       if chartIndex != -1:
         {.push ruleOff: "namedParams".}
         fmtTooltip("Value: %.2f", cos(x = chartIndex.cfloat * chartStep).cfloat)
@@ -531,7 +535,7 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
             chartIndex = i
           if res == clicked:
             colIndex = i
-          chartId = chartId + chartStep
+          chartId += chartStep
       if chartIndex != -1:
         {.push ruleOff: "namedParams".}
         fmtTooltip("Value: %.2f", abs(x = sin(x = chartStep *
@@ -552,7 +556,7 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
           chartPushSlot(value = abs(x = sin(x = chartId)), slot = 0)
           chartPushSlot(value = cos(x = chartId), slot = 1)
           chartPushSlot(value = sin(x = chartId), slot = 2)
-          chartId = chartId + chartStep
+          chartId += chartStep
       setLayoutRowDynamic(height = 100, cols = 1)
       colorChart(cType = lines, color = NkColor(r: 255, g: 0, b: 0),
           highlight = NkColor(r: 150, g: 0, b: 0), count = 32, minValue = 0.0,
@@ -568,7 +572,7 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
           chartPushSlot(value = abs(x = sin(x = chartId)), slot = 0)
           chartPushSlot(value = cos(x = chartId), slot = 1)
           chartPushSlot(value = sin(x = chartId), slot = 2)
-          chartId = chartId + chartStep
+          chartId += chartStep
     treeTab(title = "Popup", state = minimized, index = 13):
       setLayoutRowStatic(height = 30, width = 160, cols = 1)
       var bounds: Rect = getWidgetBounds()
@@ -1011,8 +1015,8 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
           addSpacing(cols = 1)
           if (isMouseHovering(rect = bounds) or isMousePrevHovering(
               rect = bounds)) and isMouseDown(id = left):
-            a = a + getMouseDelta().y
-            b = b - getMouseDelta().y
+            a += getMouseDelta().y
+            b -= getMouseDelta().y
           setLayoutRowDynamic(height = b, cols = 1)
           group(title = "middle", flags = {windowBorder, windowNoScrollbar}):
             setLayoutRowDynamic(height = 25, cols = 3)
@@ -1032,8 +1036,8 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
           bounds = getWidgetBounds()
           if (isMouseHovering(rect = bounds) or isMousePrevHovering(
               rect = bounds)) and isMouseDown(id = left):
-            b = b + getMouseDelta().y
-            c = c - getMouseDelta().y
+            b += getMouseDelta().y
+            c -= getMouseDelta().y
           setLayoutRowDynamic(height = c, cols = 1)
           group(title = "bottom", flags = {windowBorder, windowNoScrollbar}):
             setLayoutRowDynamic(height = 25, cols = 3)
