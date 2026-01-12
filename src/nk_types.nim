@@ -1,4 +1,4 @@
-# Copyright © 2023-2025 Bartek Jasicki
+# Copyright © 2023-2026 Bartek Jasicki
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -1081,6 +1081,12 @@ type
     ## * x - the X coordinate of the point
     ## * y - the Y coordinate of the point
     x*, y*: float
+  Vec2I* = object
+    ## Used to store information about UI vector.
+    ##
+    ## * x - the X coordinate of the point
+    ## * y - the Y coordinate of the point
+    x*, y*: int16
   ButtonStyle* = object
     ## Used to store information about a button's style.
     borderColor*, textNormal*, textHover*: NkColor
@@ -1163,10 +1169,33 @@ type
     next*: nk_size
     when defined(nkIncludeCommandUserData):
       userdata*: Handle ## Interna Nuklear data
+  CommandRect* = object
+    ## Used to store Nuklear command data for draw rectangles
+    header*: Command
+    rounding*, w*, h*, lineThickness*: uint16
+    x*, y*: int16
+    color*: NkColor
   CommandRectFilled* = object
     ## Used to store Nuklear command data for draw filled rectangles
     header*: Command
     rounding*, w*, h*: uint16
+    x*, y*: int16
+    color*: NkColor
+  CommandTriangle* = object
+    ## Used to store Nuklear command data for draw triangles
+    header*: Command
+    lineThickness*: uint16
+    a*, b*, c*: Vec2I
+    color*: NkColor
+  CommandTriangleFilled* = object
+    ## Used to store Nuklear command data for draw filled triangles
+    header*: Command
+    a*, b*, c*: Vec2I
+    color*: NkColor
+  CommandCircleFilled* = object
+    ## Used to store Nuklear command data for draw filled circle
+    header*: Command
+    w*, h*: uint16
     x*, y*: int16
     color*: NkColor
   CommandScissor* = object
@@ -1174,6 +1203,23 @@ type
     header*: Command
     x*, y*: int16
     w*, h*: uint16
+  CommandImage* = object
+    ## Used to store Nuklear command data for draw images
+    header*: Command
+    x*, y*: int16
+    w*, h*: uint16
+    img*: Image
+    col*: NkColor
+  CommandText* = object
+    ## Used to store Nuklear command data for draw text
+    header*: Command
+    x*, y*: int16
+    w*, h*: uint16
+    background*, foreground*: NkColor
+    font*: UserFont
+    length*: int
+    text*: string
+    height*: float
   RowLayout* = object
     ## Used to store Nuklear row layout data
     index*, columns*, treeDepth*: int
@@ -1272,13 +1318,13 @@ type
     l*, t*, r*, b*: uint16
   StyleItemData* = object
     ## Used to store Nuklear style item's data
-    case iType: StyleItemType
+    case iType*: StyleItemType
     of itemColor:
-      color: NkColor
+      color*: NkColor
     of itemImage:
-      image: Image
+      image*: Image
     of itemNineSlice:
-      slice: NineSlice
+      slice*: NineSlice
   StyleItem* = object
     ## Used to store Nuklear style item's data
     iType*: StyleItemType
@@ -1288,7 +1334,7 @@ type
   StyleButton* = object
     ## Used to store Nuklear style data for buttons
     normal*, hover*, active*: StyleItem
-    borderColor*, textBackground*, textNormal*, textHover*, textActive: NkColor
+    borderColor*, textBackground*, textNormal*, textHover*, textActive*: NkColor
     rounding*, border*, colorFactorBackground*, colorFactorText*,
       disabledFactor*: float
     padding*, imagePadding*, touchPadding*: Vec2

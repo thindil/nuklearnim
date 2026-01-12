@@ -463,18 +463,16 @@ proc nkPushScissor(b: var CommandBuffer; r: Rect) {.raises: [], tags: [
   ## Returns the modified parameter b
   body:
     b.clip = r
-    let cmd: ptr nk_command_scissor = cast[ptr nk_command_scissor](
-        nkCommandBufferPush(b = b, t = commandScissor,
-            size = nk_command_scissor.sizeof))
-    if cmd == nil:
-      return
-    cmd.x = r.x.cshort
-    cmd.y = r.y.cshort
-    cmd.w = max(x = 0.cushort, y = r.w.cushort)
-    cmd.h = max(x = 0.cushort, y = r.h.cushort)
+    var cmd: CommandScissor = cast[CommandScissor](
+      nkCommandBufferPush(b = b, t = commandScissor,
+      size = CommandScissor.sizeof))
+    cmd.x = r.x.int16
+    cmd.y = r.y.int16
+    cmd.w = max(x = 0.uint16, y = r.w.uint16)
+    cmd.h = max(x = 0.uint16, y = r.h.uint16)
 
 proc nkStrokeRect(b: var CommandBuffer, rect: Rect, rounding,
-  lineThickness: float, c: nk_color) {.raises: [], tags: [RootEffect],
+  lineThickness: float, c: NkColor) {.raises: [], tags: [RootEffect],
   contractual.} =
   ## Draw a rectangle. Internal use only
   ##
@@ -489,10 +487,8 @@ proc nkStrokeRect(b: var CommandBuffer, rect: Rect, rounding,
     if not nkIntersect(x0 = rect.x, y0 = rect.y, w0 = rect.w, h0 = rect.h,
       x1 = b.clip.x, y1 = b.clip.y, w1 = b.clip.w, h1 = b.clip.h):
       return
-  var cmd: ptr nk_command_rect = nil
-  cmd = cast[ptr nk_command_rect](nkCommandBufferPush(b = b, t = commandRect, size = cmd.sizeof))
-  if cmd == nil:
-    return
+  var cmd: CommandRect = cast[CommandRect](nkCommandBufferPush(b = b,
+    t = commandRect, size = CommandRect.sizeof))
   cmd.rounding = rounding.cushort
   cmd.line_thickness = lineThickness.cushort
   cmd.x = rect.x.cshort
@@ -502,7 +498,7 @@ proc nkStrokeRect(b: var CommandBuffer, rect: Rect, rounding,
   cmd.color = c
 
 proc nkStrokeTriangle(b: var CommandBuffer; x0, y0, x1, y1, x2, y2,
-  lineThickness: cfloat; c: nk_color) {.raises: [], tags: [], contractual.} =
+  lineThickness: float; c: NkColor) {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw a triangle. Internal use only
   ##
   ## * b             - the command buffer in which the triangle will be drawn
@@ -523,19 +519,18 @@ proc nkStrokeTriangle(b: var CommandBuffer; x0, y0, x1, y1, x2, y2,
       y = b.clip.y, w = b.clip.w, h = b.clip.h):
       return
 
-  var cmd: ptr nk_command_triangle = nil
-  if cmd == nil:
-    return
-  cmd.line_thickness = lineThickness.cshort
-  cmd.a.x = x0.cshort
-  cmd.a.y = y0.cshort
-  cmd.b.x = x1.cshort
-  cmd.b.y = y1.cshort
-  cmd.c.x = x2.cshort
-  cmd.c.y = y2.cshort
+  var cmd: CommandTriangle = cast[CommandTriangle](nkCommandBufferPush(b = b,
+    t = commandTriangle, size = CommandTriangle.sizeof))
+  cmd.line_thickness = lineThickness.uint16
+  cmd.a.x = x0.int16
+  cmd.a.y = y0.int16
+  cmd.b.x = x1.int16
+  cmd.b.y = y1.int16
+  cmd.c.x = x2.int16
+  cmd.c.y = y2.int16
   cmd.color = c
 
-proc nkFillCircle(b: var CommandBuffer; rect: Rect; c: nk_color)
+proc nkFillCircle(b: var CommandBuffer; rect: Rect; c: NkColor)
   {.raises: [], tags: [RootEffect], contractual.} =
   ## Fill the circle with the selected color
   ##
@@ -549,19 +544,16 @@ proc nkFillCircle(b: var CommandBuffer; rect: Rect; c: nk_color)
       x1 = b.clip.x, y1 = b.clip.y, w1 = b.clip.w, h1 = b.clip.h):
       return
 
-  var cmd: ptr nk_command_circle_filled = nil
-  cmd = cast[ptr nk_command_circle_filled](nkCommandBufferPush(b = b,
-    t = commandCircleFilled, size = cmd.sizeof))
-  if cmd == nil:
-    return
-  cmd.x = rect.x.cshort
-  cmd.y = rect.y.cshort
-  cmd.w = max(x = 0, y = rect.w).cushort
-  cmd.h = max(x = 0, y = rect.h).cushort
+  var cmd: CommandCircleFilled = cast[CommandCircleFilled](nkCommandBufferPush(b = b,
+    t = commandCircleFilled, size = CommandCircleFilled.sizeof))
+  cmd.x = rect.x.int16
+  cmd.y = rect.y.int16
+  cmd.w = max(x = 0, y = rect.w).uint16
+  cmd.h = max(x = 0, y = rect.h).uint16
   cmd.color = c
 
-proc nkFillTriangle(b: var CommandBuffer, x0, y0, x1, y1, x2, y2: cfloat,
-  c: nk_color) {.raises: [], tags: [RootEffect], contractual.} =
+proc nkFillTriangle(b: var CommandBuffer, x0, y0, x1, y1, x2, y2: float,
+  c: NkColor) {.raises: [], tags: [RootEffect], contractual.} =
   ## Fill the circle with the selected color
   ##
   ## * b  - the command buffer in which the triangle will be drawn
@@ -581,20 +573,17 @@ proc nkFillTriangle(b: var CommandBuffer, x0, y0, x1, y1, x2, y2: cfloat,
       y = b.clip.y, w = b.clip.w, h = b.clip.h):
       return
 
-  var cmd: ptr nk_command_triangle_filled = nil
-  cmd = cast[ptr nk_command_triangle_filled](nkCommandBufferPush(b = b,
-    t = commandTriangleFilled, size = cmd.sizeof))
-  if cmd == nil:
-    return
-  cmd.a.x = x0.cshort
-  cmd.a.y = y0.cshort
-  cmd.b.x = x1.cshort
-  cmd.b.y = y1.cshort
-  cmd.c.x = x2.cshort
-  cmd.c.y = y2.cshort
+  var cmd: CommandTriangleFilled = cast[CommandTriangleFilled](nkCommandBufferPush(b = b,
+    t = commandTriangleFilled, size = CommandTriangleFilled.sizeof))
+  cmd.a.x = x0.int16
+  cmd.a.y = y0.int16
+  cmd.b.x = x1.int16
+  cmd.b.y = y1.int16
+  cmd.c.x = x2.int16
+  cmd.c.y = y2.int16
   cmd.color = c
 
-proc nkDrawImage(b: var CommandBuffer; r: Rect; img: PImage; col: nk_color)
+proc nkDrawImage(b: var CommandBuffer; r: Rect; img: Image; col: NkColor)
   {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw the selected image
   ##
@@ -607,19 +596,16 @@ proc nkDrawImage(b: var CommandBuffer; r: Rect; img: PImage; col: nk_color)
       h0 = r.h, x1 = b.clip.x, y1 = b.clip.y, w1 = b.clip.w, h1 = b.clip.h):
       return
 
-  var cmd: ptr nk_command_image = nil
-  cmd = cast[ptr nk_command_image](nkCommandBufferPush(b = b, t = commandImage,
-    size = cmd.sizeof))
-  if cmd == nil:
-    return
+  var cmd: CommandImage = cast[CommandImage](nkCommandBufferPush(b = b, t = commandImage,
+    size = CommandImage.sizeof))
   cmd.x = r.x.cshort
   cmd.y = r.y.cshort
   cmd.w = max(x = 0.cushort, y = r.w.cushort)
   cmd.h = max(x = 0.cushort, y = r.h.cushort)
-  cmd.img = cast[nk_image](img)
+  cmd.img = img
   cmd.col = col
 
-proc nkDrawNineSlice(b: var CommandBuffer; r: Rect; slc: ptr nk_nine_slice; col: nk_color)
+proc nkDrawNineSlice(b: var CommandBuffer; r: Rect; slc: NineSlice; col: NkColor)
   {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw the selected fragments of an image
   ##
@@ -627,14 +613,14 @@ proc nkDrawNineSlice(b: var CommandBuffer; r: Rect; slc: ptr nk_nine_slice; col:
   ## * r   - the rectangle in which the slice will be drawn
   ## * slc - the image's slice to draw
   ## * col - the color used as a background for the slice
-  let slcImg: ptr nk_image = cast[ptr nk_image](slc)
+  let slcImg: Image = slc.image
   var rgnX, rgnY, rgnW, rgnH: nk_ushort = 0
   rgnX = slcImg.region[0]
   rgnY = slcImg.region[1]
   rgnW = slcImg.region[2]
   rgnH = slcImg.region[3]
 
-  var img: nk_image = nk_image()
+  var img: Image = Image()
 
   # top-left
   img.handle = slcImg.handle
@@ -642,41 +628,41 @@ proc nkDrawNineSlice(b: var CommandBuffer; r: Rect; slc: ptr nk_nine_slice; col:
   img.h = slcImg.h
   img.region = [rgnX, rgnY, slc.l, slc.t]
 
-  nkDrawImage(b = b, r = Rect(x: r.x, y: r.y, w: slc.l.float, h: slc.t.float), img = img.addr, col = col)
+  nkDrawImage(b = b, r = Rect(x: r.x, y: r.y, w: slc.l.float, h: slc.t.float), img = img, col = col)
 
   # top-center
   img.region = [rgnX + slc.l, rgnY, rgnW - slc.l - slc.r, slc.t]
-  nkDrawImage(b = b, r = Rect(x: r.x + slc.l.float, y: r.y, w: r.w - slc.l.float - slc.r.float, h: slc.t.float), img = img.addr, col = col)
+  nkDrawImage(b = b, r = Rect(x: r.x + slc.l.float, y: r.y, w: r.w - slc.l.float - slc.r.float, h: slc.t.float), img = img, col = col)
 
   # top-right
   img.region = [rgnX + rgnW - slc.r, rgnY, slc.r, slc.t]
-  nkDrawImage(b = b, r = Rect(x: r.x + r.w - slc.r.float, y: r.y, w: slc.r.float, h: slc.t.float), img = img.addr, col = col)
+  nkDrawImage(b = b, r = Rect(x: r.x + r.w - slc.r.float, y: r.y, w: slc.r.float, h: slc.t.float), img = img, col = col)
 
   # center-left
   img.region = [rgnX, rgnY + slc.t, slc.l, rgnH - slc.t - slc.b]
-  nkDrawImage(b = b, r = Rect(x: r.x, y: r.y + slc.t.float, w: slc.l.float, h: r.h - slc.t.float - slc.b.float), img = img.addr, col = col)
+  nkDrawImage(b = b, r = Rect(x: r.x, y: r.y + slc.t.float, w: slc.l.float, h: r.h - slc.t.float - slc.b.float), img = img, col = col)
 
   # center
   img.region = [rgnX + slc.l, rgnY + slc.t, rgnW - slc.l - slc.r, rgnH - slc.t - slc.b]
-  nkDrawImage(b = b, r = Rect(x: r.x + slc.l.float, y: r.y + slc.t.float, w: r.w - slc.l.float - slc.r.float, h: r.h - slc.t.float - slc.b.float), img = img.addr, col = col)
+  nkDrawImage(b = b, r = Rect(x: r.x + slc.l.float, y: r.y + slc.t.float, w: r.w - slc.l.float - slc.r.float, h: r.h - slc.t.float - slc.b.float), img = img, col = col)
 
   # center-right
   img.region = [rgnX + rgnW - slc.r, rgnY + slc.t, slc.r, rgnH - slc.t - slc.b]
-  nkDrawImage(b = b, r = Rect(x: r.x + r.w - slc.r.float, y: r.y - slc.t.float, w: slc.r.float, h: r.h - slc.t.float - slc.b.float), img = img.addr, col = col)
+  nkDrawImage(b = b, r = Rect(x: r.x + r.w - slc.r.float, y: r.y - slc.t.float, w: slc.r.float, h: r.h - slc.t.float - slc.b.float), img = img, col = col)
 
   # bottom-left
   img.region = [rgnX, rgnY + rgnH - slc.b, slc.l, slc.b]
-  nkDrawImage(b = b, r = Rect(x: r.x, y: r.y + r.h - slc.b.float, w: slc.l.float, h: slc.b.float), img = img.addr, col = col)
+  nkDrawImage(b = b, r = Rect(x: r.x, y: r.y + r.h - slc.b.float, w: slc.l.float, h: slc.b.float), img = img, col = col)
 
   # bottom-center
   img.region = [rgnX + slc.l, rgnY + rgnH - slc.b, rgnW - slc.l - slc.r, slc.b]
-  nkDrawImage(b = b, r = Rect(x: r.x + slc.l.float, y: r.y + r.h - slc.b.float, w: r.w - slc.l.float - slc.r.float, h: slc.b.float), img = img.addr, col = col)
+  nkDrawImage(b = b, r = Rect(x: r.x + slc.l.float, y: r.y + r.h - slc.b.float, w: r.w - slc.l.float - slc.r.float, h: slc.b.float), img = img, col = col)
 
   # bottom-right
   img.region = [rgnX + rgnW - slc.r, rgnY + rgnH - slc.b, slc.r, slc.b]
-  nkDrawImage(b = b, r = Rect(x: r.x + r.w - slc.r.float, y: r.y + r.h - slc.b.float, w: slc.r.float, h: slc.b.float), img = img.addr, col = col)
+  nkDrawImage(b = b, r = Rect(x: r.x + r.w - slc.r.float, y: r.y + r.h - slc.b.float, w: slc.r.float, h: slc.b.float), img = img, col = col)
 
-proc nkTextClamp(font: ptr nk_user_font; text: string; textLen: int;
+proc nkTextClamp(font: UserFont; text: string; textLen: int;
   space: float; glyphs: var int; textWidth: var float; sepList: seq[nk_rune];
   sepCount: int): int {.raises: [], tags: [RootEffect], contractual.} =
   ## Clamp the selected text
@@ -705,8 +691,8 @@ proc nkTextClamp(font: ptr nk_user_font; text: string; textLen: int;
       sepLen = len
       break
     let s: float = try:
-        font.width(arg1 = font.userdata, h = font.height, arg3 = text.cstring,
-          len = len.cint)
+        font.width(arg1 = font.userdata, h = font.height, arg3 = text,
+          len = len)
       except Exception:
         return
     var i: Natural = 0
@@ -735,7 +721,7 @@ proc nkTextClamp(font: ptr nk_user_font; text: string; textLen: int;
   return if sepLen == 0: len else: sepLen
 
 proc nkDrawText(b: var CommandBuffer; r: Rect; str: string; length: var int;
-  font: ptr nk_user_font; bg, fg: nk_color) {.raises: [], tags: [RootEffect],
+  font: UserFont; bg, fg: NkColor) {.raises: [], tags: [RootEffect],
   contractual.} =
   ## Draw the selected text
   ##
@@ -746,8 +732,6 @@ proc nkDrawText(b: var CommandBuffer; r: Rect; str: string; length: var int;
   ## * font - the font used to draw the text
   ## * bg   - the background color of the text
   ## * fg   - the foreground color of the text
-  require:
-    font != nil
   body:
     if str == "" or length == 0 or (bg.a == 0 and fg.a == 0):
       return
@@ -759,7 +743,7 @@ proc nkDrawText(b: var CommandBuffer; r: Rect; str: string; length: var int;
 
     # make sure text fits inside bounds
     let textWidth: float = try:
-        font.width(arg1 = font.userdata, h = font.height, arg3 = str.cstring, len = length.cint)
+        font.width(arg1 = font.userdata, h = font.height, arg3 = str, len = length)
       except Exception:
         return
     if textWidth > r.w:
@@ -771,19 +755,19 @@ proc nkDrawText(b: var CommandBuffer; r: Rect; str: string; length: var int;
 
     if length == 0:
       return
-    let cmd: ptr nk_command_text = cast[ptr nk_command_text](
+    var cmd: CommandText = cast[CommandText](
         nkCommandBufferPush(b = b, t = commandText,
-            size = nk_command_text.sizeof + (length + 1).nk_size))
-    cmd.x = r.x.cshort
-    cmd.y = r.y.cshort
-    cmd.w = r.w.cushort
-    cmd.h = r.h.cushort
+            size = CommandText.sizeof + (length + 1).nk_size))
+    cmd.x = r.x.int16
+    cmd.y = r.y.int16
+    cmd.w = r.w.uint16
+    cmd.h = r.h.uint16
     cmd.background = bg
     cmd.foreground = fg
     cmd.font = font
-    cmd.length = length.cint
+    cmd.length = length
     cmd.height = font.height
-    cmd.`string` = str[0..length].cstring
+    cmd.text = str[0..length]
 
 # -----
 # Input
@@ -895,7 +879,7 @@ proc isMouseReleased*(id: Buttons): bool {.raises: [], tags: [], contractual.} =
 # Text
 # ----
 proc nkWidgetText(o: var CommandBuffer; b: var Rect; str: string; len: var int;
-  t: ptr nk_text; a: nk_flags; f: ptr nk_user_font) {.raises: [], tags: [RootEffect],
+  t: Text; a: nk_flags; f: UserFont) {.raises: [], tags: [RootEffect],
   contractual.} =
   ## Draw a text widget. Internal use only
   ##
@@ -906,11 +890,7 @@ proc nkWidgetText(o: var CommandBuffer; b: var Rect; str: string; len: var int;
   ## * t   - the text style
   ## * a   - the flags related to the widget
   ## * f   - the font used to draw the widget
-  require:
-    t != nil
   body:
-    if t == nil:
-      return
     b.h = max(x = b.h, y = 2 * t.padding.y)
     var label: Rect = Rect()
     label.x = 0
@@ -919,8 +899,7 @@ proc nkWidgetText(o: var CommandBuffer; b: var Rect; str: string; len: var int;
     label.h = min(x = f.height, y = b.h - 2 * t.padding.y)
     var textWidth: float = 0.0
     textWidth = try:
-        f.width(arg1 = f.userdata, h = f.height, arg3 = str.cstring,
-          len = len.cint)
+        f.width(arg1 = f.userdata, h = f.height, arg3 = str, len = len)
       except Exception:
         return
     textWidth += (2.0 * t.padding.x)
@@ -1017,7 +996,7 @@ proc nkDoButton(state: var nk_flags; `out`: var CommandBuffer; r: Rect;
     return nkButtonBehavior(state = state, r = bounds, i = `in`, behavior = behavior)
 
 proc nkDrawButton(`out`: var CommandBuffer; bounds: Rect;
-  state: nk_flags; style: ptr StyleButton): StyleItem {.raises: [],
+  state: nk_flags; style: StyleButton): StyleItem {.raises: [],
   tags: [RootEffect], contractual.} =
   ## Draw a button. Internal use only
   ## * out      - the command buffer in which the button will be drawn
@@ -1034,25 +1013,25 @@ proc nkDrawButton(`out`: var CommandBuffer; bounds: Rect;
     result = style.normal
 
   let bg: StyleItemData = result.data
-#  case result.iType
-#  of itemImage:
-#    nkDrawImage(b = `out`, r = bounds, img = bg.image.addr, col =
-#      nk_rgb_factor(col = nk_rgba(r = 255, g = 255, b = 255, a = 255),
-#      factor = style.color_factor_background))
-#  of itemNineSlice:
-#    nkDrawNineSlice(b = `out`, r = bounds, slc = bg.slice.addr, col =
-#      nk_rgb_factor(col = nk_rgba(r = 255, g = 255, b = 255, a = 255),
-#      factor = style.color_factor_background))
-#  of itemColor:
-#    nkFillRect(b = `out`, rect = bounds, rounding = style.rounding, c =
-#      nk_rgb_factor(col = bg.color, factor = style.color_factor_background))
-#    nkStrokeRect(b = `out`, rect = bounds, rounding = style.rounding,
-#      lineThickness = style.border, c = nk_rgb_factor(col = bg.color,
-#      factor = style.color_factor_background))
+  case result.iType
+  of itemImage:
+    nkDrawImage(b = `out`, r = bounds, img = bg.image, col =
+      nkRGBFactor(col = NkColor(r: 255, g: 255, b: 255, a: 255),
+      factor = style.colorFactorBackground))
+  of itemNineSlice:
+    nkDrawNineSlice(b = `out`, r = bounds, slc = bg.slice, col =
+      nkRGBFactor(col = NkColor(r: 255, g: 255, b: 255, a: 255),
+      factor = style.colorFactorBackground))
+  of itemColor:
+    nkFillRect(b = `out`, rect = bounds, rounding = style.rounding, c =
+      nkRGBFactor(col = bg.color, factor = style.colorFactorBackground))
+    nkStrokeRect(b = `out`, rect = bounds, rounding = style.rounding,
+      lineThickness = style.border, c = nkRGBFactor(col = bg.color,
+      factor = style.colorFactorBackground))
 
 proc nkDrawSymbol(`out`: var CommandBuffer; `type`: SymbolType;
-  content: var Rect; background, foreground: nk_color; borderWidth: float;
-  font: ptr nk_user_font) {.raises: [], tags: [RootEffect], contractual.} =
+  content: var Rect; background, foreground: NkColor; borderWidth: float;
+  font: UserFont) {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw the selected symbol
   ##
   ## * out         - the command buffer in which the symbol will be drawn
@@ -1076,12 +1055,12 @@ proc nkDrawSymbol(`out`: var CommandBuffer; `type`: SymbolType;
         '-'
       else:
         ' '
-    var text: nk_text = nk_text()
-    text.padding = nk_vec2(x: 0, y: 0)
+    var text: Text = Text()
+    text.padding = Vec2(x: 0, y: 0)
     text.background = background
     text.text = foreground
     var length: Positive = 1
-    nkWidgetText(o = `out`, b = content, str = $ch, len = length, t = text.addr,
+    nkWidgetText(o = `out`, b = content, str = $ch, len = length, t = text,
       a = centered, f = font)
   of circleSolid, circleOutline, rectSolid, rectOutline:
     var drawRect: Rect = content
@@ -1134,7 +1113,7 @@ proc nkDrawSymbol(`out`: var CommandBuffer; `type`: SymbolType;
     discard
 
 proc nkDrawButtonSymbol(`out`: var CommandBuffer; bounds, content: var Rect;
-  state: nk_flags; style: ptr StyleButton; `type`: SymbolType;
+  state: nk_flags; style: StyleButton; `type`: SymbolType;
   font: UserFont) {.raises: [], tags: [RootEffect], contractual.} =
   ## Draw a button with the selected symbol on it. Internal use only
   ##
@@ -1148,15 +1127,15 @@ proc nkDrawButtonSymbol(`out`: var CommandBuffer; bounds, content: var Rect;
   # select correct colors/images
   let background: StyleItem = nkDrawButton(`out` = `out`, bounds = bounds,
     state = state, style = style)
-#  let bg: NkColor = (if background.iType == itemColor: background.data.color else: style.textBackground)
-#
-#  var sym: nk_color = (if (state and widgetStateHover.ord).bool:
-#    style.text_hover elif (state and widgetStateActive.ord).bool:
-#      style.text_active else: style.text_normal)
-#
-#  sym = nk_rgb_factor(col = sym, factor = style.color_factor_text)
-#  nkDrawSymbol(`out` = `out`, `type` = `type`, content = content,
-#    background = bg, foreground = sym, borderWidth = 1, font = font)
+  let bg: NkColor = (if background.iType == itemColor: background.data.color else: style.textBackground)
+
+  var sym: NkColor = (if (state and widgetStateHover.ord).bool:
+    style.textHover elif (state and widgetStateActive.ord).bool:
+      style.textActive else: style.textNormal)
+
+  sym = nkRGBFactor(col = sym, factor = style.colorFactorText)
+  nkDrawSymbol(`out` = `out`, `type` = `type`, content = content,
+    background = bg, foreground = sym, borderWidth = 1, font = font)
 
 proc nkDoButtonSymbol(state: var nk_flags; `out`: var CommandBuffer; bounds: var Rect,
   symbol: SymbolType; behavior: ButtonBehavior; style: StyleButton;
@@ -1181,8 +1160,8 @@ proc nkDoButtonSymbol(state: var nk_flags; `out`: var CommandBuffer; bounds: var
       style.drawBegin(b = `out`, style.userData)
     except:
       discard
-#    nkDrawButtonSymbol(`out` = `out`, bounds = bounds, content = content,
-#      state = state, style = style, `type` = symbol, font = font)
+    nkDrawButtonSymbol(`out` = `out`, bounds = bounds, content = content,
+      state = state, style = style, `type` = symbol, font = font)
     try:
       style.drawEnd(b = `out`, style.userdata)
     except:
@@ -1195,7 +1174,7 @@ proc nkDoButtonSymbol(state: var nk_flags; `out`: var CommandBuffer; bounds: var
 # -----
 # Panel
 # -----
-proc panelHeader(win: Window; title: string; style: Style; font: UserFont;
+proc panelHeader(win: var Window; title: string; style: Style; font: UserFont;
   layout: var Panel; `out`: var CommandBuffer, `in`: Input): bool {.raises: [],
   tags: [RootEffect], contractual.} =
   ## Start drawing a Nuklear panel's header if needed. Internal use only
@@ -1250,19 +1229,19 @@ proc panelHeader(win: Window; title: string; style: Style; font: UserFont;
 
     # draw header background
     header.h += 1.0
-#    let bg: nk_style_item_data = cast[nk_style_item_data](background.data)
-#    case background.`type`
-#    of itemImage:
-#      text.background = nk_rgba(r = 0, g = 0, b = 0, a = 0)
-#      nkDrawImage(b = win.buffer.addr, r = header, img = bg.image.addr,
-#        col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
-#    of itemNineSlice:
-#      text.background = nk_rgba(r = 0, g = 0, b = 0, a = 0)
-#      nkDrawNineSlice(b = win.buffer.addr, r = header, slc = bg.slice.addr,
-#        col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
-#    of itemColor:
-#      text.background = bg.color
-#      nkFillRect(b = `out`.addr, rect = header, rounding = 0, c = bg.color)
+    case background.iType
+    of itemImage:
+      text.background = NkColor(r: 0, g: 0, b: 0, a: 0)
+      nkDrawImage(b = win.buffer, r = header, img = background.data.image,
+        col = NkColor(r: 255, g: 255, b: 255, a: 255))
+    of itemNineSlice:
+      text.background = NkColor(r: 0, g: 0, b: 0, a: 0)
+      nkDrawNineSlice(b = win.buffer, r = header, slc = background.data.slice,
+        col = NkColor(r: 255, g: 255, b: 255, a: 255))
+    of itemColor:
+      text.background = background.data.color
+      nkFillRect(b = `out`, rect = header, rounding = 0,
+        c = background.data.color)
 
     # window close button
     var button: Rect = Rect()
@@ -1277,12 +1256,12 @@ proc panelHeader(win: Window; title: string; style: Style; font: UserFont;
       else:
         button.x = header.x + style.window.header.padding.x
         header.x += button.w + style.window.header.spacing.x + style.window.header.padding.x
-#      if nkDoButtonSymbol(state = ws, `out` = win.buffer.addr, bounds = button,
-#        symbol = style.window.header.close_symbol, behavior = default,
-#        style = style.window.header.close_button.addr, `in` = `in`.addr,
-#        font = style.font) and not(win.flags and windowRom.cint).nk_bool:
-#        layout.flags = layout.flags or windowHidden.cint
-#        layout.flags = layout.flags and not windowMinimized.cint
+      if nkDoButtonSymbol(state = ws, `out` = win.buffer, bounds = button,
+        symbol = style.window.header.close_symbol, behavior = default,
+        style = style.window.header.close_button, `in` = `in`,
+        font = style.font) and not(win.flags and windowRom.cint).nk_bool:
+        layout.flags = layout.flags or windowHidden.cint
+        layout.flags = layout.flags and not windowMinimized.cint
 
     # window minimize button
     if (win.flags and windowMinimizable.cint).nk_bool:
@@ -1297,23 +1276,23 @@ proc panelHeader(win: Window; title: string; style: Style; font: UserFont;
         button.x = header.x
         header.x += button.w + style.window.header.spacing.x +
           style.window.header.padding.x
-#      if nkDoButtonSymbol(state = ws, `out` = win.buffer, bounds = button,
-#        symbol = if (layout.flags and windowMinimized.cint).nk_bool:
-#        style.window.header.maximizeSymbol else:
-#        style.window.header.minimizeSymbol, behavior = default,
-#        style = style.window.header.minimize_button.addr, `in` = `in`.addr,
-#        font = style.font) and not(win.flags and windowRom.cint).nk_bool:
-#          layout.flags = if (layout.flags and windowMinimized.cint).nk_bool:
-#            layout.flags and not windowMinimized.cint else:
-#            layout.flags or windowMinimized.cint
+      if nkDoButtonSymbol(state = ws, `out` = win.buffer, bounds = button,
+        symbol = if (layout.flags and windowMinimized.cint).nk_bool:
+        style.window.header.maximizeSymbol else:
+        style.window.header.minimizeSymbol, behavior = default,
+        style = style.window.header.minimize_button, `in` = `in`,
+        font = style.font) and not(win.flags and windowRom.cint).nk_bool:
+          layout.flags = if (layout.flags and windowMinimized.cint).nk_bool:
+            layout.flags and not windowMinimized.cint else:
+            layout.flags or windowMinimized.cint
 
     # window header title
     var textLen: int = title.len
-#    let t: float = try:
-#        font.width(arg1 = font.userdata, h = font.height,
-#          arg3 = title.cstring, len = textLen.cint)
-#      except Exception:
-#        return false
+    let t: float = try:
+        font.width(arg1 = font.userdata, h = font.height,
+          arg3 = title, len = textLen)
+      except Exception:
+        return false
     text.padding = Vec2(x: 0, y: 0)
     var label: Rect = Rect(x: 0, y: 0, w: 0, h: 0)
 
@@ -1321,13 +1300,13 @@ proc panelHeader(win: Window; title: string; style: Style; font: UserFont;
     label.x += style.window.header.label_padding.x
     label.y = header.y + style.window.header.label_padding.y
     label.h = font.height + 2 * style.window.header.label_padding.y
-#    label.w = t + 2 * style.window.header.spacing.x
+    label.w = t + 2 * style.window.header.spacing.x
     label.w = (0.float).clamp(a = label.w, b = header.x + header.w - label.x)
-#    nkWidgetText(o = `out`, b = label, str = title, len = textLen,
-#      t = text.addr, a = TextAlignment.left, f = font)
+    nkWidgetText(o = `out`, b = label, str = title, len = textLen,
+      t = text, a = TextAlignment.left, f = font)
   return true
 
-proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
+proc nkPanelBegin(context: Context; title: string; panelType: PanelType): bool {.raises: [
     ], tags: [RootEffect], contractual.} =
   ## Start drawing a Nuklear panel. Internal use only
   ##
@@ -1351,10 +1330,10 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     let
       style: nk_style = ctx.style
       font: ptr nk_user_font = style.font
-    var win: ptr nk_window = ctx.current
-    let
-      layout: PNkPanel = win.layout
-      `out`: nk_command_buffer = win.buffer
+    var
+      win: Window = context.current
+      layout: Panel = win.layout
+    let  `out`: CommandBuffer = win.buffer
     var `in`: nk_input = (if (win.flags and windowNoInput.cint) ==
           1: nk_input() else: ctx.input)
     when defined(nkIncludeCommandUserdata):
@@ -1392,7 +1371,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
       `in`.mouse.buttons = buttons.addr
 
     # setup panel
-    layout.`type` = panelType
+    layout.pType = panelType
     layout.flags = win.flags
     layout.bounds = win.bounds
     layout.bounds.x += panelPadding.x
@@ -1402,8 +1381,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
       var shrinked: Rect = Rect(x: layout.bounds.x, y: layout.bounds.y,
         w: layout.bounds.w, h: layout.bounds.h)
       shrinked = nkShrinkRect(r = shrinked, amount = layout.border)
-      layout.bounds = new_nk_rect(x = shrinked.x, y = shrinked.y,
-        w = shrinked.w, h = shrinked.h)
+      layout.bounds = shrinked
     else:
       layout.border = 0
     layout.at_y = layout.bounds.y
@@ -1418,7 +1396,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
     layout.row.item_width = 0
     layout.row.tree_depth = 0
     layout.row.height = panelPadding.y
-    layout.has_scrolling = nkTrue.cuint
+    layout.has_scrolling = nkTrue
     if not(win.flags and windowNoScrollbar.cint).nk_bool:
       layout.bounds.w -= scrollbarSize.x
     if nkPanelIsNonblock(`type` = panelType):
@@ -1463,7 +1441,7 @@ proc nkPanelBegin(ctx; title: string; panelType: PanelType): bool {.raises: [
       y0 = layout.clip.y, x1 = layout.clip.x + layout.clip.w,
       y1 = layout.clip.y + layout.clip.h)
 #    nkPushScissor(b = `out`.addr, r = clip)
-    layout.clip = new_nk_rect(x = clip.x, y = clip.y, w = clip.w, h = clip.h)
+    layout.clip = clip
     return not (layout.flags and windowHidden.cint).nk_bool and not
       (layout.flags and windowMinimized.cint).nk_bool
 
@@ -1556,7 +1534,7 @@ proc nkPopupBegin(ctx; pType: PopupType; title: string; flags: set[PanelFlags];
 #    nkPushScissor(b = popup.buffer.addr, r = nkNullRect)
 
     # popup is running therefore invalidate parent panels
-    if nkPanelBegin(ctx = ctx, title = title, panelType = panelPopup):
+    if nkPanelBegin(context = context, title = title, panelType = panelPopup):
       var root: PNkPanel = win.layout
       while root != nil:
         root.flags = root.flags or windowRom.cint
