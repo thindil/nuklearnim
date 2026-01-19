@@ -1,4 +1,4 @@
-# Copyright © 2025 Bartek Jasicki
+# Copyright © 2025-2026 Bartek Jasicki
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 ## Provides code for nuklear page type
 
 import contracts
-import nk_types, nk_context
+import nk_buffer, nk_types, nk_context, nk_pool
 
 # ---------------------
 # Procedures parameters
@@ -67,3 +67,28 @@ proc nkFreePageElement*(ctx; elem: ptr nk_page_element) {.raises: [], tags: [],
     ctx.memory.size -= elem.sizeOf
   else:
     nkLinkPageElementIntoFreelist(ctx = ctx, elem = elem)
+
+proc nkCreatePageElement*(context: var Context;
+    pageType: PageDataType): PageElement {.raises: [], tags: [RootEffect],
+    contractual.} =
+  ## Create a new page element
+  ##
+  ## * context  - the Nuklear context
+  ## * pageType - the type of the page element
+  ##
+  ## Returns the newly created element
+  result = PageElement(data: PageData(pageDataType: pageType))
+  if context.freeList != nil:
+    # Unlink page element from free list
+    result = context.freeList[]
+    context.freeList = result.next
+  elif context.usePool:
+    # Allocate page element from memory pool
+    result = nkPoolAlloc(pool = context.pool, pageType = pageType)
+  else:
+    # Allocate new page element from back of fixed size memory buffer
+    let
+      size: nk_size = PageElement.sizeof
+      align: nk_size = PageElement.alignof
+    result = cast[PageElement](nkBufferAlloc(b = context.memory,
+        bufferAlloc = bufferBack, size = size, align = align))

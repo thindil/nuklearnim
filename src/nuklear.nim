@@ -26,7 +26,7 @@
 import std/[colors, hashes, macros, unicode]
 import contracts, nimalyzer
 import nk_button, nk_colors, nk_context, nk_draw, nk_input, nk_layout, nk_math,
-  nk_panel, nk_tooltip, nk_types, nk_utf, nk_widget
+  nk_page, nk_panel, nk_tooltip, nk_types, nk_utf, nk_widget
 export nk_button, nk_colors, nk_context, nk_input, nk_layout, nk_tooltip,
   nk_types, nk_widget
 
@@ -58,9 +58,6 @@ proc nk_widget_disable_end(ctx) {.importc, cdecl, raises: [], tags: [], contract
 # -------
 # Windows
 # -------
-proc nk_create_window(ctx): pointer {.importc, cdecl, raises: [], tags: [], contractual.}
-  ## A binding to Nuklear's function. Internal use only
-
 proc nk_window_find(ctx; name: cstring): ptr nk_window {.importc, nodecl,
     raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
@@ -440,7 +437,8 @@ proc windowDisable*() {.raises: [], tags: [], contractual.} =
     ## A binding to Nuklear's function. Internal use only
   nk_window_disable(ctx = ctx)
 
-proc windowShow*(name: string; state: ShowStates) {.raises: [], tags: [], contractual.} =
+proc windowShow*(name: string; state: ShowStates) {.raises: [], tags: [],
+    contractual.} =
   ## Show or hide the window depending on the state
   ##
   ## * name  - the name of the window to show or hide
@@ -449,6 +447,18 @@ proc windowShow*(name: string; state: ShowStates) {.raises: [], tags: [], contra
     nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
   nk_window_show(ctx = ctx, name = name.cstring, state = state)
+
+proc createWindow*(context: var Context): Window {.raises: [],
+  tags: [RootEffect], contractual.} =
+  ## Create a new Nuklear widget
+  ##
+  ## * context - the Nuklear context
+  ##
+  ## Returns the newly created widget
+  var elem: PageElement = nkCreatePageElement(context = context,
+    pageType = windowType)
+  elem.data.win.seq = context.seq
+  return elem.data.win
 
 # ----
 # Misc
@@ -1174,7 +1184,7 @@ proc nkDoButtonSymbol(state: var nk_flags; `out`: var CommandBuffer; bounds: var
 # -----
 # Panel
 # -----
-proc panelHeader(win: var Window; title: string; style: Style; font: UserFont;
+proc panelHeader(win: ref Window; title: string; style: Style; font: UserFont;
   layout: var Panel; `out`: var CommandBuffer, `in`: Input): bool {.raises: [],
   tags: [RootEffect], contractual.} =
   ## Start drawing a Nuklear panel's header if needed. Internal use only
@@ -1315,10 +1325,6 @@ proc nkPanelBegin(context: Context; title: string; panelType: PanelType): bool {
   ## * panelType - the type of the panel to draw
   ##
   ## Returns true if the panel was drawn, otherwise false
-  require:
-    ctx != nil
-    ctx.current != nil
-    ctx.current.layout != nil
   body:
     zeroMem(p = ctx.current.layout, size = ctx.current.layout.sizeof)
     if (ctx.current.flags and windowHidden.cint) == 1 or (
@@ -1328,21 +1334,21 @@ proc nkPanelBegin(context: Context; title: string; panelType: PanelType): bool {
       return false;
     # pull state into local stack
     let
-      style: nk_style = ctx.style
-      font: ptr nk_user_font = style.font
+      style: Style = context.style
+      font: UserFont = style.font
     var
-      win: Window = context.current
+      win: ref Window = context.current
       layout: Panel = win.layout
-    let  `out`: CommandBuffer = win.buffer
-    var `in`: nk_input = (if (win.flags and windowNoInput.cint) ==
-          1: nk_input() else: ctx.input)
+    var  `out`: CommandBuffer = win.buffer
+    var `in`: Input = (if (win.flags and windowNoInput.cint) ==
+          1: Input() else: context.input)
     when defined(nkIncludeCommandUserdata):
       win.buffer.userdata = ctx.userdata
     # pull style configuration into local stack
     let
-      scrollbarSize: nk_vec2 = style.window.scrollbar_size
-      panelPadding: nk_vec2 = nkPanelGetPadding(style = style,
-          `type` = panelType)
+      scrollbarSize: Vec2 = style.window.scrollbar_size
+      panelPadding: Vec2 = nkPanelGetPadding(style = style,
+          pType = panelType)
 
     # window movement
     if (win.flags and windowMovable.cint) == 1 and (win.flags and
@@ -1356,7 +1362,7 @@ proc nkPanelBegin(context: Context; title: string; panelType: PanelType): bool {
       else:
         header.h = panelPadding.y
       # window movement by dragging
-      var buttons: ButtonsArray = cast[ButtonsArray](`in`.mouse.buttons)
+      var buttons: array[Buttons.max, MouseButton] = `in`.mouse.buttons
       let
         leftMouseDown: bool = buttons[Buttons.left].down
         leftMouseClicked: bool = buttons[Buttons.left].clicked == 1
@@ -1368,7 +1374,7 @@ proc nkPanelBegin(context: Context; title: string; panelType: PanelType): bool {
         buttons[Buttons.left].clicked_pos.x += `in`.mouse.delta.x
         buttons[Buttons.left].clicked_pos.y += `in`.mouse.delta.y
         ctx.style.cursor_active = cursors[cursorMove].addr
-      `in`.mouse.buttons = buttons.addr
+      `in`.mouse.buttons = buttons
 
     # setup panel
     layout.pType = panelType
@@ -1377,7 +1383,7 @@ proc nkPanelBegin(context: Context; title: string; panelType: PanelType): bool {
     layout.bounds.x += panelPadding.x
     layout.bounds.w -= (2 * panelPadding.x)
     if (win.flags and windowBorder.cint).nk_bool:
-      layout.border = nkPanelGetBorder(style = style, flags = win.flags, `type` = panelType)
+      layout.border = nkPanelGetBorder(style = style, flags = win.flags, pType = panelType)
       var shrinked: Rect = Rect(x: layout.bounds.x, y: layout.bounds.y,
         w: layout.bounds.w, h: layout.bounds.h)
       shrinked = nkShrinkRect(r = shrinked, amount = layout.border)
@@ -1407,9 +1413,9 @@ proc nkPanelBegin(context: Context; title: string; panelType: PanelType): bool {
       layout.bounds.h -= layout.footer_height
 
     # panel header
-#    if not panelHeader(win = win, title = title, style = style, font = font,
-#      layout = layout, `out` = `out`, `in` = `in`):
-#      return false
+    if not panelHeader(win = win, title = title, style = style, font = font,
+      layout = layout, `out` = `out`, `in` = `in`):
+      return false
 
     # draw window background
     if not (layout.flags and windowMinimized.cint).nk_bool and not
@@ -1420,17 +1426,17 @@ proc nkPanelBegin(context: Context; title: string; panelType: PanelType): bool {
       body.y = (win.bounds.y + layout.header_height)
       body.h = (win.bounds.h - layout.header_height)
 
-      let bg: nk_style_item_data = cast[nk_style_item_data](style.window.fixed_background.data)
-#      case style.window.fixed_background.`type`
-#      of itemImage:
-#        nkDrawImage(b = `out`.addr, r = body, img = bg.image.addr,
-#          col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
-#      of itemNineSlice:
-#        nkDrawNineSlice(b = `out`.addr, r = body, slc = bg.slice.addr,
-#          col = nk_rgba(r = 255, g = 255, b = 255, a = 255))
-#      of itemColor:
-#        nkFillRect(b = `out`.addr, rect = body,
-#          rounding = style.window.rounding, c = bg.color)
+      let bg: StyleItemData = style.window.fixedBackground.data
+      case style.window.fixedBackground.iType
+      of itemImage:
+        nkDrawImage(b = `out`, r = body, img = bg.image,
+          col = NkColor(r: 255, g: 255, b: 255, a: 255))
+      of itemNineSlice:
+        nkDrawNineSlice(b = `out`, r = body, slc = bg.slice,
+          col = NkColor(r: 255, g: 255, b: 255, a: 255))
+      of itemColor:
+        nkFillRect(b = `out`, rect = body,
+          rounding = style.window.rounding, c = bg.color)
 
     # set clipping rectangle
     var clip: Rect = Rect(x: 0, y: 0, w: 0, h: 0)
@@ -1440,7 +1446,7 @@ proc nkPanelBegin(context: Context; title: string; panelType: PanelType): bool {
     nkUnify(clip = clip, a = aClip, x0 = layout.clip.x,
       y0 = layout.clip.y, x1 = layout.clip.x + layout.clip.w,
       y1 = layout.clip.y + layout.clip.h)
-#    nkPushScissor(b = `out`.addr, r = clip)
+    nkPushScissor(b = `out`, r = clip)
     layout.clip = clip
     return not (layout.flags and windowHidden.cint).nk_bool and not
       (layout.flags and windowMinimized.cint).nk_bool
@@ -1466,61 +1472,56 @@ proc nkStartPopup(ctx; win: var PNkWindow) {.raises: [], tags: [],
     buf.active = nkTrue
     win.popup.buf = buf
 
-proc nkPopupBegin(ctx; pType: PopupType; title: string; flags: set[PanelFlags];
+proc nkPopupBegin(context: var Context; pType: PopupType; title: string; flags: set[PanelFlags];
     x, y, w, h: float): bool {.raises: [NuklearException], tags: [
         RootEffect], contractual.} =
   ## Try to create a new popup window. Internal use only.
   ##
-  ## * ctx   - the Nuklear context
-  ## * pType - the type of the popup
-  ## * title - the title of the popup
-  ## * flags - the flags for the popup
-  ## * x     - the X position of the top left corner of the popup
-  ## * y     - the Y position of the top left corner of the popup
-  ## * w     - the width of the popup
-  ## * h     - the height of the popup
+  ## * context - the Nuklear context
+  ## * pType   - the type of the popup
+  ## * title   - the title of the popup
+  ## * flags   - the flags for the popup
+  ## * x       - the X position of the top left corner of the popup
+  ## * y       - the Y position of the top left corner of the popup
+  ## * w       - the width of the popup
+  ## * h       - the height of the popup
   require:
-    ctx != nil
     title.len > 0
-    ctx.current != nil
-    ctx.current.layout != nil
   body:
-    if ctx == nil or ctx.current == nil or ctx.current.layout == nil:
-      return false
-    var win: PNkWindow = ctx.current
-    let panel: ptr nk_panel = win.layout
-    if panel.`type`.cint != panelSetPopup.cint:
+    var win: ref Window = context.current
+    let panel: Panel = win.layout
+    if panel.pType.cint != panelSetPopup.cint:
       raise newException(exceptn = NuklearException,
           message = "Popups are not allowed to have popups.")
-    var popup: PNkWindow = win.popup.win
-    if (popup == nil):
-      popup = cast[PNkWindow](nk_create_window(ctx = ctx))
+    var popup: ref Window = win.popup.win
+    if popup == nil:
+      popup[] = createWindow(context = context)
       popup.parent = win
       win.popup.win = popup
       win.popup.active = nkFalse
-      win.popup.`type` = panelPopup
+      win.popup.pType = panelPopup
     let titleHash: Hash = hash(x = title)
     # make sure we have correct popup
     if win.popup.name != titleHash.nk_hash:
       if win.popup.active:
         return false
       {.ruleOff: "namedParams".}
-      nk_zero(`ptr` = popup, size = sizeof(popup).culong)
+#      nk_zero(`ptr` = popup, size = sizeof(popup).culong)
       {.ruleOn: "namedParams".}
       win.popup.name = titleHash.nk_hash
       win.popup.active = nkTrue
-      win.popup.type = panelPopup
+      win.popup.pType = panelPopup
     # popup position is local to window
-    ctx.current = popup
+    context.current = popup
     var
       localX: float = x + win.layout.clip.x
       localY: float = y + win.layout.clip.y
 
     # setup popup data
     popup.parent = win
-    popup.bounds = new_nk_rect(x = localX, y = localY, w = w, h = h)
+    popup.bounds = Rect(x: localX, y: localY, w: w, h: h)
     popup.seq = ctx.seq
-    popup.layout = cast[PNkPanel](nk_create_panel(ctx = ctx))
+#    popup.layout = cast[PNkPanel](nk_create_panel(ctx = ctx))
     popup.flags = winSetToInt(nimFlags = flags)
     {.ruleOff: "assignments".}
     popup.flags = popup.flags or windowBorder.cint
@@ -1529,34 +1530,34 @@ proc nkPopupBegin(ctx; pType: PopupType; title: string; flags: set[PanelFlags];
     {.ruleOn: "assignments".}
 
     popup.buffer = win.buffer
-    nkStartPopup(ctx = ctx, win = win)
+#    nkStartPopup(ctx = ctx, win = win)
     var allocated: nk_size = ctx.memory.allocated
-#    nkPushScissor(b = popup.buffer.addr, r = nkNullRect)
+    nkPushScissor(b = popup.buffer, r = nkNullRect)
 
     # popup is running therefore invalidate parent panels
     if nkPanelBegin(context = context, title = title, panelType = panelPopup):
-      var root: PNkPanel = win.layout
-      while root != nil:
-        root.flags = root.flags or windowRom.cint
-        root.flags = root.flags and not windowRemoveRom.cint
-        root = root.parent
+#      var root: PNkPanel = win.layout
+#      while root != nil:
+#        root.flags = root.flags or windowRom.cint
+#        root.flags = root.flags and not windowRemoveRom.cint
+#        root = root.parent
       win.popup.active = nkTrue
       popup.layout.offset_x = popup.scrollbar.x
       popup.layout.offset_y = popup.scrollbar.y
-      popup.layout.parent = win.layout
+#      popup.layout.parent = win.layout
       return true
 
     # popup was closed/is invalid so cleanup
-    var root: PNkPanel = win.layout
-    while root != nil:
-      root.flags = root.flags or windowRemoveRom.cint
-      root = root.parent
+#    var root: PNkPanel = win.layout
+#    while root != nil:
+#      root.flags = root.flags or windowRemoveRom.cint
+#      root = root.parent
     win.popup.buf.active = nkFalse
     win.popup.active = nkFalse
     ctx.memory.allocated = allocated
-    ctx.current = win
-    nkFreePanel(ctx = ctx, pan = popup.layout)
-    popup.layout = nil
+#    ctx.current = win
+#    nkFreePanel(ctx = ctx, pan = popup.layout)
+#    popup.layout = nil
     return false
 
 proc createPopup(pType2: PopupType; title2: cstring;
@@ -1572,14 +1573,14 @@ proc createPopup(pType2: PopupType; title2: cstring;
   return nk_popup_begin(ctx = ctx, pType = pType2, title = title2,
       flags = flags2, rect = new_nk_rect(x = x2, y = y2, w = w2, h = h2))
 
-proc createPopup(pType2: PopupType; title2: string; flags2: set[PanelFlags];
-  x2, y2, w2, h2: float): bool {.raises: [NuklearException],
-  tags: [RootEffect], contractual.} =
-  ## Create a new Nuklear popup window, internal use only, temporary code
-  ##
-  ## Returns true if the popup was successfully created, otherwise false.
-  return nkPopupBegin(ctx = ctx, pType = pType2, title = title2,
-    flags = flags2, x = x2, y = y2, w = w2, h = h2)
+#proc createPopup(pType2: PopupType; title2: string; flags2: set[PanelFlags];
+#  x2, y2, w2, h2: float): bool {.raises: [NuklearException],
+#  tags: [RootEffect], contractual.} =
+#  ## Create a new Nuklear popup window, internal use only, temporary code
+#  ##
+#  ## Returns true if the popup was successfully created, otherwise false.
+#  return nkPopupBegin(ctx = ctx, pType = pType2, title = title2,
+#    flags = flags2, x = x2, y = y2, w = w2, h = h2)
 
 proc createNonBlocking(flags2: nk_flags; x2, y2, w2, h2: cfloat): bool {.raises: [], tags: [], contractual, discardable.} =
   ## Create a new Nuklear non-blocking popup window, internal use only,

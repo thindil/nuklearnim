@@ -1264,7 +1264,7 @@ type
     active*: bool
   PopupState* = object
     ## Used to store Nuklear popup data
-    win*: Window
+    win*: ref Window
     active*: bool
     pType*: PanelType
     name*: nk_hash
@@ -1498,13 +1498,13 @@ type
     combo*: StyleCombo
   PageData* = object
     ## Used to store memory page's data
-    case pageDataType: PageDataType
+    case pageDataType*: PageDataType
     of tableType:
       tbl*: NkTable
     of panelType:
       pan*: Panel
     of windowType:
-      win: Window
+      win*: Window
   PageElement* = object
     ## Used to store memory page's elements
     data*: PageData
@@ -1643,18 +1643,18 @@ type
     alloc*: Allocator
     aType*: AllocationType
     pageCount*, capacity*: uint
-    pages*: Page
+    pages*: ref Page
     freeList*: PageElement
     size*, cap*: nk_size
   Context* = object
     ## The main context of the Nuklear library
     style*: Style
     input*: Input
-    begin*, last*, current*, active*: Window
+    begin*, last*, current*, active*: ref Window
     seq*, count*: uint
-    memory: Buffer
+    memory*: Buffer
     usePool*: bool
-    freeList*: PageElement
+    freeList*: ref PageElement
     clip*: Clipboard
     lastWidgetState*: nk_flags
     buttonBehavior*: ButtonBehavior
