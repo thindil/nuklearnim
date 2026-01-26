@@ -23,32 +23,67 @@
 # OR TORT *(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-## Provides code for Nuklear pool
+## Provides code for various utility code
 
 import contracts
 import nk_types
 
-proc nkPoolAlloc*(pool: var Pool; pageType: PageDataType): PageElement {.raises: [],
-    tags: [RootEffect], contractual.} =
-  ## Allocate page element from the pool
+proc nkMemSet*(pData: pointer; c0: int; size: nk_size) {.raises: [], tags: [],
+    contractual.} =
+  ## Set the memory for the selected data
   ##
-  ## * pool - the pool from which the page element will be allocated
+  ## * pData - the pointer to the data which will be set
+  ## * c0    - the index from which the memory will be set
+  ## * size  - the size of the data to set
+  var c: uint = 0
+  const
+    nkWsize: int = uint.sizeof
+    nkWmask: int = nkWsize - 1
+
+  c = c0.nk_byte
+  if c != 0:
+    c = (c shl 8) or c # at least 16-bits
+    if nkWsize > 2:
+      c = (c shl 16) or c # at least 32-bits
+
+  # too small of a word count
+  var dst: ptr nk_byte = cast[ptr nk_byte](pData)
+  var localSize: nk_size = size
+  if localSize < 3 * nkWsize:
+    while localSize > 0:
+      dst[] = c0.nk_byte
+      dst = dst + 1
+      localSize.dec
+
+  # align destination
+  var t: nk_size = cast[nk_size](dst)
+  if (t and nkWmask) != 0:
+    t = nkWsize - t
+    localSize -= t
+    t.dec
+    while t != 0:
+      dst[] = c0.nk_byte
+      dst = dst + 1
+      t.dec
+
+  # fill word
+  t = (size / nkWsize).nk_size
+  t.dec
+  while t != 0:
+    dst[] = c.nk_byte
+    t.dec
+
+  # fill trailing bytes
+  t = size and nkWmask
+  if t != 0:
+    while t != 0:
+      dst[] = c0.nk_byte
+      t.dec
+
+proc nkZero*(pData: pointer; size: nk_size) {.raises: [], tags: [],
+    contractual.} =
+  ## Set the memory for empty data
   ##
-  ## Returns allocated page element
-  if pool.pages == nil or pool.pages.size >= pool.capacity:
-    var page: Page = Page()
-    if pool.aType == bufferFixed:
-      if pool.pages == nil:
-        return
-      return
-    else:
-      var size: nk_size = Page.sizeof
-      size += ((pool.capacity - 1) * PageElement.sizeof.uint).nk_size
-      try:
-        page = cast[Page](pool.alloc.alloc(pool.alloc.userData, nil, size))
-        page.next = pool.pages
-        page.size = 0
-      except:
-        discard
-  result = pool.pages.win[pool.pages.size]
-  pool.pages.size.inc
+  ## * pData - the pointer to the data which will be set
+  ## * size  - the size of the data to set
+  nkMemSet(pData = pData, c0 = 0, size = size)
