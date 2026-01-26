@@ -585,7 +585,7 @@ proc showPopups() {.raises: [], tags: [RootEffect], contractual.} =
           labelButton(title = "Cancel"):
             popupActive = false
             closePopup()
-      except:
+      except NuklearException:
         popupActive = false
     setLayoutRowStatic(height = 30, width = 150, cols = 1)
     bounds = getWidgetBounds()
@@ -750,7 +750,7 @@ proc overview*() {.raises: [Exception], tags: [RootEffect], contractual.} =
           label(str = "Nuklear")
           label(str = "By Micha Mettke")
           label(str = "nuklear is licensed under the public domain License.")
-      except:
+      except NuklearException:
         showAppAbout = false
     treeTab(title = "Window", state = minimized, index = 1):
       setLayoutRowDynamic(height = 30, cols = 2)
