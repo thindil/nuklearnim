@@ -40,7 +40,9 @@ type PImage* = pointer ## A pointer to the image type
 # ---------------------
 # Procedures parameters
 # ---------------------
-using ctx: PContext
+using
+  ctx: PContext
+  context: ref Context
 
 # -------
 # General
@@ -445,7 +447,7 @@ proc windowShow*(name: string; state: ShowStates) {.raises: [], tags: [],
     ## A binding to Nuklear's function. Internal use only
   nk_window_show(ctx = ctx, name = name.cstring, state = state)
 
-proc createWindow*(context: var Context): Window {.raises: [],
+proc createWindow*(context): Window {.raises: [],
   tags: [RootEffect], contractual.} =
   ## Create a new Nuklear widget
   ##
@@ -1182,7 +1184,7 @@ proc nkDoButtonSymbol(state: var nk_flags; `out`: var CommandBuffer; bounds: var
 # Panel
 # -----
 proc panelHeader(win: ref Window; title: string; style: Style; font: UserFont;
-  layout: var Panel; `out`: var CommandBuffer, `in`: Input): bool {.raises: [],
+  layout: ref Panel; `out`: var CommandBuffer, `in`: Input): bool {.raises: [],
   tags: [RootEffect], contractual.} =
   ## Start drawing a Nuklear panel's header if needed. Internal use only
   ##
@@ -1313,7 +1315,7 @@ proc panelHeader(win: ref Window; title: string; style: Style; font: UserFont;
       t = text, a = TextAlignment.left, f = font)
   return true
 
-proc nkPanelBegin(context: Context; title: string; panelType: PanelType): bool {.raises: [
+proc nkPanelBegin(context; title: string; panelType: PanelType): bool {.raises: [
     ], tags: [RootEffect], contractual.} =
   ## Start drawing a Nuklear panel. Internal use only
   ##
@@ -1323,11 +1325,11 @@ proc nkPanelBegin(context: Context; title: string; panelType: PanelType): bool {
   ##
   ## Returns true if the panel was drawn, otherwise false
   body:
-    zeroMem(p = ctx.current.layout, size = ctx.current.layout.sizeof)
-    if (ctx.current.flags and windowHidden.cint) == 1 or (
-        ctx.current.flags and windowClosed.cint) == 1:
-      zeroMem(p = ctx.current.layout, size = nk_types.nk_panel.sizeof)
-      ctx.current.layout.`type` = panelType
+    zeroMem(p = context.current.layout.addr, size = Panel.sizeof)
+    if (context.current.flags and windowHidden.cint) == 1 or (
+        context.current.flags and windowClosed.cint) == 1:
+      zeroMem(p = context.current.layout.addr, size = Panel.sizeof)
+      context.current.layout.pType = panelType
       return false;
     # pull state into local stack
     let
@@ -1335,12 +1337,12 @@ proc nkPanelBegin(context: Context; title: string; panelType: PanelType): bool {
       font: UserFont = style.font
     var
       win: ref Window = context.current
-      layout: Panel = win.layout
+      layout: ref Panel = win.layout
     var  `out`: CommandBuffer = win.buffer
     var `in`: Input = (if (win.flags and windowNoInput.cint) ==
           1: Input() else: context.input)
     when defined(nkIncludeCommandUserdata):
-      win.buffer.userdata = ctx.userdata
+      win.buffer.userdata = context.userdata
     # pull style configuration into local stack
     let
       scrollbarSize: Vec2 = style.window.scrollbar_size
@@ -1451,25 +1453,22 @@ proc nkPanelBegin(context: Context; title: string; panelType: PanelType): bool {
 # ------
 # Popups
 # ------
-proc nkStartPopup(ctx; win: var PNkWindow) {.raises: [], tags: [],
+proc nkStartPopup(context; win: ref Window) {.raises: [], tags: [],
     contractual.} =
   ## Start setting a popup window. Internal use only
   ##
-  ## * ctx - the Nuklear context
-  ## * win - the window of a popup
-  require:
-    ctx != nil
-    win != nil
+  ## * context - the Nuklear context
+  ## * win     - the window of a popup
   body:
-    var buf: nk_popup_buffer = win.popup.buf
-    buf.begin = win.buffer.`end`
-    buf.end = win.buffer.end
+    var buf: PopupBuffer = win.popup.buf
+    buf.begin = win.buffer.cmdEnd
+    buf.buffEnd = win.buffer.cmdEnd
     buf.parent = win.buffer.last
     buf.last = buf.begin
     buf.active = nkTrue
     win.popup.buf = buf
 
-proc nkPopupBegin(context: var Context; pType: PopupType; title: string; flags: set[PanelFlags];
+proc nkPopupBegin(context; pType: PopupType; title: string; flags: set[PanelFlags];
     x, y, w, h: float): bool {.raises: [NuklearException], tags: [
         RootEffect], contractual.} =
   ## Try to create a new popup window. Internal use only.
@@ -1486,7 +1485,7 @@ proc nkPopupBegin(context: var Context; pType: PopupType; title: string; flags: 
     title.len > 0
   body:
     var win: ref Window = context.current
-    let panel: Panel = win.layout
+    let panel: ref Panel = win.layout
     if panel.pType.cint != panelSetPopup.cint:
       raise newException(exceptn = NuklearException,
           message = "Popups are not allowed to have popups.")
@@ -1518,7 +1517,7 @@ proc nkPopupBegin(context: var Context; pType: PopupType; title: string; flags: 
     popup.parent = win
     popup.bounds = Rect(x: localX, y: localY, w: w, h: h)
     popup.seq = ctx.seq
-#    popup.layout = cast[PNkPanel](nk_create_panel(ctx = ctx))
+    popup.layout = nkCreatePanel(context = context)
     popup.flags = winSetToInt(nimFlags = flags)
     {.ruleOff: "assignments".}
     popup.flags = popup.flags or windowBorder.cint
@@ -1527,34 +1526,34 @@ proc nkPopupBegin(context: var Context; pType: PopupType; title: string; flags: 
     {.ruleOn: "assignments".}
 
     popup.buffer = win.buffer
-#    nkStartPopup(ctx = ctx, win = win)
+    nkStartPopup(context = context, win = win)
     var allocated: nk_size = ctx.memory.allocated
     nkPushScissor(b = popup.buffer, r = nkNullRect)
 
     # popup is running therefore invalidate parent panels
     if nkPanelBegin(context = context, title = title, panelType = panelPopup):
-#      var root: PNkPanel = win.layout
-#      while root != nil:
-#        root.flags = root.flags or windowRom.cint
-#        root.flags = root.flags and not windowRemoveRom.cint
-#        root = root.parent
+      var root: ref Panel = win.layout
+      while root != nil:
+        root.flags = root.flags or windowRom.cint
+        root.flags = root.flags and not windowRemoveRom.cint
+        root = root.parent
       win.popup.active = nkTrue
       popup.layout.offset_x = popup.scrollbar.x
       popup.layout.offset_y = popup.scrollbar.y
-#      popup.layout.parent = win.layout
+      popup.layout.parent = win.layout
       return true
 
     # popup was closed/is invalid so cleanup
-#    var root: PNkPanel = win.layout
-#    while root != nil:
-#      root.flags = root.flags or windowRemoveRom.cint
-#      root = root.parent
+    var root: ref Panel = win.layout
+    while root != nil:
+      root.flags = root.flags or windowRemoveRom.cint
+      root = root.parent
     win.popup.buf.active = nkFalse
     win.popup.active = nkFalse
-    ctx.memory.allocated = allocated
-#    ctx.current = win
-#    nkFreePanel(ctx = ctx, pan = popup.layout)
-#    popup.layout = nil
+    context.memory.allocated = allocated
+    context.current = win
+    nkFreePanel(context = context, pan = popup.layout)
+    popup.layout = nil
     return false
 
 proc createPopup(pType2: PopupType; title2: cstring;
@@ -1570,14 +1569,16 @@ proc createPopup(pType2: PopupType; title2: cstring;
   return nk_popup_begin(ctx = ctx, pType = pType2, title = title2,
       flags = flags2, rect = new_nk_rect(x = x2, y = y2, w = w2, h = h2))
 
-#proc createPopup(pType2: PopupType; title2: string; flags2: set[PanelFlags];
-#  x2, y2, w2, h2: float): bool {.raises: [NuklearException],
-#  tags: [RootEffect], contractual.} =
-#  ## Create a new Nuklear popup window, internal use only, temporary code
-#  ##
-#  ## Returns true if the popup was successfully created, otherwise false.
-#  return nkPopupBegin(ctx = ctx, pType = pType2, title = title2,
-#    flags = flags2, x = x2, y = y2, w = w2, h = h2)
+proc createPopup(pType2: PopupType; title2: string; flags2: set[PanelFlags];
+  x2, y2, w2, h2: float): bool {.raises: [NuklearException],
+  tags: [RootEffect], contractual.} =
+  ## Create a new Nuklear popup window, internal use only, temporary code
+  ##
+  ## Returns true if the popup was successfully created, otherwise false.
+  var con: ref Context
+  con[] = context
+  return nkPopupBegin(context = con, pType = pType2, title = title2,
+    flags = flags2, x = x2, y = y2, w = w2, h = h2)
 
 proc createNonBlocking(flags2: nk_flags; x2, y2, w2, h2: cfloat): bool {.raises: [], tags: [], contractual, discardable.} =
   ## Create a new Nuklear non-blocking popup window, internal use only,

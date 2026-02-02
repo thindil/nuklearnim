@@ -1292,7 +1292,7 @@ type
     next*, prev*: ref NkTable
   Window* = object
     ## Used to store Nuklear window data
-    layout*: Panel
+    layout*: ref Panel
     popup*: ref PopupState
     parent*, next*, prev*: ref Window
     bounds*: Rect
@@ -1388,7 +1388,9 @@ type
     width*: TextWidthF
     when defined(nkIncludeVertexBufferOutput):
       query*: QueryFontGlyphF
+        ## Procedure to execute when parsing user font
       texture*: Handle
+        ## Texture used for user font
   StyleText* = object
     ## Used to store Nuklear style data for text widgets
     padding*: Vec2
@@ -1502,13 +1504,13 @@ type
     of tableType:
       tbl*: NkTable
     of panelType:
-      pan*: Panel
+      pan*: ref Panel
     of windowType:
       win*: Window
   PageElement* = object
     ## Used to store memory page's elements
     data*: PageData
-    next*, prev*: ref PageElement
+    next*, prev*: ptr PageElement
   Str* = object
     ## Used to store string, replace it later with normal string
     buffer*: Buffer
@@ -1533,7 +1535,9 @@ type
     preferredX*: float
     undo*: TextUndoState
   PluginPaste* = proc(handle: Handle; edit: TextEdit)
+    ## Used to execute plugin code when pasting a text
   PluginCopy* = proc(handle: Handle; text: string; len: int)
+    ## Used to execute plugin code when copying a text
   Clipboard* = object
     ## Used to store clipboard data
     userData*: Handle
@@ -1654,7 +1658,7 @@ type
     seq*, count*: uint
     memory*: Buffer
     usePool*: bool
-    freeList*: ref PageElement
+    freeList*: ptr PageElement
     clip*: Clipboard
     lastWidgetState*: nk_flags
     buttonBehavior*: ButtonBehavior

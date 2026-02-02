@@ -26,18 +26,14 @@
 ## Provides code related to the panel widget in nuklear library
 
 import contracts
-import nk_alignment, nk_context, nk_page, nk_types
+import nk_alignment, nk_context, nk_page, nk_types, nk_utils
 
 # ---------------------
 # Procedures parameters
 # ---------------------
-using ctx: PContext
-
-# ------------------
-# Low level bindings
-# ------------------
-proc nk_create_panel*(ctx): pointer {.importc, cdecl, raises: [], tags: [], contractual.}
-  ## A binding to Nuklear's function. Internal use only
+using
+  ctx: PContext
+  context: ref Context
 
 # -------------------
 # High level bindings
@@ -122,13 +118,25 @@ proc nkPanelIsNonblock*(`type`: PanelType): bool {.raises: [], tags: [],
   ## Returns true if the panel's type is non-blocking, otherwise false.
   return (`type`.cint and panelSetNonBlock.cint).bool
 
-proc nkFreePanel*(ctx; pan: PNkPanel) {.raises: [], tags: [], contractual.} =
+proc nkFreePanel*(context; pan: ref Panel) {.raises: [], tags: [], contractual.} =
   ## Free memory used by the panel
   ##
   ## * ctx - the Nuklear context
   ## * pan - the panel which memory will be freed
   let
-    pd: ptr nk_page_data = nkContainerOf(`ptr` = pan, `type` = nk_page_data, member = "")
-    pe: ptr nk_page_element = nkContainerOf(`ptr` = pd, `type` = nk_page_element, member = "data")
-  nkFreePageElement(ctx = ctx, elem = pe)
+    pd: ptr PageData = nkContainerOf(`ptr` = pan.addr, `type` = PageData, member = "")
+    pe: ptr PageElement = nkContainerOf(`ptr` = pd,
+        `type` = PageElement, member = "data")
+  nkFreePageElement(context = context, elem = pe)
 
+proc nkCreatePanel*(context): ref Panel {.raises: [], tags: [
+    RootEffect], contractual.} =
+  ## Create a new panel in the selected context
+  ##
+  ## * context - the Nuklear context in which the panel will be created
+  ##
+  ## Returns newly created panel
+  let elem: PageElement = nkCreatePageElement(context = context,
+      pageType = panelType)
+  nkZero(pData = elem.addr, size = PageElement.sizeof)
+  result = elem.data.pan
