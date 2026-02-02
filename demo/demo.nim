@@ -1,4 +1,4 @@
-# Copyright © 2023-2025 Bartek Jasicki
+# Copyright © 2023-2026 Bartek Jasicki
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@ when defined(xlib):
 else:
   import nuklear_sdl_renderer
   const windowName = "SDL2 Renderer"
+import contracts
 import overview, style
 
 const
@@ -43,7 +44,8 @@ type
   difficulty = enum
     easy, hard
 
-proc main() =
+proc main() {.raises: [Exception], tags: [TimeEffect, RootEffect],
+    contractual.} =
 
   nuklearInit(windowWidth, windowHeight, windowName)
   when defined(sdl2):
