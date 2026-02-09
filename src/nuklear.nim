@@ -962,7 +962,7 @@ proc nkButtonBehavior(state: var nk_flags; r: Rect; i: Input;
     state = widgetStateHovered.nk_flags
     if isMouseDown(id = left):
       state = widgetStateActive.nk_flags
-      if hasMouseClickDownInRect(id = left, rect = r, down = nkTrue):
+      if hasMouseClickDownInRect2(id = left, rect = r, down = nkTrue):
         if behavior == default:
           when defined(nkButtonTriggerOnRelease):
             result = isMouseReleased(id = left)
@@ -975,13 +975,12 @@ proc nkButtonBehavior(state: var nk_flags; r: Rect; i: Input;
   elif isMousePrevHovering(rect = r):
     state = state or widgetStateLeft.ord
 
-proc nkDoButton(state: var nk_flags; `out`: var CommandBuffer; r: Rect;
+proc nkDoButton(state: var nk_flags; r: Rect;
   style: StyleButton; `in`: Input; behavior: ButtonBehavior;
   content: var Rect): bool {.raises: [], tags: [], contractual.} =
   ## Draw a button. Internal use only
   ##
   ## * state    - the state of the button
-  ## * out      - the command buffer in which the button will be drawn
   ## * r        - the bounds of the button
   ## * style    - the style of the button
   ## * in       - the user input
@@ -1163,17 +1162,17 @@ proc nkDoButtonSymbol(state: var nk_flags; `out`: var CommandBuffer; bounds: var
   ## Returns true if button was properly drawn, otherwise false
   body:
     var content: Rect = Rect()
-    result = nkDoButton(state = state, `out` = `out`, r = bounds, style = style,
+    result = nkDoButton(state = state, r = bounds, style = style,
       `in` = `in`, behavior = behavior, content = content)
     try:
-      style.drawBegin(b = `out`, style.userData)
-    except:
+      style.drawBegin(b = `out`, userData = style.userData)
+    except Exception:
       discard
     nkDrawButtonSymbol(`out` = `out`, bounds = bounds, content = content,
       state = state, style = style, `type` = symbol, font = font)
     try:
-      style.drawEnd(b = `out`, style.userdata)
-    except:
+      style.drawEnd(b = `out`, userData = style.userdata)
+    except Exception:
       discard
 
 # ------------
@@ -1338,7 +1337,9 @@ proc nkPanelBegin(context; title: string; panelType: PanelType): bool {.raises: 
     var
       win: ref Window = context.current
       layout: ref Panel = win.layout
+    {.ruleOff: "varUplevel"}
     var  `out`: CommandBuffer = win.buffer
+    {.ruleOn: "varUplevel"}
     var `in`: Input = (if (win.flags and windowNoInput.cint) ==
           1: Input() else: context.input)
     when defined(nkIncludeCommandUserdata):
@@ -1365,7 +1366,7 @@ proc nkPanelBegin(context; title: string; panelType: PanelType): bool {.raises: 
       let
         leftMouseDown: bool = buttons[Buttons.left].down
         leftMouseClicked: bool = buttons[Buttons.left].clicked == 1
-        leftMouseClickInCursor: bool = hasMouseClickDownInRect(id = left, rect = header, down = nkTrue)
+        leftMouseClickInCursor: bool = hasMouseClickDownInRect2(id = left, rect = header, down = nkTrue)
         cursors: CursorsArray = cast[CursorsArray](ctx.style.cursors)
       if leftMouseDown and leftMouseClickInCursor and not leftMouseClicked:
         win.bounds.x += `in`.mouse.delta.x
@@ -1453,11 +1454,10 @@ proc nkPanelBegin(context; title: string; panelType: PanelType): bool {.raises: 
 # ------
 # Popups
 # ------
-proc nkStartPopup(context; win: ref Window) {.raises: [], tags: [],
+proc nkStartPopup(win: ref Window) {.raises: [], tags: [],
     contractual.} =
   ## Start setting a popup window. Internal use only
   ##
-  ## * context - the Nuklear context
   ## * win     - the window of a popup
   body:
     var buf: PopupBuffer = win.popup.buf
@@ -1526,7 +1526,7 @@ proc nkPopupBegin(context; pType: PopupType; title: string; flags: set[PanelFlag
     {.ruleOn: "assignments".}
 
     popup.buffer = win.buffer
-    nkStartPopup(context = context, win = win)
+    nkStartPopup(win = win)
     var allocated: nk_size = ctx.memory.allocated
     nkPushScissor(b = popup.buffer, r = nkNullRect)
 
@@ -1575,7 +1575,7 @@ proc createPopup(pType2: PopupType; title2: string; flags2: set[PanelFlags];
   ## Create a new Nuklear popup window, internal use only, temporary code
   ##
   ## Returns true if the popup was successfully created, otherwise false.
-  var con: ref Context
+  var con: ref Context = nil
   con[] = context
   return nkPopupBegin(context = con, pType = pType2, title = title2,
     flags = flags2, x = x2, y = y2, w = w2, h = h2)
