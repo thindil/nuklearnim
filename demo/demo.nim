@@ -47,7 +47,8 @@ type
 proc main() {.raises: [Exception], tags: [TimeEffect, RootEffect],
     contractual.} =
 
-  nuklearInit(windowWidth, windowHeight, windowName)
+  nuklearInit(windowWidth = windowWidth, windowHeight = windowHeight,
+      name = windowName)
   when defined(sdl2):
     nuklearSetDefaultFont()
 
@@ -69,23 +70,24 @@ proc main() {.raises: [Exception], tags: [TimeEffect, RootEffect],
         discard
 
     # GUI
-    window(name = "Demo", x = 50, y = 50, w = 200, h = 200, {windowBorder,
-        windowMovable, windowScalable, windowClosable,
+    window(name = "Demo", x = 50, y = 50, w = 200, h = 200, flags = {
+        windowBorder, windowMovable, windowScalable, windowClosable,
         windowMinimizable, windowTitle}):
-      setLayoutRowStatic(30.0, 80, 1)
-      labelButton("button"):
+      setLayoutRowStatic(height = 30.0, width = 80, cols = 1)
+      labelButton(title = "button"):
         echo "button pressed"
-      setLayoutRowDynamic(30.0, 2)
-      if option("easy", op == easy):
+      setLayoutRowDynamic(height = 30.0, cols = 2)
+      if option(label = "easy", selected = op == easy):
         op = easy
-      if option("hard", op == hard):
+      if option(label = "hard", selected = op == hard):
         op = hard
-      setLayoutRowDynamic(25.0, 1)
-      property("Compression:", 0, property, 100, 10, 1.0)
-    if windowIsHidden("Demo"):
+      setLayoutRowDynamic(height = 25.0, cols = 1)
+      property(name = "Compression:", min = 0, val = property, max = 100,
+          step = 10, incPerPixel = 1.0)
+    if windowIsHidden(name = "Demo"):
       break
     overview()
-    setStyle(themeDark)
+    setStyle(theme = themeDark)
 
     # Draw
     nuklearDraw()
@@ -93,7 +95,7 @@ proc main() {.raises: [Exception], tags: [TimeEffect, RootEffect],
     # Timing
     let dt = cpuTime() - started
     if (dt < dtime):
-      sleep((dtime - dt).int)
+      sleep(milsecs = (dtime - dt).int)
 
   nuklearClose()
 
