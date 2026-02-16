@@ -23,7 +23,7 @@
 # OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-# Nuklear Xlib demo translated to Nim
+## Nuklear Xlib demo translated to Nim
 
 import std/[os, times]
 when defined(xlib):
@@ -46,6 +46,7 @@ type
 
 proc main() {.raises: [Exception], tags: [TimeEffect, RootEffect],
     contractual.} =
+  ## The main procedure of the demo. Starts the demo
 
   nuklearInit(windowWidth = windowWidth, windowHeight = windowHeight,
       name = windowName)
