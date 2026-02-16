@@ -1,4 +1,4 @@
-# Copyright © 2023-2025 Bartek Jasicki
+# Copyright © 2023-2026 Bartek Jasicki
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -52,6 +52,8 @@ const
   SDL_RENDERER_PRESENTVSYNC: cint = 0x0000000
   SDLK_RSHIFT: uint = 0x400000e5u
   SDLK_LSHIFT: uint = 0x400000e1u
+  SDLK_LALT: uint = 0x400000e2u
+  SDLK_RALT: uint = 0x400000e6u
   SDLK_DELETE: uint = 0x0000007fu
   SDLK_RETURN: uint = 0x0000000du
   SDLK_TAB: uint = 0x00000009u
@@ -254,7 +256,7 @@ proc nuklearInit*(windowWidth, windowHeight: int; name: string = "";
   let scaleY: cfloat = renderH.cfloat / windowH.cfloat
   SDL_RenderSetScale(renderer = renderer, scaleX = scaleX, scaleY = scaleY)
   fontScale = scaleY
-  setContext(context = nk_sdl_init(win = win, renderer = renderer))
+  setContext(newContext = nk_sdl_init(win = win, renderer = renderer))
   return getContext()
 
 proc nuklearInput*(): UserEvents {.raises: [], tags: [], contractual.} =
@@ -293,9 +295,11 @@ proc nuklearInput*(): UserEvents {.raises: [], tags: [], contractual.} =
       of SDLK_HOME.cuint:
         nk_input_key(ctx = ctx, key = keyTextStart, down = down)
         nk_input_key(ctx = ctx, key = keyScrollStart, down = down)
+        nk_input_key(ctx = ctx, key = keyHome, down = down)
       of SDLK_END.cuint:
         nk_input_key(ctx = ctx, key = keyTextEnd, down = down)
         nk_input_key(ctx = ctx, key = keyScrollEnd, down = down)
+        nk_input_key(ctx = ctx, key = keyEnd, down = down)
       of SDLK_PAGEDOWN.cuint:
         nk_input_key(ctx = ctx, key = keyScrollDown, down = down)
       of SDLK_PAGEUP.cuint:
@@ -337,6 +341,8 @@ proc nuklearInput*(): UserEvents {.raises: [], tags: [], contractual.} =
           nk_input_key(ctx = ctx, key = keyRight, down = down)
       of SDLK_ESCAPE.cuint:
         nk_input_key(ctx = ctx, key = keyEscape, down = down)
+      of SDLK_RALT.cuint, SDLK_LALT.cuint:
+        nk_input_key(ctx = ctx, key = keyAlt, down = down)
       else:
         result = noEvent
     of SDL_MOUSEBUTTONDOWN.cuint, SDL_MOUSEBUTTONUP.cuint:

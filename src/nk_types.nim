@@ -133,7 +133,7 @@ type
       keyTextEnd, keyTextUndo, keyTextRedo,
       keyTextSelectAll, keyTextWordLeft, keyTextWordRight,
       keyScrollStart, keyScrollEnd, keyScrollDown,
-      keyScrollUp, keyEscape, keyMax
+      keyScrollUp, keyEscape, keyAlt, keyHome, keyEnd, keyMax
   StyleCursor* = enum
     ## Types of cursor's styles
     cursorArrow, cursorText, cursorMove, cursorResizeVertical,
@@ -998,7 +998,8 @@ type
     button_behavior*: ButtonBehavior
     stacks*: nk_configuration_stacks
     when defined(nkIncludeCommandUserData):
-      userdata*: nk_handle ## Interna Nuklear data
+      userdata*: nk_handle
+        ## Interna Nuklear data
     when defined(nkIncludeVertexBufferOutput):
       draw_list*: nk_draw_list
         ## Internal Nuklear type
@@ -1498,19 +1499,6 @@ type
     scrollH*, scrollV: StyleScrollbar
     tab*: StyleTab
     combo*: StyleCombo
-  PageData* = object
-    ## Used to store memory page's data
-    case pageDataType*: PageDataType
-    of tableType:
-      tbl*: NkTable
-    of panelType:
-      pan*: ref Panel
-    of windowType:
-      win*: Window
-  PageElement* = object
-    ## Used to store memory page's elements
-    data*: PageData
-    next*, prev*: ptr PageElement
   Str* = object
     ## Used to store string, replace it later with normal string
     buffer*: Buffer
@@ -1637,28 +1625,12 @@ type
     when defined(nkIncludeCommandUserData):
       userdata*: Handle
         ## Internal Nuklear type
-  Page* = object
-    ## Used to store data for page memory
-    size*: uint
-    next*: ref Page
-    win*: array[1, PageElement]
-  Pool* = object
-    ## Used to store data for memory pool
-    alloc*: Allocator
-    aType*: AllocationType
-    pageCount*, capacity*: uint
-    pages*: ref Page
-    freeList*: PageElement
-    size*, cap*: nk_size
   Context* = object
     ## The main context of the Nuklear library
     style*: Style
     input*: Input
     begin*, last*, current*, active*: ref Window
-    seq*, count*: uint
-    memory*: Buffer
-    usePool*: bool
-    freeList*: ptr PageElement
+    seq*, count*: Natural
     clip*: Clipboard
     lastWidgetState*: nk_flags
     buttonBehavior*: ButtonBehavior
@@ -1671,8 +1643,7 @@ type
         ## Internal Nuklear type
     textEdit*: TextEdit
     overlay*: CommandBuffer
-    build*: int
-    pool*: Pool
+    build*: bool
   Text* = object
     ## Used to store data for text
     padding*: Vec2
