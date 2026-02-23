@@ -58,7 +58,7 @@ proc main() {.raises: [Exception], tags: [TimeEffect, RootEffect],
     property: int = 20
 
   while true:
-    let started = cpuTime()
+    let started: float = cpuTime()
     # Input
     when defined(xlib):
       if nuklearInput():
@@ -94,7 +94,7 @@ proc main() {.raises: [Exception], tags: [TimeEffect, RootEffect],
     nuklearDraw()
 
     # Timing
-    let dt = cpuTime() - started
+    let dt: float = cpuTime() - started
     if (dt < dtime):
       sleep(milsecs = (dtime - dt).int)
 
