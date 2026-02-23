@@ -43,40 +43,6 @@ include nuklear
 
 # SDL2 bindings
 
-const
-  SDL_INIT_VIDEO: cint = 0x00000020
-  SDL_WINDOWPOS_CENTERED: cint = 0x2FFF0000 or 0
-  SDL_WINDOW_SHOWN: cuint = 0x00000004
-  SDL_WINDOW_ALLOW_HIGHDPI: cuint = 0x00002000
-  SDL_RENDERER_ACCELERATED: cint = 0x00000002
-  SDL_RENDERER_PRESENTVSYNC: cint = 0x0000000
-  SDLK_RSHIFT: uint = 0x400000e5u
-  SDLK_LSHIFT: uint = 0x400000e1u
-  SDLK_LALT: uint = 0x400000e2u
-  SDLK_RALT: uint = 0x400000e6u
-  SDLK_DELETE: uint = 0x0000007fu
-  SDLK_RETURN: uint = 0x0000000du
-  SDLK_TAB: uint = 0x00000009u
-  SDLK_BACKSPACE: uint = 0x00000008u
-  SDLK_HOME: uint = 0x4000004au
-  SDLK_END: uint = 0x4000004du
-  SDLK_PAGEDOWN: uint = 0x4000004eu
-  SDLK_PAGEUP: uint = 0x4000004bu
-  SDLK_Z: uint = 0x0000007au
-  SDLK_R: uint = 0x00000072u
-  SDLK_C: uint = 0x00000063u
-  SDLK_V: uint = 0x00000076u
-  SDLK_X: uint = 0x00000078u
-  SDLK_B: uint = 0x00000062u
-  SDLK_E: uint = 0x00000065u
-  SDLK_UP: uint = 0x40000052u
-  SDLK_DOWN: uint = 0x40000051u
-  SDLK_LEFT: uint = 0x40000050u
-  SDLK_RIGHT: uint = 0x4000004fu
-  SDLK_ESCAPE: uint = 0x0000001bu
-  IMG_INIT_PNG: cint = 0x00000002
-  windowCentered*: cint = SDL_WINDOWPOS_CENTERED ## The centered position of a window
-
 type
   SDL_EventType = enum
     SDL_FIRSTEVENT = 0, SDL_QUIT = 0x100, SDL_WINDOWEVENT = 0x200,
@@ -110,8 +76,67 @@ type
     x, y: cint
   SDL_Scancode = enum
     SDL_SCANCODE_LCTRL = 224
+    SDL_SCANCODE_RCTRL = 228
   SDL_Mouse_Buttons = enum
     SDL_BUTTON_LEFT = 1, SDL_BUTTON_MIDDLE, SDL_BUTTON_RIGHT
+
+const SDLK_SCANCODE_MASK: cint = 1 shl 30
+proc SDL_ScancodeToKeycode(code: SDL_Scancode): uint {.raises: [], tags: [],
+    contractual.} =
+  ## Converts SDL scancode to keycode
+  ##
+  ## * code - the scancode to convert
+  ##
+  ## Returns SDL keycode for the selectec scancode
+  (code.cint or SDLK_SCANCODE_MASK).uint
+
+const
+  SDL_INIT_VIDEO: cint = 0x00000020
+  SDL_WINDOWPOS_CENTERED: cint = 0x2FFF0000 or 0
+  SDL_WINDOW_SHOWN: cuint = 0x00000004
+  SDL_WINDOW_ALLOW_HIGHDPI: cuint = 0x00002000
+  SDL_RENDERER_ACCELERATED: cint = 0x00000002
+  SDL_RENDERER_PRESENTVSYNC: cint = 0x0000000
+  SDLK_RSHIFT: uint = 0x400000e5u
+  SDLK_LSHIFT: uint = 0x400000e1u
+  SDLK_LALT: uint = 0x400000e2u
+  SDLK_RALT: uint = 0x400000e6u
+  SDLK_LCTRL: uint = SDL_ScancodeToKeycode(code = SDL_SCANCODE_LCTRL)
+  SDLK_RCTRL: uint = SDL_ScancodeToKeycode(code = SDL_SCANCODE_RCTRL)
+  SDLK_INSERT: uint = 0x40000049u
+  SDLK_DELETE: uint = 0x0000007fu
+  SDLK_RETURN: uint = 0x0000000du
+  SDLK_TAB: uint = 0x00000009u
+  SDLK_BACKSPACE: uint = 0x00000008u
+  SDLK_HOME: uint = 0x4000004au
+  SDLK_KP_1: uint = 0x40000059u
+  SDLK_KP_2: uint = 0x4000005au
+  SDLK_KP_3: uint = 0x4000005bu
+  SDLK_KP_4: uint = 0x4000005cu
+  SDLK_KP_5: uint = 0x4000005du
+  SDLK_KP_6: uint = 0x4000005eu
+  SDLK_KP_7: uint = 0x4000005fu
+  SDLK_KP_8: uint = 0x40000060u
+  SDLK_KP_9: uint = 0x40000061u
+  SDLK_KP_0: uint = 0x40000062u
+  SDLK_KP_PERIOD: uint = 0x40000063u
+  SDLK_END: uint = 0x4000004du
+  SDLK_PAGEDOWN: uint = 0x4000004eu
+  SDLK_PAGEUP: uint = 0x4000004bu
+  SDLK_Z: uint = 0x0000007au
+  SDLK_R: uint = 0x00000072u
+  SDLK_C: uint = 0x00000063u
+  SDLK_V: uint = 0x00000076u
+  SDLK_X: uint = 0x00000078u
+  SDLK_B: uint = 0x00000062u
+  SDLK_E: uint = 0x00000065u
+  SDLK_UP: uint = 0x40000052u
+  SDLK_DOWN: uint = 0x40000051u
+  SDLK_LEFT: uint = 0x40000050u
+  SDLK_RIGHT: uint = 0x4000004fu
+  SDLK_ESCAPE: uint = 0x0000001bu
+  IMG_INIT_PNG: cint = 0x00000002
+  windowCentered*: cint = SDL_WINDOWPOS_CENTERED ## The centered position of a window
 
 proc SDL_SetHint(name, value: cstring) {.importc, nodecl, raises: [], tags: [], contractual.}
   ## Internal SDL binding
@@ -343,6 +368,32 @@ proc nuklearInput*(): UserEvents {.raises: [], tags: [], contractual.} =
         nk_input_key(ctx = ctx, key = keyEscape, down = down)
       of SDLK_RALT.cuint, SDLK_LALT.cuint:
         nk_input_key(ctx = ctx, key = keyAlt, down = down)
+      of SDLK_RCTRL.cuint, SDLK_LCTRL.cuint:
+        nk_input_key(ctx = ctx, key = keyCtrl, down = down)
+      of SDLK_KP_1.cuint:
+        nk_input_key(ctx = ctx, key = keyKP1, down = down)
+      of SDLK_KP_2.cuint:
+        nk_input_key(ctx = ctx, key = keyKP2, down = down)
+      of SDLK_KP_3.cuint:
+        nk_input_key(ctx = ctx, key = keyKP3, down = down)
+      of SDLK_KP_4.cuint:
+        nk_input_key(ctx = ctx, key = keyKP4, down = down)
+      of SDLK_KP_5.cuint:
+        nk_input_key(ctx = ctx, key = keyKP5, down = down)
+      of SDLK_KP_6.cuint:
+        nk_input_key(ctx = ctx, key = keyKP6, down = down)
+      of SDLK_KP_7.cuint:
+        nk_input_key(ctx = ctx, key = keyKP7, down = down)
+      of SDLK_KP_8.cuint:
+        nk_input_key(ctx = ctx, key = keyKP8, down = down)
+      of SDLK_KP_9.cuint:
+        nk_input_key(ctx = ctx, key = keyKP9, down = down)
+      of SDLK_KP_0.cuint:
+        nk_input_key(ctx = ctx, key = keyKP0, down = down)
+      of SDLK_KP_PERIOD.cuint:
+        nk_input_key(ctx = ctx, key = keyKPPeriod, down = down)
+      of SDLK_INSERT.cuint:
+        nk_input_key(ctx = ctx, key = keyInsert, down = down)
       else:
         result = noEvent
     of SDL_MOUSEBUTTONDOWN.cuint, SDL_MOUSEBUTTONUP.cuint:
