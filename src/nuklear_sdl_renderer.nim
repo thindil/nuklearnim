@@ -135,6 +135,18 @@ const
   SDLK_LEFT: uint = 0x40000050u
   SDLK_RIGHT: uint = 0x4000004fu
   SDLK_ESCAPE: uint = 0x0000001bu
+  SDLK_F1: uint = 0x4000003au
+  SDLK_F2: uint = 0x4000003bu
+  SDLK_F3: uint = 0x4000003cu
+  SDLK_F4: uint = 0x4000003du
+  SDLK_F5: uint = 0x4000003eu
+  SDLK_F6: uint = 0x4000003fu
+  SDLK_F7: uint = 0x40000040u
+  SDLK_F8: uint = 0x40000041u
+  SDLK_F9: uint = 0x40000042u
+  SDLK_F10: uint = 0x40000043u
+  SDLK_F11: uint = 0x40000044u
+  SDLK_F12: uint = 0x40000045u
   IMG_INIT_PNG: cint = 0x00000002
   windowCentered*: cint = SDL_WINDOWPOS_CENTERED ## The centered position of a window
 
@@ -238,11 +250,14 @@ type
     ## Used to store data about an application's font
     path*: string
     size*: Positive = 14
+  NkSdl = object
+    ## Used to store data about SDL backend
+    win: WindowPtr
+    renderer: RendererPtr
 
 var
-  win: WindowPtr = nil        ## The main X window of the program
-  renderer: RendererPtr = nil ## The SDL renderer
-  fontScale: cfloat = 0.0     ## The scale used to resize a font
+  fontScale: cfloat = 0.0 ## The scale used to resize a font
+  sdl: NkSdl = NkSdl()    ## The SDL backend settings
 
 proc nuklearInit*(windowWidth, windowHeight: int; name: string = "";
     iconPath: string = ""): PContext {.discardable, raises: [], tags: [],
@@ -257,31 +272,32 @@ proc nuklearInit*(windowWidth, windowHeight: int; name: string = "";
   SDL_SetHint(name = "SDL_HINT_VIDEO_HIGHDPI_DISABLED", value = "0")
   discard SDL_Init(flags = SDL_INIT_VIDEO)
   discard IMG_Init(flags = IMG_INIT_PNG)
-  win = SDL_CreateWindow(title = name.cstring, x = SDL_WINDOWPOS_CENTERED,
+  sdl.win = SDL_CreateWindow(title = name.cstring, x = SDL_WINDOWPOS_CENTERED,
       y = SDL_WINDOWPOS_CENTERED, w = windowWidth.cint, h = windowHeight.cint,
           flags = SDL_WINDOW_SHOWN or SDL_WINDOW_ALLOW_HIGHDPI)
-  if win == nil:
+  if sdl.win == nil:
     {.ruleOff: "namedparams".}
     SDL_Log("Error SDL_CreateWindow %s", SDL_GetError())
     {.ruleOn: "namedparams".}
     quit QuitFailure
-  renderer = SDL_CreateRenderer(window = win, index = -1,
+  sdl.renderer = SDL_CreateRenderer(window = sdl.win, index = -1,
       flags = SDL_RENDERER_ACCELERATED or SDL_RENDERER_PRESENTVSYNC)
-  if renderer == nil:
+  if sdl.renderer == nil:
     {.ruleOff: "namedparams".}
     SDL_Log("Error SDL_CreateRenderer %s", SDL_GetError())
     {.ruleOn: "namedparams".}
     quit QuitFailure
   var renderW, renderH, windowW, windowH: cint = 0
-  SDL_GetRendererOutputSize(renderer = renderer, w = renderW, h = renderH)
-  SDL_GetWindowSize(window = win, w = windowW, h = windowH)
+  SDL_GetRendererOutputSize(renderer = sdl.renderer, w = renderW, h = renderH)
+  SDL_GetWindowSize(window = sdl.win, w = windowW, h = windowH)
   if iconPath.len > 0:
-    SDL_SetWindowIcon(window = win, icon = IMG_Load(file = iconPath.cstring))
+    SDL_SetWindowIcon(window = sdl.win, icon = IMG_Load(
+        file = iconPath.cstring))
   let scaleX: cfloat = renderW.cfloat / windowW.cfloat
   let scaleY: cfloat = renderH.cfloat / windowH.cfloat
-  SDL_RenderSetScale(renderer = renderer, scaleX = scaleX, scaleY = scaleY)
+  SDL_RenderSetScale(renderer = sdl.renderer, scaleX = scaleX, scaleY = scaleY)
   fontScale = scaleY
-  setContext(newContext = nk_sdl_init(win = win, renderer = renderer))
+  setContext(newContext = nk_sdl_init(win = sdl.win, renderer = sdl.renderer))
   return getContext()
 
 proc nuklearInput*(): UserEvents {.raises: [], tags: [], contractual.} =
@@ -294,7 +310,7 @@ proc nuklearInput*(): UserEvents {.raises: [], tags: [], contractual.} =
   result = noEvent
   while SDL_PollEvent(event = evt) != 0:
     case evt.`type`
-    of SDL_QUIT.cuint:
+    of SDL_QUIT.ord:
       return quitEvent
     of SDL_WINDOWEVENT.cuint:
       let wEvt: SDL_WindowEvt = cast[SDL_WindowEvt](evt)
@@ -394,6 +410,30 @@ proc nuklearInput*(): UserEvents {.raises: [], tags: [], contractual.} =
         nk_input_key(ctx = ctx, key = keyKPPeriod, down = down)
       of SDLK_INSERT.cuint:
         nk_input_key(ctx = ctx, key = keyInsert, down = down)
+      of SDLK_F1.cuint:
+        nk_input_key(ctx = ctx, key = keyF1, down = down)
+      of SDLK_F2.cuint:
+        nk_input_key(ctx = ctx, key = keyF2, down = down)
+      of SDLK_F3.cuint:
+        nk_input_key(ctx = ctx, key = keyF3, down = down)
+      of SDLK_F4.cuint:
+        nk_input_key(ctx = ctx, key = keyF4, down = down)
+      of SDLK_F5.cuint:
+        nk_input_key(ctx = ctx, key = keyF5, down = down)
+      of SDLK_F6.cuint:
+        nk_input_key(ctx = ctx, key = keyF6, down = down)
+      of SDLK_F7.cuint:
+        nk_input_key(ctx = ctx, key = keyF7, down = down)
+      of SDLK_F8.cuint:
+        nk_input_key(ctx = ctx, key = keyF8, down = down)
+      of SDLK_F9.cuint:
+        nk_input_key(ctx = ctx, key = keyF9, down = down)
+      of SDLK_F10.cuint:
+        nk_input_key(ctx = ctx, key = keyF10, down = down)
+      of SDLK_F11.cuint:
+        nk_input_key(ctx = ctx, key = keyF11, down = down)
+      of SDLK_F12.cuint:
+        nk_input_key(ctx = ctx, key = keyF12, down = down)
       else:
         result = noEvent
     of SDL_MOUSEBUTTONDOWN.cuint, SDL_MOUSEBUTTONUP.cuint:
@@ -421,17 +461,17 @@ proc nuklearInput*(): UserEvents {.raises: [], tags: [], contractual.} =
 
 proc nuklearDraw*() {.raises: [], tags: [], contractual.} =
   ## Draw the main window content
-  discard SDL_SetRenderDrawColor(renderer = renderer, r = (0.10 * 255).uint8,
-      g = (0.18 * 255).uint8, b = (0.24 * 255).uint8, a = 255)
-  discard SDL_RenderClear(renderer = renderer)
+  discard SDL_SetRenderDrawColor(renderer = sdl.renderer, r = (0.10 *
+      255).uint8, g = (0.18 * 255).uint8, b = (0.24 * 255).uint8, a = 255)
+  discard SDL_RenderClear(renderer = sdl.renderer)
   nk_sdl_render(aa = antiAliasingOn)
-  SDL_RenderPresent(renderer = renderer)
+  SDL_RenderPresent(renderer = sdl.renderer)
 
 proc nuklearClose*() {.raises: [], tags: [], contractual.} =
   ## Release all resources related to Xlib and Nuklear
   nk_sdl_shutdown()
-  SDL_DestroyRenderer(renderer = renderer)
-  SDL_DestroyWindow(window = win)
+  SDL_DestroyRenderer(renderer = sdl.renderer)
+  SDL_DestroyWindow(window = sdl.win)
   IMG_Quit()
   SDL_Quit()
 
@@ -449,7 +489,7 @@ proc nuklearLoadSVGImage*(filePath: string; width,
       height = height.cint)
   if surface == nil:
     raise newException(exceptn = NuklearException, message = $(SDL_GetError()))
-  let image: TexturePtr = SDL_CreateTextureFromSurface(renderer = renderer,
+  let image: TexturePtr = SDL_CreateTextureFromSurface(renderer = sdl.renderer,
       surface = surface)
   if image == nil:
     raise newException(exceptn = NuklearException, message = $(SDL_GetError()))
@@ -503,7 +543,7 @@ proc nuklearResizeWin*(width, height: int) {.raises: [], tags: [],
   ##
   ## * width  - the new width of the main window
   ## * height - the new height of the main window
-  SDL_SetWindowSize(window = win, w = width.cint, h = height.cint)
+  SDL_SetWindowSize(window = sdl.win, w = width.cint, h = height.cint)
 
 proc nuklearSetWindowPos*(x, y: int) {.raises: [], tags: [], contractual.} =
   ## Set the window position on the screen, related to the upper left corner
@@ -513,14 +553,14 @@ proc nuklearSetWindowPos*(x, y: int) {.raises: [], tags: [], contractual.} =
   ##       windowCentered
   ## * y - the y coordinate of the window in screen coordinates or
   ##       windowCentered
-  SDL_SetWindowPosition(window = win, x = x.cint, y = y.cint)
+  SDL_SetWindowPosition(window = sdl.win, x = x.cint, y = y.cint)
 
 proc nuklearSetWindowResizable*(resizable: bool = true) {.raises: [], tags: [],
     contractual.} =
   ## Set the main window of application resizable, or not
   ##
   ## * resizable - if true, the window will be resizable, otherwise not
-  SDL_SetWindowResizable(window = win, resizable = resizable.ord.cint)
+  SDL_SetWindowResizable(window = sdl.win, resizable = resizable.ord.cint)
 
 proc nuklearGetWindowSize*(): tuple[w: float; h: float] {.raises: [], tags: [],
     contractual.} =
@@ -528,5 +568,5 @@ proc nuklearGetWindowSize*(): tuple[w: float; h: float] {.raises: [], tags: [],
   ##
   ## Returns a tuple with width and height of the window.
   var winWidth, winHeight: cint = 0
-  SDL_GetWindowSize(window = win, w = winWidth, h = winHeight)
+  SDL_GetWindowSize(window = sdl.win, w = winWidth, h = winHeight)
   return (winWidth.float, winHeight.float)

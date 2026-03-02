@@ -125,14 +125,51 @@ type
     bufferFixed, bufferDynamic
   Keys* = enum
     ## Special keys
-    keyNone, keyShift, keyCtrl, keyCopy, keyCut, keyPaste, keyTextInsertMode,
-      keyTextReplaceMode, keyTextResetMode, keyTextLineStart, keyTextLineEnd,
-      keyTextStart, keyTextEnd, keyTextUndo, keyTextRedo, keyTextSelectAll,
-      keyTextWordLeft, keyTextWordRight, keyScrollStart, keyScrollEnd,
-      keyScrollDown, keyScrollUp, keyAlt, keyEscape, keyHome, keyEnd, keyKP7,
-      keyKP1, keyKP2, keyKP3, keyKP4, keyKP5, keyKP6, keyKP8, keyKP9, keyKP0,
-      keyKPPeriod, keyInsert, keyDel, keyUp, keyDown, keyLeft, keyRight,
-      keyEnter, keyTab, keyBackspace, keyMax
+    keyNone, keyShift,
+    keyCtrl = "Control",
+    keyCopy, keyCut, keyPaste, keyTextInsertMode, keyTextReplaceMode,
+      keyTextResetMode, keyTextLineStart, keyTextLineEnd, keyTextStart,
+      keyTextEnd, keyTextUndo, keyTextRedo, keyTextSelectAll, keyTextWordLeft,
+      keyTextWordRight, keyScrollStart, keyScrollEnd,
+    keyScrollDown = "Next",
+    keyScrollUp = "Prior",
+    keyAlt = "Alt",
+    keyEscape = "Escape",
+    keyHome = "Home",
+    keyEnd = "End",
+    keyKP7 = "KP_Home",
+    keyKP1 = "KP_End",
+    keyKP2 = "KP_Down",
+    keyKP3 = "KP_Next",
+    keyKP4 = "KP_Left",
+    keyKP5 = "KP_Begin",
+    keyKP6 = "KP_Right",
+    keyKP8 = "KP_Up",
+    keyKP9 = "KP_Prior",
+    keyKP0 = "KP_Insert",
+    keyKPPeriod = "KP_Delete",
+    keyInsert = "Insert",
+    keyDel = "Delete",
+    keyUp = "Up",
+    keyDown = "Down",
+    keyLeft = "Left",
+    keyRight = "Right",
+    keyEnter = "Enter",
+    keyTab = "Tab",
+    keyBackspace = "Backspace",
+    keyF1 = "F1",
+    keyF2 = "F2",
+    keyF3 = "F3",
+    keyF4 = "F4",
+    keyF5 = "F5",
+    keyF6 = "F6",
+    keyF7 = "F7",
+    keyF8 = "F8",
+    keyF9 = "F9",
+    keyF10 = "F10",
+    keyF11 = "F11",
+    keyF12 = "F12",
+    keyMax
   StyleCursor* = enum
     ## Types of cursor's styles
     cursorArrow, cursorText, cursorMove, cursorResizeVertical,
@@ -1647,6 +1684,9 @@ type
     ## Used to store data for text
     padding*: Vec2
     background*, text*: NkColor
+  FontAtlas* = object
+    ## Used to store data about user fonts
+    pixel*, texWidth, texHeight: int
 
 # ---------
 # Constants
