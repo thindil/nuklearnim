@@ -3,7 +3,7 @@
 if paramCount() < 3:
   quit "Required parameter: xlib or sdl2"
 
-case paramStr(3)
+case paramStr(i = 3)
 of "xlib":
   exec "nim c --define:xlib demo.nim"
 of "sdl2":
