@@ -293,8 +293,7 @@ type
       buttonHoverTextColor, buttonActiveTextColor, editTextColor,
       comboTextColor, tooltipColor, tooltipBorderColor, groupBorderColor,
       headerTextColor, groupTextColor, selectActiveTextColor, propertyTextColor,
-      popupColor, popupBorderColor, progressbarColor, progressbarBorderColor,
-      countColors
+      popupColor, popupBorderColor, progressbarColor, progressbarBorderColor
   PanelType* = enum
     ## The types of panels
     panelNone = 0,
@@ -368,6 +367,8 @@ const
     ## The size of the stack of user fonts
   nkInputMax*: Positive = 16
     ## The max size of the user's input
+  nkWidgetDisabledFactor*: float = 0.5
+    ## Default color factor for disabled widgets
 
 # -------
 # Objects
@@ -1162,7 +1163,7 @@ type
     keyboard*: Keyboard
   Handle* = object
     ## Used to store a handle to various elements
-    case handleType: HandleType
+    case handleType*: HandleType
     of handlePtr:
       ptrValue*: pointer
     of handleInt:
@@ -1375,7 +1376,7 @@ type
     rounding*, border*, colorFactorBackground*, colorFactorText*,
       disabledFactor*: float
     padding*, imagePadding*, touchPadding*: Vec2
-    alignment*: nk_flags
+    alignment*: TextAlignment
     userData*: Handle
     drawBegin*, drawEnd*: DrawF
   StyleWindowHeader* = object
