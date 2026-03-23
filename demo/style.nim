@@ -1,4 +1,4 @@
-# Copyright © 2023-2025 Bartek Jasicki
+# Copyright © 2023-2026 Bartek Jasicki
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@ proc setStyle*(theme: Theme) {.raises: [], tags: [], contractual.} =
   ##
   ## * theme - the UI theme to set
   {.ruleOff: "varDeclared".}
-  var table: array[countColors, NkColor]
+  var table: array[StyleColors, NkColor]
   {.ruleOn: "varDeclared".}
   case theme
   of themeWhite:
