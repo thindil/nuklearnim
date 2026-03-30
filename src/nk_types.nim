@@ -125,7 +125,8 @@ type
     bufferFixed, bufferDynamic
   Keys* = enum
     ## Special keys
-    keyNone, keyShift,
+    keyNone,
+    keyShift = "Shift",
     keyCtrl = "Control",
     keyCopy, keyCut, keyPaste, keyTextInsertMode, keyTextReplaceMode,
       keyTextResetMode, keyTextLineStart, keyTextLineEnd, keyTextStart,
@@ -1445,6 +1446,7 @@ type
     textAlignment*: nk_flags
     padding*, touchPadding*: Vec2
     spacing*, border*, colorFactor*, disabledFactor*: float
+    userData*: Handle
   StyleSelectable* = object
     ## Used to store Nuklear style data for selectable widgets
     normal*, hover*, pressed*, normalActive*, hoverActive*,

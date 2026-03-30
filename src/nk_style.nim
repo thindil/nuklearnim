@@ -140,6 +140,65 @@ proc nkStyleFromTable*(table: array[StyleColors,
   context.style.contextualButton.drawEnd = nil
 
   # menu button
+  context.style.menuButton.normal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[windowColor]))
+  context.style.menuButton.hover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[windowColor]))
+  context.style.menuButton.active = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[windowColor]))
+  context.style.menuButton.borderColor = table[windowColor]
+  context.style.menuButton.textBackground = table[windowColor]
+  context.style.menuButton.textNormal = table[textColor]
+  context.style.menuButton.textHover = table[textColor]
+  context.style.menuButton.textActive = table[textColor]
+  context.style.menuButton.padding = Vec2(x: 2.0, y: 2.0)
+  context.style.menuButton.touchPadding = Vec2(x: 0.0, y: 0.0)
+  context.style.menuButton.userData = Handle(handleType: handleInt, intValue: 0)
+  context.style.menuButton.alignment = centered
+  context.style.menuButton.border = 0.0
+  context.style.menuButton.rounding = 1.0
+  context.style.menuButton.colorFactorText = 1.0
+  context.style.menuButton.colorFactorBackground = 1.0
+  context.style.menuButton.disabledFactor = nkWidgetDisabledFactor
+  context.style.menuButton.drawBegin = nil
+  context.style.menuButton.drawEnd = nil
+
+  # checkbox toggle
+  context.style.checkbox.normal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[toggleColor]))
+  context.style.checkbox.hover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[toggleHoverColor]))
+  context.style.checkbox.active = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[toggleHoverColor]))
+  context.style.checkbox.cursorNormal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[toggleCursorColor]))
+  context.style.checkbox.cursorHover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[toggleCursorColor]))
+  context.style.checkbox.userData = Handle(handleType: handleInt, intValue: 0)
+  context.style.checkbox.textBackground = table[windowColor]
+  context.style.checkbox.textNormal = table[textColor]
+  context.style.checkbox.textHover = table[textColor]
+  context.style.checkbox.textActive = table[textColor]
+  context.style.checkbox.padding = Vec2(x: 2.0, y: 2.0)
+  context.style.checkbox.touchPadding = Vec2(x: 0.0, y: 0.0)
+  context.style.checkbox.borderColor = NkColor(r: 0, g: 0, b: 0, a: 0)
+  context.style.checkbox.border = 0.0
+  context.style.checkbox.spacing = 4
+  context.style.checkbox.colorFactor = 1.0
+  context.style.checkbox.disabledFactor = nkWidgetDisabledFactor
+
+  # options toggle
+  context.style.option.normal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[toggleColor]))
+  context.style.option.hover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[toggleHoverColor]))
+  context.style.option.active = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[toggleHoverColor]))
+  context.style.option.cursorNormal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[toggleCursorColor]))
+  context.style.option.cursorHover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[toggleCursorColor]))
+  context.style.option.userData = Handle(handleType: handleInt, intValue: 0)
 
 proc defaultStyle*() {.raises: [], tags: [], contractual.} =
   ## Reset the UI colors to the default Nuklear setting
