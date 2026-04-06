@@ -199,6 +199,54 @@ proc nkStyleFromTable*(table: array[StyleColors,
   context.style.option.cursorHover = StyleItem(iType: itemColor,
       data: StyleItemData(itype: itemColor, color: table[toggleCursorColor]))
   context.style.option.userData = Handle(handleType: handleInt, intValue: 0)
+  context.style.option.textBackground = table[windowColor]
+  context.style.option.textNormal = table[textColor]
+  context.style.option.textHover = table[textColor]
+  context.style.option.textActive = table[textColor]
+  context.style.option.padding = Vec2(x: 3.0, y: 3.0)
+  context.style.option.touchPadding = Vec2(x: 0.0, y: 0.0)
+  context.style.option.borderColor = NkColor(r: 0, g: 0, b: 0, a: 0)
+  context.style.option.border = 0.0
+  context.style.option.spacing = 4
+  context.style.option.colorFactor = 1.0
+  context.style.option.disabledFactor = nkWidgetDisabledFactor
+
+  # selectable
+  context.style.selectable.normal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[selectColor]))
+  context.style.selectable.hover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[selectColor]))
+  context.style.selectable.pressed = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[selectColor]))
+  context.style.selectable.normalActive = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[selectActiveColor]))
+  context.style.selectable.hoverActive = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[selectActiveColor]))
+  context.style.selectable.pressedActive = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[selectActiveColor]))
+  context.style.selectable.textNormal = table[textColor]
+  context.style.selectable.textHover = table[textColor]
+  context.style.selectable.textPressed = table[textColor]
+  context.style.selectable.textNormalActive = table[selectActiveTextColor]
+  context.style.selectable.textHoverActive = table[selectActiveTextColor]
+  context.style.selectable.textPressedActive = table[selectActiveTextColor]
+  context.style.selectable.padding = Vec2(x: 2.0, y: 2.0)
+  context.style.selectable.imagePadding = Vec2(x: 2.0, y: 2.0)
+  context.style.selectable.touchPadding = Vec2(x: 0.0, y: 0.0)
+  context.style.selectable.userData = Handle(handleType: handleInt, intValue: 0)
+  context.style.selectable.rounding = 0.0
+  context.style.selectable.colorFactor = 1.0
+  context.style.selectable.disabledFactor = nkWidgetDisabledFactor
+  context.style.selectable.drawBegin = nil
+  context.style.selectable.drawEnd = nil
+
+  # slider
+  context.style.slider.normal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: NkColor(r: 0, g: 0, b: 0, a: 0)))
+  context.style.slider.hover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: NkColor(r: 0, g: 0, b: 0, a: 0)))
+  context.style.slider.active = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: NkColor(r: 0, g: 0, b: 0, a: 0)))
 
 proc defaultStyle*() {.raises: [], tags: [], contractual.} =
   ## Reset the UI colors to the default Nuklear setting
