@@ -247,6 +247,39 @@ proc nkStyleFromTable*(table: array[StyleColors,
       data: StyleItemData(itype: itemColor, color: NkColor(r: 0, g: 0, b: 0, a: 0)))
   context.style.slider.active = StyleItem(iType: itemColor,
       data: StyleItemData(itype: itemColor, color: NkColor(r: 0, g: 0, b: 0, a: 0)))
+  context.style.slider.barNormal = table[sliderColor]
+  context.style.slider.barHover = table[sliderColor]
+  context.style.slider.barActive = table[sliderColor]
+  context.style.slider.barFilled = table[sliderCursorColor]
+  context.style.slider.cursorNormal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[sliderCursorColor]))
+  context.style.slider.cursorHover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[
+      sliderCursorHoverColor]))
+  context.style.slider.cursorActive = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[
+      sliderCursorActiveColor]))
+  context.style.slider.incSymbol = triangleRight
+  context.style.slider.decSymbol = triangleLeft
+  context.style.slider.cursorSize = Vec2(x: 16, y: 16)
+  context.style.slider.padding = Vec2(x: 2, y: 2)
+  context.style.slider.spacing = Vec2(x: 2, y: 2)
+  context.style.slider.userData = Handle(handleType: handleInt, intValue: 0)
+  context.style.slider.showButtons = false
+  context.style.slider.barHeight = 8
+  context.style.slider.rounding = 0
+  context.style.slider.colorFactor = 1.0
+  context.style.slider.disabledFactor = nkWidgetDisabledFactor
+  context.style.slider.drawBegin = nil
+  context.style.slider.drawEnd = nil
+
+  # slider buttons
+  context.style.slider.incButton.normal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: NkColor(r: 40, g: 40, b: 40, a: 255)))
+  context.style.slider.incButton.hover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: NkColor(r: 42, g: 42, b: 42, a: 255)))
+  context.style.slider.incButton.active = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: NkColor(r: 44, g: 44, b: 44, a: 255)))
 
 proc defaultStyle*() {.raises: [], tags: [], contractual.} =
   ## Reset the UI colors to the default Nuklear setting
