@@ -240,13 +240,17 @@ proc nkStyleFromTable*(table: array[StyleColors,
   context.style.selectable.drawBegin = nil
   context.style.selectable.drawEnd = nil
 
+  proc itemHide(): StyleItem {.raises: [], tags: [], contractual.} =
+    ## Set a style item to be hidden
+    ##
+    ## Returns StyleItem object with setting for hidden item
+    return StyleItem(iType: itemColor, data: StyleItemData(itype: itemColor,
+        color: NkColor(r: 0, g: 0, b: 0, a: 0)))
+
   # slider
-  context.style.slider.normal = StyleItem(iType: itemColor,
-      data: StyleItemData(itype: itemColor, color: NkColor(r: 0, g: 0, b: 0, a: 0)))
-  context.style.slider.hover = StyleItem(iType: itemColor,
-      data: StyleItemData(itype: itemColor, color: NkColor(r: 0, g: 0, b: 0, a: 0)))
-  context.style.slider.active = StyleItem(iType: itemColor,
-      data: StyleItemData(itype: itemColor, color: NkColor(r: 0, g: 0, b: 0, a: 0)))
+  context.style.slider.normal = itemHide()
+  context.style.slider.hover = itemHide()
+  context.style.slider.active = itemHide()
   context.style.slider.barNormal = table[sliderColor]
   context.style.slider.barHover = table[sliderColor]
   context.style.slider.barActive = table[sliderColor]
@@ -280,6 +284,74 @@ proc nkStyleFromTable*(table: array[StyleColors,
       data: StyleItemData(itype: itemColor, color: NkColor(r: 42, g: 42, b: 42, a: 255)))
   context.style.slider.incButton.active = StyleItem(iType: itemColor,
       data: StyleItemData(itype: itemColor, color: NkColor(r: 44, g: 44, b: 44, a: 255)))
+  context.style.slider.incButton.borderColor = NkColor(r: 65, g: 65, b: 65, a: 255)
+  context.style.slider.incButton.textBackground = NkColor(r: 40, g: 40, b: 40, a: 255)
+  context.style.slider.incButton.textNormal = NkColor(r: 175, g: 175, b: 175, a: 255)
+  context.style.slider.incButton.textHover = NkColor(r: 175, g: 175, b: 175, a: 255)
+  context.style.slider.incButton.textActive = NkColor(r: 175, g: 175, b: 175, a: 255)
+  context.style.slider.incButton.padding = Vec2(x: 8.0, y: 8.0)
+  context.style.slider.incButton.touchPadding = Vec2(x: 0.0, y: 0.0)
+  context.style.slider.incButton.userData = Handle(handleType: handleInt, intValue: 0)
+  context.style.slider.incButton.alignment = centered
+  context.style.slider.incButton.border = 1.0
+  context.style.slider.incButton.rounding = 0.0
+  context.style.slider.incButton.colorFactorText = 1.0
+  context.style.slider.incButton.colorFactorBackground = 1.0
+  context.style.slider.incButton.disabledFactor = nkWidgetDisabledFactor
+  context.style.slider.incButton.drawBegin = nil
+  context.style.slider.incButton.drawEnd = nil
+  context.style.slider.decButton = context.style.slider.incButton
+
+  # knob
+  context.style.knob.normal = itemHide()
+  context.style.knob.hover = itemHide()
+  context.style.knob.active = itemHide()
+  context.style.knob.knobNormal = table[knobColor]
+  context.style.knob.knobHover = table[knobColor]
+  context.style.knob.knobActive = table[knobColor]
+  context.style.knob.cursorNormal = table[knobCursorColor]
+  context.style.knob.cursorHover = table[knobCursorHoverColor]
+  context.style.knob.cursorActive = table[knobCursorActiveColor]
+  context.style.knob.knobBorderColor = table[StyleColors.borderColor]
+  context.style.knob.border = 1.0
+  context.style.knob.padding = Vec2(x: 2.0, y: 2.0)
+  context.style.knob.spacing = Vec2(x: 2.0, y: 2.0)
+  context.style.knob.cursorWidth = 2
+  context.style.knob.colorFactor = 1.0
+  context.style.knob.disabledFactor = nkWidgetDisabledFactor
+  context.style.knob.userData = Handle(handleType: handleInt, intValue: 0)
+  context.style.knob.drawBegin = nil
+  context.style.knob.drawEnd = nil
+
+  # progressbar
+  context.style.progress.normal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[
+      progressbarBorderColor]))
+  context.style.progress.hover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[sliderColor]))
+  context.style.progress.active = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[sliderColor]))
+  context.style.progress.cursorNormal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[progressbarColor]))
+  context.style.progress.cursorHover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[sliderCursorColor]))
+  context.style.progress.cursorActive = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[sliderCursorColor]))
+  context.style.progress.borderColor = NkColor(r: 0, g: 0, b: 0, a: 0)
+  context.style.progress.cursorBorderColor = NkColor(r: 0, g: 0, b: 0, a: 0)
+  context.style.progress.userData = Handle(handleType: handleInt, intValue: 0)
+  context.style.progress.padding = Vec2(x: 4.0, y: 4.0)
+  context.style.progress.rounding = 0.0
+  context.style.progress.border = 0.0
+  context.style.progress.cursorRounding = 0.0
+  context.style.progress.cursorBorder = 0.0
+  context.style.progress.colorFactor = 1.0
+  context.style.progress.disabledFactor = nkWidgetDisabledFactor
+  context.style.progress.drawBegin = nil
+  context.style.progress.drawEnd = nil
+
+  # scrollbars
+
 
 proc defaultStyle*() {.raises: [], tags: [], contractual.} =
   ## Reset the UI colors to the default Nuklear setting
