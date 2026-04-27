@@ -351,7 +351,60 @@ proc nkStyleFromTable*(table: array[StyleColors,
   context.style.progress.drawEnd = nil
 
   # scrollbars
+  context.style.scrollH.normal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[scrollbarColor]))
+  context.style.scrollH.hover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[scrollbarColor]))
+  context.style.scrollH.active = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[scrollbarColor]))
+  context.style.scrollH.cursorNormal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[scrollbarCursorColor]))
+  context.style.scrollH.cursorHover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[
+      scrollbarCursorHoverColor]))
+  context.style.scrollH.cursorActive = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[
+      scrollbarCursorActiveColor]))
+  context.style.scrollH.decSymbol = circleSolid
+  context.style.scrollH.incSymbol = circleSolid
+  context.style.scrollH.userData = Handle(handleType: handleInt, intValue: 0)
+  context.style.scrollH.borderColor = table[scrollbarColor]
+  context.style.scrollH.cursorBorderColor = table[scrollbarColor]
+  context.style.scrollH.padding = Vec2(x: 0.0, y: 0.0)
+  context.style.scrollH.showButtons = false
+  context.style.scrollH.border = 0.0
+  context.style.scrollH.rounding = 0.0
+  context.style.scrollH.borderCursor = 0.0
+  context.style.scrollH.roundingCursor = 0.0
+  context.style.scrollH.colorFactor = 1.0
+  context.style.scrollH.disabledFactor = nkWidgetDisabledFactor
+  context.style.scrollH.drawBegin = nil
+  context.style.scrollH.drawEnd = nil
+  context.style.scrollV = context.style.scrollH
 
+  # scrollbars buttons
+  context.style.scrollH.incButton.normal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: NkColor(r: 40, g: 40, b: 40, a: 255)))
+  context.style.scrollH.incButton.hover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: NkColor(r: 42, g: 42, b: 42, a: 255)))
+  context.style.scrollH.incButton.active = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: NkColor(r: 44, g: 44, b: 44, a: 255)))
+  context.style.scrollH.incButton.borderColor = NkColor(r: 65, g: 65, b: 65, a: 255)
+  context.style.scrollH.incButton.textBackground = NkColor(r: 40, g: 40, b: 40, a: 255)
+  context.style.scrollH.incButton.textNormal = NkColor(r: 175, g: 175, b: 175, a: 255)
+  context.style.scrollH.incButton.textHover = NkColor(r: 175, g: 175, b: 175, a: 255)
+  context.style.scrollH.incButton.textActive = NkColor(r: 175, g: 175, b: 175, a: 255)
+  context.style.scrollH.incButton.padding = Vec2(x: 4.0, y: 4.0)
+  context.style.scrollH.incButton.touchPadding = Vec2(x: 0.0, y: 0.0)
+  context.style.scrollH.incButton.userData = Handle(handleType: handleInt, intValue: 0)
+  context.style.scrollH.incButton.alignment = centered
+  context.style.scrollH.incButton.border = 1.0
+  context.style.scrollH.incButton.rounding = 0.0
+  context.style.scrollH.incButton.colorFactorText = 1.0
+  context.style.scrollH.incButton.colorFactorBackground = 1.0
+  context.style.scrollH.incButton.disabledFactor = nkWidgetDisabledFactor
+  context.style.scrollH.incButton.drawBegin = nil
+  context.style.scrollH.incButton.drawEnd = nil
 
 proc defaultStyle*() {.raises: [], tags: [], contractual.} =
   ## Reset the UI colors to the default Nuklear setting

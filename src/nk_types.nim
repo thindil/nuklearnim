@@ -1485,9 +1485,10 @@ type
     normal*, hover*, active*, cursorNormal*, cursorHover*,
       cursorActive*: StyleItem
     borderColor*, cursorBorderColor*: NkColor
-    border*, rounding*, borderCursor*, colorFactor*, disabledFactor*: float
+    border*, rounding*, borderCursor*, colorFactor*, disabledFactor*,
+      roundingCursor*: float
     padding*: Vec2
-    showButtons: int
+    showButtons*: bool
     incButton*, decButton*: StyleButton
     incSymbol*, decSymbol*: SymbolType
     userData*: Handle
@@ -1543,7 +1544,7 @@ type
     knob*: StyleKnob
     edit*: StyleEdit
     chart*: StyleChart
-    scrollH*, scrollV: StyleScrollbar
+    scrollH*, scrollV*: StyleScrollbar
     tab*: StyleTab
     combo*: StyleCombo
   Str* = object
