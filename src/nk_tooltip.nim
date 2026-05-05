@@ -1,4 +1,4 @@
-# Copyright 2024-2025 Bartek thindil Jasicki
+# Copyright 2024-2026 Bartek thindil Jasicki
 #
 # This file is part of Steam Sky.
 #
@@ -19,8 +19,8 @@
 ## them, etc.
 
 import std/macros
-import contracts
-import nk_context, nk_types
+import contracts, nimalyzer
+import nk_context, nk_types, nk_widget
 
 # ---------------------
 # Procedures parameters
@@ -30,6 +30,8 @@ using ctx: PContext
 proc nk_tooltipf(ctx; fmt: cstring) {.importc, nodecl, varargs, raises: [],
     tags: [], contractual.}
   ## Internal Nuklear C binding
+proc nk_tooltip_end(ctx) {.importc, nodecl, raises: [], tags: [], contractual.}
+  ## A binding to Nuklear's function. Internal use only
 
 macro fmtTooltip*(args: varargs[untyped]): untyped =
   ## Draw a tooltip formatted in the same way like the C function printf
@@ -52,14 +54,10 @@ proc tooltip*(text: string; x, y: float) {.raises: [], tags: [], contractual.} =
   ## * text - the text to show on the tooltip window
   ## * x    - the X coordinate of the tooltip window
   ## * y    - the Y coordinate of the tooltip window
-  proc nk_tooltip2(ctx; text: cstring, startx, starty: cfloat) {.importc, nodecl, raises: [], tags: [], contractual.}
+  proc nk_tooltip2(ctx; text: cstring; startx, starty: cfloat) {.importc,
+      nodecl, raises: [], tags: [], contractual.}
     ## Internal Nuklear C binding
   nk_tooltip2(ctx = ctx, text = text.cstring, startx = x, starty = y)
-
-type
-  TooltipData = object
-    bounds*: Rect
-    text*: string
 
 var
   tooltipDelay*: float = 1000.0
@@ -67,10 +65,12 @@ var
     ## tooltip will be shown
   frameDelay*: float = 0.0
     ## The length of UI frames. Used to count when to show a tooltip
-  tooltips*: seq[TooltipData] = @[]
-    ## The list of tooltips available in the window
   delay*: float = tooltipDelay
     ## The current delay before show a tooltip, when reached 0, show a tooltip
+  tooltipEnabled: bool = true
+    ## If true, tooltips are enabled (default true)
+  hoveredTooltip: bool = false
+    ## If true, a tooltip is hovered, used to advance the timer
 
 proc setTooltips*(tDelay, fDelay: float) {.raises: [], tags: [], contractual.} =
   ## Set the tooltips configuration
@@ -80,17 +80,60 @@ proc setTooltips*(tDelay, fDelay: float) {.raises: [], tags: [], contractual.} =
   tooltipDelay = tDelay
   frameDelay = fDelay
 
-proc resetTooltips*() {.raises: [], tags: [], contractual.} =
-  ## Reset the list of tooltips available in the window. Should be called
-  ## at the begining of a Nuklear window declaration.
-  tooltips = @[]
+proc enableTooltips*() {.raises: [], tags: [], contractual.} =
+  ## Enable showing tooltips
+  tooltipEnabled = true
 
+proc disableTooltips*() {.raises: [], tags: [], contractual.} =
+  ## Disable showing tooltips
+  tooltipEnabled = false
+
+proc showTooltip*(text: string) {.raises: [], tags: [], contractual.} =
+  ## Show the selected tooltip for the next widget. The procedure should be
+  ## called before the widget which will have the tooltip.
+  ##
+  ## * text - the text to show on the tooltip
+  if not tooltipEnabled or not widgetIsHovered():
+    return
+  hoveredTooltip = true
+  if delay <= 0:
+    tooltip(text = text)
+
+proc updateTooltips*() {.raises: [], tags: [], contractual.} =
+  ## Update tooltips timer
+  if not tooltipEnabled:
+    return
+  if hoveredTooltip:
+    delay -= frameDelay
+  hoveredTooltip = false
+
+{.push ruleOff:"params".}
 proc addTooltip*(bounds: Rect; text: string) {.raises: [], tags: [],
     contractual.} =
-  ## Add a tooltip to the list of tooltips. The procedure should be called
-  ## before the widget declaration, because it also needs bounds in which the
-  ## mouse will be check.
+  ## Deprecated, still here for backward compatybility
   ##
   ## * bounds - the area in which the widget with the tooltip is
   ## * text   - the text which will be show as the tooltip
-  tooltips.add(y = TooltipData(bounds: bounds, text: text))
+  showTooltip(text = text)
+{.pop ruleOn:"params".}
+
+proc createTooltip(width2, x2, y2: float): bool {.raises: [], tags: [], contractual.} =
+  ## Create a new Nuklear tooltip window, internal use only, temporary code
+  ## temporary code
+  ##
+  ## Returns true if the popup is active, otherwise false.
+  proc nk_tooltip_begin2(ctx; width, startx, starty: cfloat): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_tooltip_begin2(ctx = ctx, width = width2.cfloat, startx = x2, starty = y2)
+
+template tooltip*(x, y, width: float; content: untyped) =
+  ## Create a new tooltip window with the selected content
+  ##
+  ## * x       - the X coordinate of the tooltip window
+  ## * y       - the Y coordinate of the tooltip window
+  ## * width   - the width of the tooltip window
+  ## * content - the content of the window
+  if createTooltip(width2 = width, x2 = x, y2 = y):
+    content
+    ctx.nk_tooltip_end
+

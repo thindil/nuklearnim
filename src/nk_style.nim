@@ -405,6 +405,47 @@ proc nkStyleFromTable*(table: array[StyleColors,
   context.style.scrollH.incButton.disabledFactor = nkWidgetDisabledFactor
   context.style.scrollH.incButton.drawBegin = nil
   context.style.scrollH.incButton.drawEnd = nil
+  context.style.scrollH.decButton = context.style.scrollH.incButton
+  context.style.scrollV.incButton = context.style.scrollH.incButton
+  context.style.scrollV.decButton = context.style.scrollH.incButton
+
+  # edit
+  context.style.edit.normal = StyleItem(iType: itemColor, data: StyleItemData(
+      itype: itemColor, color: table[editColor]))
+  context.style.edit.hover = StyleItem(iType: itemColor, data: StyleItemData(
+      itype: itemColor, color: table[editColor]))
+  context.style.edit.active = StyleItem(iType: itemColor, data: StyleItemData(
+      itype: itemColor, color: table[editColor]))
+  context.style.edit.cursorNormal = table[editCursorColor]
+  context.style.edit.cursorHover = table[editCursorColor]
+  context.style.edit.cursorTextNormal = table[editColor]
+  context.style.edit.cursorTextHover = table[editColor]
+  context.style.edit.borderColor = table[StyleColors.borderColor]
+  context.style.edit.textNormal = table[editTextColor]
+  context.style.edit.textHover = table[editTextColor]
+  context.style.edit.textActive = table[editTextColor]
+  context.style.edit.selectedNormal = table[editTextColor]
+  context.style.edit.selectedHover = table[editTextColor]
+  context.style.edit.selectedTextNormal = table[editColor]
+  context.style.edit.selectedTextHover = table[editColor]
+  context.style.edit.scrollbarSize = Vec2(x: 10, y: 10)
+  context.style.edit.scrollbar = context.style.scrollH
+  context.style.edit.padding = Vec2(x: 4, y: 4)
+  context.style.edit.rowPadding = 2
+  context.style.edit.cursorSize = 4
+  context.style.edit.border = 1
+  context.style.edit.rounding = 0
+  context.style.edit.colorFactor = 1.0
+  context.style.edit.disabledFactor = nkWidgetDisabledFactor
+
+  # property
+  context.style.property.normal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[propertyColor]))
+  context.style.property.hover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[propertyColor]))
+  context.style.property.active = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[propertyColor]))
+  context.style.property.borderColor = table[StyleColors.borderColor]
 
 proc defaultStyle*() {.raises: [], tags: [], contractual.} =
   ## Reset the UI colors to the default Nuklear setting
