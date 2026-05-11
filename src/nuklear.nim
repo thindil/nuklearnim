@@ -1880,6 +1880,22 @@ template imageButton*(image: PImage; onPressCode: untyped) =
   if createImageButton(img = image):
     onPressCode
 
+template imageButton*(image: PImage; tooltip: string; onPressCode: untyped) =
+  ## Draw the button with the selected image. Execute the selected code
+  ## on pressing it.
+  ##
+  ## * image       - the image to shown on the button
+  ## * tooltip     - the tooltip to show when mouse is hovering about the
+  ##                 button
+  ## * onPressCode - the Nim code to execute when the button was pressed
+  ##
+  ## Returns true if button was pressed
+  let bounds: Rect = getWidgetBounds()
+  if createImageButton(img = image):
+    onPressCode
+  if isMouseHovering(rect = bounds):
+    showTooltip2(text = tooltip)
+
 proc createImageButtonCentered(img: PImage): bool {.raises: [], tags: [],
     contractual.} =
   ## Draw the button with the selected image, internal use only, temporary code
@@ -2536,7 +2552,7 @@ template changeStyle*(src, dest: ButtonStyleTypes; code: untyped) =
 # Combos
 # ------
 proc comboList*(items: openArray[string]; selected, itemHeight: int; x,
-    y: float; amount: int = items.len - 1): int {.raises: [], tags: [],
+    y: float; amount: int = items.len - 1; tooltip: string = ""): int {.raises: [], tags: [],
         contractual.} =
   ## Create a Nuklear combo widget
   ##
@@ -2547,6 +2563,7 @@ proc comboList*(items: openArray[string]; selected, itemHeight: int; x,
   ## * y           - the height of the combo's values list
   ## * amount      - the amount of items in the items list. Default to the length
   ##                 of the list
+  ## * tooltip     - the tooltip to show when mouse is hovering over the widget
   ##
   ## Returns the index of the currently selected valu on the combo's list
   proc nk_combo(ctx; items: pointer; count,
@@ -2556,9 +2573,12 @@ proc comboList*(items: openArray[string]; selected, itemHeight: int; x,
   var optionsList: seq[cstring] = @[]
   for i in 0..amount:
     optionsList.add(y = items[i].cstring)
-  return nk_combo(ctx = ctx, items = optionsList[0].addr, count = amount.cint +
+  let bounds: Rect = getWidgetBounds()
+  result = nk_combo(ctx = ctx, items = optionsList[0].addr, count = amount.cint +
       1, selected = selected.cint, itemHeight = itemHeight.cint,
           size = new_nk_vec2(x = x.cfloat, y = y.cfloat)).int
+  if tooltip.len > 0 and isMouseHovering(rect = bounds):
+    showTooltip2(text = tooltip)
 
 proc createColorCombo(ctx; color1: NkColor; x1, y1: cfloat): bool {.raises: [],
     tags: [], contractual.} =
@@ -2859,8 +2879,9 @@ template group*(title: string; flags: set[PanelFlags]; content: untyped) =
 # Edit text
 # ---------
 proc editString*(text: var string; maxLen: int; editType: EditTypes = simple;
-    filter: PluginFilter = nk_filter_default; flags: set[EditFlags] = {
-        }): EditEvent {.discardable, raises: [], tags: [], contractual.} =
+    filter: PluginFilter = nk_filter_default; flags: set[EditFlags] = {};
+    tooltip: string = ""): EditEvent {.discardable, raises: [], tags: [],
+    contractual.} =
   ## Draw the field of hte selected type and with the selected filter to edit a
   ## text
   ##
@@ -2889,9 +2910,12 @@ proc editString*(text: var string; maxLen: int; editType: EditTypes = simple;
   for flag in flags:
     cFlags = cFlags or flag.cint
   {.ruleOn: "assignments".}
+  let bounds: Rect = getWidgetBounds()
   result = nk_edit_string(ctx = ctx, flags = cFlags,
       memory = cText[0].addr, len = length.cint, max = maxLen.cint,
       filter = filter).EditEvent
+  if isMouseHovering(rect = bounds):
+    showTooltip2(text = tooltip)
   text = charArrayToString(charArray = cText, length = length)
 
 proc editIsActive*(): bool {.raises: [], tags: [], contractual.} =

@@ -446,6 +446,77 @@ proc nkStyleFromTable*(table: array[StyleColors,
   context.style.property.active = StyleItem(iType: itemColor,
       data: StyleItemData(itype: itemColor, color: table[propertyColor]))
   context.style.property.borderColor = table[StyleColors.borderColor]
+  context.style.property.labelNormal = table[StyleColors.textColor]
+  context.style.property.labelHover = table[StyleColors.textColor]
+  context.style.property.labelActive = table[StyleColors.textColor]
+  context.style.property.symLeft = triangleLeft
+  context.style.property.symRight = triangleRight
+  context.style.property.userData = Handle(handleType: handleInt, intValue: 0)
+  context.style.property.padding = Vec2(x: 4, y: 4)
+  context.style.property.border = 1
+  context.style.property.rounding = 10
+  context.style.property.drawBegin = nil
+  context.style.property.drawEnd = nil
+  context.style.property.colorFactor = 1.0
+  context.style.property.disabledFactor = nkWidgetDisabledFactor
+
+  # property buttons
+  context.style.property.decButton.normal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[propertyColor]))
+  context.style.property.decButton.hover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[propertyColor]))
+  context.style.property.decButton.active = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[propertyColor]))
+  context.style.property.decButton.borderColor = NkColor(r: 0, g: 0, b: 0, a: 0)
+  context.style.property.decButton.textBackground = table[propertyColor]
+  context.style.property.decButton.textNormal = table[textColor]
+  context.style.property.decButton.textHover = table[textColor]
+  context.style.property.decButton.textActive = table[textColor]
+  context.style.property.decButton.padding = Vec2(x: 0.0, y: 0.0)
+  context.style.property.decButton.touchPadding = Vec2(x: 0.0, y: 0.0)
+  context.style.property.decButton.userData = Handle(handleType: handleInt, intValue: 0)
+  context.style.property.decButton.alignment = centered
+  context.style.property.decButton.border = 0.0
+  context.style.property.decButton.rounding = 0.0
+  context.style.property.decButton.colorFactorText = 1.0
+  context.style.property.decButton.colorFactorBackground = 1.0
+  context.style.property.decButton.disabledFactor = nkWidgetDisabledFactor
+  context.style.property.decButton.drawBegin = nil
+  context.style.property.decButton.drawEnd = nil
+  context.style.property.incButton = context.style.property.decButton
+
+  # property edit
+  context.style.property.edit.normal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[propertyColor]))
+  context.style.property.edit.hover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[propertyColor]))
+  context.style.property.edit.active = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[propertyColor]))
+  context.style.property.edit.borderColor = NkColor(r: 0, g: 0, b: 0, a: 0)
+  context.style.property.edit.cursorNormal = table[propertyTextColor]
+  context.style.property.edit.cursorHover = table[propertyTextColor]
+  context.style.property.edit.cursorTextNormal = table[editColor]
+  context.style.property.edit.cursorTextHover = table[editColor]
+  context.style.property.edit.textNormal = table[propertyTextColor]
+  context.style.property.edit.textHover = table[propertyTextColor]
+  context.style.property.edit.textActive = table[propertyTextColor]
+  context.style.property.edit.selectedNormal = table[propertyTextColor]
+  context.style.property.edit.selectedHover = table[propertyTextColor]
+  context.style.property.edit.selectedTextNormal = table[editColor]
+  context.style.property.edit.selectedTextHover = table[editColor]
+  context.style.property.edit.padding = Vec2(x: 0.0, y: 0.0)
+  context.style.property.edit.cursorSize = 8
+  context.style.property.edit.border = 0
+  context.style.property.edit.rounding = 0
+  context.style.property.edit.colorFactor = 1.0
+  context.style.property.edit.disabledFactor = nkWidgetDisabledFactor
+
+  # chart
+  context.style.chart.background = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[chartColor]))
+  context.style.chart.borderColor = table[StyleColors.borderColor]
+  context.style.chart.selectedColor = table[colorChartHighlightColor]
+  context.style.chart.color = table[colorChartColor]
 
 proc defaultStyle*() {.raises: [], tags: [], contractual.} =
   ## Reset the UI colors to the default Nuklear setting
