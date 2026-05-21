@@ -1,4 +1,4 @@
-# Copyright © 2024-2025 Bartek Jasicki
+# Copyright © 2024-2026 Bartek Jasicki
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -44,54 +44,6 @@ proc nkWidgetStateReset*(s: var nk_flags) {.raises: [], tags: [],
     s = widgetStateInactive.int or widgetStateModified.int
   else:
     s = widgetStateInactive.ord
-
-proc checkbox*(label: string; checked: var bool): bool {.discardable, raises: [
-    ], tags: [], contractual.} =
-  ## Create a Nuklear checkbox widget
-  ##
-  ## * label   - the text to show with the checkbox
-  ## * checked - the state of the checkbox, if true, the checkbox is checked
-  ##
-  ## Returns true if the state of the checkbox was changed, otherwise false.
-  proc nk_checkbox_label(ctx; text: cstring;
-      active: var cint): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
-    ## Nuklear C binding
-  var active: cint = (if checked: 1 else: 0)
-  result = nk_checkbox_label(ctx = ctx, text = label.cstring,
-      active = active) == nkTrue
-  checked = active == 1
-
-proc option*(label: string; selected: bool): bool {.raises: [], tags: [],
-    contractual.} =
-  ## Create a Nuklear option (radio) widget
-  ##
-  ## * label    - the text show with the option
-  ## * selected - the state of the option, if true the option is selected
-  ##
-  ## Returns true if the option is selected, otherwise false
-  proc nk_option_label(ctx; name: cstring; active: cint): nk_bool {.importc,
-      nodecl, raises: [], tags: [], contractual.}
-    ## Nuklear C binding
-  var active: cint = (if selected: 1 else: 0)
-  return nk_option_label(ctx = ctx, name = label.cstring, active = active) == nkTrue
-
-proc progressBar*(value: var int; maxValue: int; modifyable: bool = true;
-    reversed: bool = false): bool {.discardable, raises: [], tags: [],
-    contractual.} =
-  ## Create a Nuklear progress bar widget
-  ##
-  ## * value      - the current value of the progress bar
-  ## * maxValue   - the maximum value of the progress bar
-  ## * modifyable - if true, the user can modify the value of the progress bar
-  ## * reversed   - if true, the progress bar should be draw in reverse, from
-  ##                the end
-  ##
-  ## Returns true if the value parameter was changed, otherwise false
-  proc nk_progress(ctx; cur: var nk_size; max: nk_size; modifyable,
-      reversed: nk_bool): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
-    ## Nuklear C binding
-  return nk_progress(ctx = ctx, cur = value, max = maxValue,
-      modifyable = modifyable.nk_bool, reversed = reversed.nk_bool) == nkTrue
 
 proc widgetIsHovered*(): bool {.raises: [], tags: [], contractual.} =
   ## Check if the next widget is hovered by the mouse

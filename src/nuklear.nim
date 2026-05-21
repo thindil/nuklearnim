@@ -470,7 +470,7 @@ proc nkPushScissor(b: var CommandBuffer; r: Rect) {.raises: [], tags: [
     b.clip = r
     var cmd: CommandScissor = cast[CommandScissor](
       nkCommandBufferPush(b = b, t = commandScissor,
-      size = CommandScissor.sizeof))
+      size = CommandScissor.sizeof.nk_size))
     cmd.x = r.x.int16
     cmd.y = r.y.int16
     cmd.w = max(x = 0.uint16, y = r.w.uint16)
@@ -493,7 +493,7 @@ proc nkStrokeRect(b: var CommandBuffer, rect: Rect, rounding,
       x1 = b.clip.x, y1 = b.clip.y, w1 = b.clip.w, h1 = b.clip.h):
       return
   var cmd: CommandRect = cast[CommandRect](nkCommandBufferPush(b = b,
-    t = commandRect, size = CommandRect.sizeof))
+    t = commandRect, size = CommandRect.sizeof.nk_size))
   cmd.rounding = rounding.cushort
   cmd.line_thickness = lineThickness.cushort
   cmd.x = rect.x.cshort
@@ -525,7 +525,7 @@ proc nkStrokeTriangle(b: var CommandBuffer; x0, y0, x1, y1, x2, y2,
       return
 
   var cmd: CommandTriangle = cast[CommandTriangle](nkCommandBufferPush(b = b,
-    t = commandTriangle, size = CommandTriangle.sizeof))
+    t = commandTriangle, size = CommandTriangle.sizeof.nk_size))
   cmd.line_thickness = lineThickness.uint16
   cmd.a.x = x0.int16
   cmd.a.y = y0.int16
@@ -550,7 +550,7 @@ proc nkFillCircle(b: var CommandBuffer; rect: Rect; c: NkColor)
       return
 
   var cmd: CommandCircleFilled = cast[CommandCircleFilled](nkCommandBufferPush(b = b,
-    t = commandCircleFilled, size = CommandCircleFilled.sizeof))
+    t = commandCircleFilled, size = CommandCircleFilled.sizeof.nk_size))
   cmd.x = rect.x.int16
   cmd.y = rect.y.int16
   cmd.w = max(x = 0, y = rect.w).uint16
@@ -579,7 +579,7 @@ proc nkFillTriangle(b: var CommandBuffer, x0, y0, x1, y1, x2, y2: float,
       return
 
   var cmd: CommandTriangleFilled = cast[CommandTriangleFilled](nkCommandBufferPush(b = b,
-    t = commandTriangleFilled, size = CommandTriangleFilled.sizeof))
+    t = commandTriangleFilled, size = CommandTriangleFilled.sizeof.nk_size))
   cmd.a.x = x0.int16
   cmd.a.y = y0.int16
   cmd.b.x = x1.int16
@@ -602,7 +602,7 @@ proc nkDrawImage(b: var CommandBuffer; r: Rect; img: Image; col: NkColor)
       return
 
   var cmd: CommandImage = cast[CommandImage](nkCommandBufferPush(b = b, t = commandImage,
-    size = CommandImage.sizeof))
+    size = CommandImage.sizeof.nk_size))
   cmd.x = r.x.cshort
   cmd.y = r.y.cshort
   cmd.w = max(x = 0.cushort, y = r.w.cushort)
@@ -762,7 +762,7 @@ proc nkDrawText(b: var CommandBuffer; r: Rect; str: string; length: var int;
       return
     var cmd: CommandText = cast[CommandText](
         nkCommandBufferPush(b = b, t = commandText,
-            size = CommandText.sizeof + (length + 1).nk_size))
+            size = CommandText.sizeof.nk_size + (length + 1).nk_size))
     cmd.x = r.x.int16
     cmd.y = r.y.int16
     cmd.w = r.w.uint16
@@ -1512,7 +1512,7 @@ proc nkPopupBegin(context; pType: PopupType; title: string; flags: set[PanelFlag
       if win.popup.active:
         return false
       {.ruleOff: "namedParams".}
-      nkZero(pData = popup.addr, size = Window.sizeof)
+      nkZero(pData = popup.addr, size = Window.sizeof.nk_size)
       {.ruleOn: "namedParams".}
       win.popup.name = titleHash.nk_hash
       win.popup.active = nkTrue
@@ -1732,7 +1732,8 @@ template treeElement*(eType: TreeType; title: string; state: CollapseStates;
 # ------
 # Labels
 # ------
-proc colorLabel*(str: string; color: Color; align: TextAlignment = left) {.raises: [], tags: [], contractual.} =
+proc colorLabel*(str: string; color: Color; align: TextAlignment = left;
+    tooltip: string = "") {.raises: [], tags: [], contractual.} =
   ## Draw a text with the selected color
   ##
   ## * str   - the text to display
@@ -1742,10 +1743,14 @@ proc colorLabel*(str: string; color: Color; align: TextAlignment = left) {.raise
       color: nk_color) {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
   var (r, g, b) = color.extractRGB
+  let showTips: bool = widgetIsHovered()
   nk_label_colored(ctx = ctx, str = str.cstring, align = align.nk_flags,
       color = nk_rgb(r = r.cint, g = g.cint, b = b.cint))
+  if showTips and tooltip.len > 0:
+    showTooltip2(text = tooltip)
 
-proc colorLabel*(str: string; color, background: Color; align: TextAlignment = left) {.raises: [], tags: [], contractual.} =
+proc colorLabel*(str: string; color, background: Color; align: TextAlignment = left;
+    tooltip: string = "") {.raises: [], tags: [], contractual.} =
   ## Draw a text with the selected color and background
   ##
   ## * str        - the text to display
@@ -1758,33 +1763,45 @@ proc colorLabel*(str: string; color, background: Color; align: TextAlignment = l
   var
     (r, g, b) = color.extractRGB
     (r2, g2, b2) = background.extractRGB
+  let showTips: bool = widgetIsHovered()
   nk_label_colored2(ctx = ctx, str = str.cstring, align = align.nk_flags,
       color = nk_rgb(r = r.cint, g = g.cint, b = b.cint),
       color2 = nk_rgb(r = r2.cint, g = g2.cint, b = b2.cint))
+  if showTips and tooltip.len > 0:
+    showTooltip2(text = tooltip)
 
-proc colorLabel*(str: string; background: Color; align: TextAlignment = left) {.raises: [], tags: [], contractual.} =
+proc colorLabel*(str: string; background: Color; align: TextAlignment = left;
+    tooltip: string = "") {.raises: [], tags: [], contractual.} =
   ## Draw a text with the selected background color
   ##
   ## * str        - the text to display
   ## * background - the color of the text's background
   ## * align      - the text aligmnent flags
+  ## * tooltip    - the tooltip to show on the label. Can be empty
   proc nk_label_colored3(ctx; str: cstring; align: nk_flags;
       color: nk_color) {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
   var (r, g, b) = background.extractRGB
+  let showTips: bool = widgetIsHovered()
   nk_label_colored3(ctx = ctx, str = str.cstring, align = align.nk_flags,
       color = nk_rgb(r = r.cint, g = g.cint, b = b.cint))
+  if showTips and tooltip.len > 0:
+    showTooltip2(text = tooltip)
 
-proc label*(str: string; alignment: TextAlignment = left) {.raises: [], tags: [
-    ], contractual.} =
+proc label*(str: string; alignment: TextAlignment = left; tooltip: string = "")
+    {.raises: [], tags: [], contractual.} =
   ## Draw the text with the selected alignment
   ##
   ## * str       - the text to draw
   ## * alignment - the alignment of the text. Default is alignment to the left
+  ## * tooltip   - the tooltip to show on the label. Can be empty
   proc nk_label(ctx; str: cstring; alignment: nk_flags) {.importc, nodecl,
       raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
+  let showTips: bool = widgetIsHovered()
   nk_label(ctx = ctx, str = str.cstring, alignment = alignment.nk_flags)
+  if showTips and tooltip.len > 0:
+    showTooltip2(text = tooltip)
 
 proc text*(str: string; len: int = str.len;
     alignment: TextAlignment = left) {.raises: [], tags: [], contractual.} =
@@ -1890,10 +1907,10 @@ template imageButton*(image: PImage; tooltip: string; onPressCode: untyped) =
   ## * onPressCode - the Nim code to execute when the button was pressed
   ##
   ## Returns true if button was pressed
-  let bounds: Rect = getWidgetBounds()
+  let showTips: bool = widgetIsHovered()
   if createImageButton(img = image):
     onPressCode
-  if isMouseHovering(rect = bounds):
+  if showTips:
     showTooltip2(text = tooltip)
 
 proc createImageButtonCentered(img: PImage): bool {.raises: [], tags: [],
@@ -1965,7 +1982,8 @@ proc createImageLabelButton(img: PImage; txt: string; align: TextAlignment): boo
     ## A binding to Nuklear's function. Internal use only
   return nk_button_image_label(ctx = ctx, image = nk_image_ptr(iPtr = img), text = txt.cstring, text_alignment = align.nk_flags)
 
-template imageLabelButton*(image: PImage; text: string; alignment: TextAlignment; onPressCode: untyped) =
+template imageLabelButton*(image: PImage; text: string;
+    alignment: TextAlignment; onPressCode: untyped) =
   ## Draw the button with the selected image and text. Execute the selected code
   ## on pressing it.
   ##
@@ -1977,6 +1995,24 @@ template imageLabelButton*(image: PImage; text: string; alignment: TextAlignment
   ## Returns true if button was pressed
   if createImageLabelButton(img = image, txt = text, align = alignment):
     onPressCode
+
+template imageLabelButton*(image: PImage; label, tooltip: string;
+    alignment: TextAlignment; onPressCode: untyped) =
+  ## Draw the button with the selected image and text. Execute the selected code
+  ## on pressing it.
+  ##
+  ## * image       - the image to shown on the button
+  ## * label        - the text to show on the button
+  ## * tooltip     - the tooltip to show when mouse is hovering over the widget
+  ## * align       - the alignment of the text to show
+  ## * onPressCode - the Nim code to execute when the button was pressed
+  ##
+  ## Returns true if button was pressed
+  let showTips: bool = widgetIsHovered()
+  if createImageLabelButton(img = image, txt = label, align = alignment):
+    onPressCode
+  if showTips:
+    showTooltip2(text = tooltip)
 
 # -------
 # Sliders
@@ -2219,8 +2255,8 @@ proc property*(name: string; min: float; val: var float; max, step: float;
       incPerPixel = incPerPixel.cfloat)
   val = newVal.float
 
-proc property2*(name: string; min, val, max, step,
-    incPerPixel: float): float {.raises: [], tags: [], contractual.} =
+proc property2*(name: string; min, val, max, step, incPerPixel: float;
+    tooltip: string = ""): float {.raises: [], tags: [], contractual.} =
   ## Create a Nuklear property widget with float values
   ##
   ## * name        - the name of the property and its label to show on it.
@@ -2238,12 +2274,15 @@ proc property2*(name: string; min, val, max, step,
   proc nk_propertyf(ctx; name: cstring; min, val, max, step,
       incPerPixel: cfloat): cfloat {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
-  return nk_propertyf(ctx = ctx, name = name.cstring, min = min.cfloat,
+  let showTips: bool = widgetIsHovered()
+  result = nk_propertyf(ctx = ctx, name = name.cstring, min = min.cfloat,
       val = val.cfloat, max = max.cfloat, step = step.cfloat,
       incPerPixel = incPerPixel.cfloat).float
+  if showTips and tooltip.len > 0:
+    showTooltip2(text = tooltip)
 
-proc property2*(name: string; min, val, max, step: int;
-    incPerPixel: float): int {.raises: [], tags: [], contractual.} =
+proc property2*(name: string; min, val, max, step: int; incPerPixel: float;
+    tooltip: string = ""): int {.raises: [], tags: [], contractual.} =
   ## Create a Nuklear property widget with integer values
   ##
   ## * name        - the name of the property and its label to show on it.
@@ -2261,9 +2300,12 @@ proc property2*(name: string; min, val, max, step: int;
   proc nk_propertyi(ctx; name: cstring; min, val, max, step: cint;
       incPerPixel: cfloat): cint {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
-  return nk_propertyi(ctx = ctx, name = name.cstring, min = min.cint,
+  let showTips: bool = widgetIsHovered()
+  result = nk_propertyi(ctx = ctx, name = name.cstring, min = min.cint,
       val = val.cint, max = max.cint, step = step.cint,
       incPerPixel = incPerPixel.cfloat).int
+  if showTips and tooltip.len > 0:
+    showTooltip2(text = tooltip)
 
 # -----
 # Style
@@ -2573,11 +2615,11 @@ proc comboList*(items: openArray[string]; selected, itemHeight: int; x,
   var optionsList: seq[cstring] = @[]
   for i in 0..amount:
     optionsList.add(y = items[i].cstring)
-  let bounds: Rect = getWidgetBounds()
+  let showTips: bool = widgetIsHovered()
   result = nk_combo(ctx = ctx, items = optionsList[0].addr, count = amount.cint +
       1, selected = selected.cint, itemHeight = itemHeight.cint,
           size = new_nk_vec2(x = x.cfloat, y = y.cfloat)).int
-  if tooltip.len > 0 and isMouseHovering(rect = bounds):
+  if showTips and tooltip.len > 0:
     showTooltip2(text = tooltip)
 
 proc createColorCombo(ctx; color1: NkColor; x1, y1: cfloat): bool {.raises: [],
@@ -2910,11 +2952,11 @@ proc editString*(text: var string; maxLen: int; editType: EditTypes = simple;
   for flag in flags:
     cFlags = cFlags or flag.cint
   {.ruleOn: "assignments".}
-  let bounds: Rect = getWidgetBounds()
+  let showTips: bool = widgetIsHovered()
   result = nk_edit_string(ctx = ctx, flags = cFlags,
       memory = cText[0].addr, len = length.cint, max = maxLen.cint,
       filter = filter).EditEvent
-  if isMouseHovering(rect = bounds):
+  if showTips and tooltip.len > 0:
     showTooltip2(text = tooltip)
   text = charArrayToString(charArray = cText, length = length)
 
@@ -3027,6 +3069,67 @@ proc ruleHorizontal*(color: Color, rounding: bool) {.raises: [], tags: [], contr
   let (r, g, b) = color.extractRGB
   nk_rule_horizontal(ctx = ctx, color = nk_color(r: r.uint8, g: g.uint8, b: b.uint8), rounding = (if rounding: nkTrue else: nkFalse))
 
+proc checkbox*(label: string; checked: var bool; tooltip: string = ""): bool {.discardable, raises: [
+    ], tags: [], contractual.} =
+  ## Create a Nuklear checkbox widget
+  ##
+  ## * label   - the text to show with the checkbox
+  ## * checked - the state of the checkbox, if true, the checkbox is checked
+  ##
+  ## Returns true if the state of the checkbox was changed, otherwise false.
+  proc nk_checkbox_label(ctx; text: cstring;
+      active: var cint): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## Nuklear C binding
+  var active: cint = (if checked: 1 else: 0)
+  let showTips: bool = widgetIsHovered()
+  result = nk_checkbox_label(ctx = ctx, text = label.cstring,
+      active = active) == nkTrue
+  checked = active == 1
+  if showTips and tooltip.len > 0:
+    showTooltip2(text = tooltip)
+
+proc option*(label: string; selected: bool;
+    tooltip: string = ""): bool {.raises: [], tags: [], contractual.} =
+  ## Create a Nuklear option (radio) widget
+  ##
+  ## * label    - the text show with the option
+  ## * selected - the state of the option, if true the option is selected
+  ## * tooltip  - the tooltip to show when mouse is hovering about the widget
+  ##
+  ## Returns true if the option is selected, otherwise false
+  proc nk_option_label(ctx; name: cstring; active: cint): nk_bool {.importc,
+      nodecl, raises: [], tags: [], contractual.}
+    ## Nuklear C binding
+  var active: cint = (if selected: 1 else: 0)
+  let showTips: bool = widgetIsHovered()
+  result = nk_option_label(ctx = ctx, name = label.cstring, active = active) == nkTrue
+  if showTips and tooltip.len > 0:
+    showTooltip2(text = tooltip)
+
+proc progressBar*(value: var int; maxValue: int; modifyable: bool = true;
+    reversed: bool = false; tooltip: string = ""): bool {.discardable, raises: [], tags: [],
+    contractual.} =
+  ## Create a Nuklear progress bar widget
+  ##
+  ## * value      - the current value of the progress bar
+  ## * maxValue   - the maximum value of the progress bar
+  ## * modifyable - if true, the user can modify the value of the progress bar
+  ## * reversed   - if true, the progress bar should be draw in reverse, from
+  ##                the end
+  ## * tooltip    - the tooltip to show on the progress bar. Can be empty
+  ##
+  ## Returns true if the value parameter was changed, otherwise false
+  proc nk_progress(ctx; cur: var nk_size; max: nk_size; modifyable,
+      reversed: nk_bool): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## Nuklear C binding
+  let showTips: bool = widgetIsHovered()
+  var curr: nk_size = value.nk_size
+  result = nk_progress(ctx = ctx, cur = curr, max = maxValue.nk_size,
+      modifyable = modifyable.nk_bool, reversed = reversed.nk_bool) == nkTrue
+  value = curr
+  if showTips and tooltip.len > 0:
+    showTooltip2(text = tooltip)
+
 # ------
 # Colors
 # ------
@@ -3057,3 +3160,28 @@ proc hsvaToColorf*(hsva: array[4, float]): NkColorF {.raises: [], tags: [],
   let newColor: nk_colorf = nk_hsva_colorf(h = hsva[0], s = hsva[1], v = hsva[
       2], a = hsva[3])
   result = NkColorF(r: newColor.r, g: newColor.g, b: newColor.b, a: newColor.a)
+
+# --------
+# Tooltips
+# --------
+proc createTooltip(width2, x2, y2: float): bool {.raises: [], tags: [],
+    contractual.} =
+  ## Create a new Nuklear tooltip window, internal use only, temporary code
+  ## temporary code
+  ##
+  ## Returns true if the popup is active, otherwise false.
+  proc nk_tooltip_begin2(ctx; width, startx, starty: cfloat): nk_bool {.importc,
+      nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_tooltip_begin2(ctx = ctx, width = width2.cfloat, startx = x2, starty = y2)
+
+template tooltip*(x, y, width: float; content: untyped) =
+  ## Create a new tooltip window with the selected content
+  ##
+  ## * x       - the X coordinate of the tooltip window
+  ## * y       - the Y coordinate of the tooltip window
+  ## * width   - the width of the tooltip window
+  ## * content - the content of the window
+  if createTooltip(width2 = width, x2 = x, y2 = y):
+    content
+    ctx.nk_tooltip_end

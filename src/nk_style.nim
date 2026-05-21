@@ -517,6 +517,91 @@ proc nkStyleFromTable*(table: array[StyleColors,
   context.style.chart.borderColor = table[StyleColors.borderColor]
   context.style.chart.selectedColor = table[colorChartHighlightColor]
   context.style.chart.color = table[colorChartColor]
+  context.style.chart.padding = Vec2(x: 4.0, y: 4.0)
+  context.style.chart.border = 0
+  context.style.chart.rounding = 0
+  context.style.chart.colorFactor = 1.0
+  context.style.chart.disabledFactor = nkWidgetDisabledFactor
+  context.style.chart.showMarkers = true
+
+  # combo
+  context.style.combo.normal = StyleItem(iType: itemColor, data: StyleItemData(
+      itype: itemColor, color: table[comboColor]))
+  context.style.combo.hover = StyleItem(iType: itemColor, data: StyleItemData(
+      itype: itemColor, color: table[comboColor]))
+  context.style.combo.active = StyleItem(iType: itemColor, data: StyleItemData(
+      itype: itemColor, color: table[comboColor]))
+  context.style.combo.borderColor = table[StyleColors.borderColor]
+  context.style.combo.labelNormal = table[comboTextColor]
+  context.style.combo.labelHover = table[comboTextColor]
+  context.style.combo.labelActive = table[comboTextColor]
+  context.style.combo.symNormal = triangleDown
+  context.style.combo.symHover = triangleDown
+  context.style.combo.symActive = triangleDown
+  context.style.combo.contentPadding = Vec2(x: 4.0, y: 4.0)
+  context.style.combo.buttonPadding = Vec2(x: 0.0, y: 4.0)
+  context.style.combo.spacing = Vec2(x: 4.0, y: 0.0)
+  context.style.combo.border = 1
+  context.style.combo.rounding = 0
+  context.style.combo.colorFactor = 1.0
+  context.style.combo.disabledFactor = nkWidgetDisabledFactor
+
+  # combo button
+  context.style.combo.button.normal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[comboColor]))
+  context.style.combo.button.hover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[comboColor]))
+  context.style.combo.button.active = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[comboColor]))
+  context.style.combo.button.borderColor = NkColor(r: 0, g: 0, b: 0, a: 0)
+  context.style.combo.button.textBackground = table[comboColor]
+  context.style.combo.button.textNormal = table[textColor]
+  context.style.combo.button.textHover = table[textColor]
+  context.style.combo.button.textActive = table[textColor]
+  context.style.combo.button.padding = Vec2(x: 2.0, y: 2.0)
+  context.style.combo.button.touchPadding = Vec2(x: 0.0, y: 0.0)
+  context.style.combo.button.userData = Handle(handleType: handleInt, intValue: 0)
+  context.style.combo.button.alignment = centered
+  context.style.combo.button.border = 0.0
+  context.style.combo.button.rounding = 0.0
+  context.style.combo.button.colorFactorText = 1.0
+  context.style.combo.button.colorFactorBackground = 1.0
+  context.style.combo.button.disabledFactor = nkWidgetDisabledFactor
+  context.style.combo.button.drawBegin = nil
+  context.style.combo.button.drawEnd = nil
+
+  # tab
+  context.style.tab.background = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[tabHeaderColor]))
+  context.style.tab.borderColor = table[StyleColors.borderColor]
+  context.style.tab.text = table[textColor]
+  context.style.tab.symMinimize = triangleRight
+  context.style.tab.symMaximize = triangleDown
+  context.style.tab.padding = Vec2(x: 4.0, y: 4.0)
+  context.style.tab.spacing = Vec2(x: 4.0, y: 4.0)
+  context.style.tab.indent = 10.0
+  context.style.tab.border = 1
+  context.style.tab.rounding = 0
+  context.style.tab.colorFactor = 1.0
+  context.style.tab.disabledFactor = nkWidgetDisabledFactor
+
+  # tab button
+  context.style.tab.tabMinimizeButton.normal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[tabHeaderColor]))
+  context.style.tab.tabMinimizeButton.hover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[tabHeaderColor]))
+  context.style.tab.tabMinimizeButton.active = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[tabHeaderColor]))
+  context.style.tab.tabMinimizeButton.borderColor = NkColor(r: 0, g: 0, b: 0,
+      a: 0)
+  context.style.tab.tabMinimizeButton.textBackground = table[tabHeaderColor]
+  context.style.tab.tabMinimizeButton.textNormal = table[textColor]
+  context.style.tab.tabMinimizeButton.textHover = table[textColor]
+  context.style.tab.tabMinimizeButton.textActive = table[textColor]
+  context.style.tab.tabMinimizeButton.padding = Vec2(x: 2.0, y: 2.0)
+  context.style.tab.tabMinimizeButton.touchPadding = Vec2(x: 0.0, y: 0.0)
+  context.style.tab.tabMinimizeButton.userData = Handle(handleType: handleInt,
+      intValue: 0)
 
 proc defaultStyle*() {.raises: [], tags: [], contractual.} =
   ## Reset the UI colors to the default Nuklear setting
