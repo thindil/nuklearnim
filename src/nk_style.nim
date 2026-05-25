@@ -602,6 +602,88 @@ proc nkStyleFromTable*(table: array[StyleColors,
   context.style.tab.tabMinimizeButton.touchPadding = Vec2(x: 0.0, y: 0.0)
   context.style.tab.tabMinimizeButton.userData = Handle(handleType: handleInt,
       intValue: 0)
+  context.style.tab.tabMinimizeButton.alignment = centered
+  context.style.tab.tabMinimizeButton.border = 0.0
+  context.style.tab.tabMinimizeButton.rounding = 0.0
+  context.style.tab.tabMinimizeButton.colorFactorText = 1.0
+  context.style.tab.tabMinimizeButton.colorFactorBackground = 1.0
+  context.style.tab.tabMinimizeButton.disabledFactor = nkWidgetDisabledFactor
+  context.style.tab.tabMinimizeButton.drawBegin = nil
+  context.style.tab.tabMinimizeButton.drawEnd = nil
+  context.style.tab.tabMaximizeButton = context.style.tab.tabMinimizeButton
+
+  # node button
+  context.style.tab.nodeMinimizeButton.normal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[windowColor]))
+  context.style.tab.nodeMinimizeButton.hover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[windowColor]))
+  context.style.tab.nodeMinimizeButton.active = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[windowColor]))
+  context.style.tab.nodeMinimizeButton.borderColor = NkColor(r: 0, g: 0, b: 0,
+      a: 0)
+  context.style.tab.nodeMinimizeButton.textBackground = table[tabHeaderColor]
+  context.style.tab.nodeMinimizeButton.textNormal = table[textColor]
+  context.style.tab.nodeMinimizeButton.textHover = table[textColor]
+  context.style.tab.nodeMinimizeButton.textActive = table[textColor]
+  context.style.tab.nodeMinimizeButton.padding = Vec2(x: 2.0, y: 2.0)
+  context.style.tab.nodeMinimizeButton.touchPadding = Vec2(x: 0.0, y: 0.0)
+  context.style.tab.nodeMinimizeButton.userData = Handle(handleType: handleInt,
+      intValue: 0)
+  context.style.tab.nodeMinimizeButton.alignment = centered
+  context.style.tab.nodeMinimizeButton.border = 0.0
+  context.style.tab.nodeMinimizeButton.rounding = 0.0
+  context.style.tab.nodeMinimizeButton.colorFactorText = 1.0
+  context.style.tab.nodeMinimizeButton.colorFactorBackground = 1.0
+  context.style.tab.nodeMinimizeButton.disabledFactor = nkWidgetDisabledFactor
+  context.style.tab.nodeMinimizeButton.drawBegin = nil
+  context.style.tab.nodeMinimizeButton.drawEnd = nil
+  context.style.tab.nodeMaximizeButton = context.style.tab.nodeMinimizeButton
+
+  # window header
+  context.style.window.header.align = headerRight
+  context.style.window.header.closeSymbol = x
+  context.style.window.header.minimizeSymbol = minus
+  context.style.window.header.maximizeSymbol = plus
+  context.style.window.header.normal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[headerColor]))
+  context.style.window.header.hover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[headerColor]))
+  context.style.window.header.active = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[headerColor]))
+  context.style.window.header.labelNormal = table[headerTextColor]
+  context.style.window.header.labelHover = table[headerTextColor]
+  context.style.window.header.labelActive = table[headerTextColor]
+  context.style.window.header.labelPadding = Vec2(x: 4.0, y: 4.0)
+  context.style.window.header.padding = Vec2(x: 4.0, y: 4.0)
+  context.style.window.header.spacing = Vec2(x: 0.0, y: 0.0)
+
+  # window header close button
+  context.style.window.header.closeButton.normal = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[headerColor]))
+  context.style.window.header.closeButton.hover = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[headerColor]))
+  context.style.window.header.closeButton.active = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[headerColor]))
+  context.style.window.header.closeButton.borderColor = NkColor(r: 0, g: 0,
+      b: 0, a: 0)
+  context.style.window.header.closeButton.textBackground = table[headerColor]
+  context.style.window.header.closeButton.textNormal = table[textColor]
+  context.style.window.header.closeButton.textHover = table[textColor]
+  context.style.window.header.closeButton.textActive = table[textColor]
+  context.style.window.header.closeButton.padding = Vec2(x: 0.0, y: 0.0)
+  context.style.window.header.closeButton.touchPadding = Vec2(x: 0.0, y: 0.0)
+  context.style.window.header.closeButton.userData = Handle(
+      handleType: handleInt, intValue: 0)
+  context.style.window.header.closeButton.alignment = centered
+  context.style.window.header.closeButton.border = 0.0
+  context.style.window.header.closeButton.rounding = 0.0
+  context.style.window.header.closeButton.colorFactorText = 1.0
+  context.style.window.header.closeButton.colorFactorBackground = 1.0
+  context.style.window.header.closeButton.disabledFactor = nkWidgetDisabledFactor
+  context.style.window.header.closeButton.drawBegin = nil
+  context.style.window.header.closeButton.drawEnd = nil
+
+  # window header minimize button
 
 proc defaultStyle*() {.raises: [], tags: [], contractual.} =
   ## Reset the UI colors to the default Nuklear setting
