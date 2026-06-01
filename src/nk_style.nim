@@ -684,10 +684,66 @@ proc nkStyleFromTable*(table: array[StyleColors,
   context.style.window.header.closeButton.drawEnd = nil
 
   # window header minimize button
+  context.style.window.header.minimizeButton.normal = StyleItem(
+      iType: itemColor, data: StyleItemData(itype: itemColor, color: table[headerColor]))
+  context.style.window.header.minimizeButton.hover = StyleItem(
+      iType: itemColor, data: StyleItemData(itype: itemColor, color: table[headerColor]))
+  context.style.window.header.minimizeButton.active = StyleItem(
+      iType: itemColor, data: StyleItemData(itype: itemColor, color: table[headerColor]))
+  context.style.window.header.minimizeButton.borderColor = NkColor(r: 0, g: 0,
+      b: 0, a: 0)
+  context.style.window.header.minimizeButton.textBackground = table[headerColor]
+  context.style.window.header.minimizeButton.textNormal = table[textColor]
+  context.style.window.header.minimizeButton.textHover = table[textColor]
+  context.style.window.header.minimizeButton.textActive = table[textColor]
+  context.style.window.header.minimizeButton.padding = Vec2(x: 0.0, y: 0.0)
+  context.style.window.header.minimizeButton.touchPadding = Vec2(x: 0.0, y: 0.0)
+  context.style.window.header.minimizeButton.userData = Handle(
+      handleType: handleInt, intValue: 0)
+  context.style.window.header.minimizeButton.alignment = centered
+  context.style.window.header.minimizeButton.border = 0.0
+  context.style.window.header.minimizeButton.rounding = 0.0
+  context.style.window.header.minimizeButton.colorFactorText = 1.0
+  context.style.window.header.minimizeButton.colorFactorBackground = 1.0
+  context.style.window.header.minimizeButton.disabledFactor = nkWidgetDisabledFactor
+  context.style.window.header.minimizeButton.drawBegin = nil
+  context.style.window.header.minimizeButton.drawEnd = nil
+
+  # window
+  context.style.window.background = table[windowColor]
+  context.style.window.fixedBackground = StyleItem(iType: itemColor,
+      data: StyleItemData(itype: itemColor, color: table[windowColor]))
+  context.style.window.borderColor = table[StyleColors.borderColor]
+  context.style.window.popupBorderColor = table[popupBorderColor]
+  context.style.window.popupBackground = table[popupColor]
+  context.style.window.comboBorderColor = table[StyleColors.borderColor]
+  context.style.window.contextualBorderColor = table[StyleColors.borderColor]
+  context.style.window.menuBorderColor = table[StyleColors.borderColor]
+  context.style.window.groupBorderColor = table[StyleColors.borderColor]
+  context.style.window.tooltipBorderColor = table[tooltipBorderColor]
+  context.style.window.tooltipBackground = table[tooltipColor]
+  context.style.window.scaler = StyleItem(iType: itemColor, data: StyleItemData(
+      itype: itemColor, color: table[textColor]))
+  context.style.window.rounding = 0.0
+  context.style.window.spacing = Vec2(x: 4.0, y: 4.0)
+  context.style.window.scrollbarSize = Vec2(x: 10.0, y: 10.0)
+  context.style.window.minSize = Vec2(x: 64.0, y: 64.0)
+  context.style.window.comboBorder = 1.0
+  context.style.window.contextualBorder = 1.0
+  context.style.window.menuBorder = 1.0
+  context.style.window.groupBorder = 1.0
+  context.style.window.tooltipBorder = 1.0
+  context.style.window.popupBorder = 1.0
+  context.style.window.border = 2.0
+  context.style.window.minRowHeightPadding = 8.0
+  context.style.window.padding = Vec2(x: 4.0, y: 4.0)
+  context.style.window.groupPadding = Vec2(x: 4.0, y: 4.0)
+  context.style.window.popupPadding = Vec2(x: 4.0, y: 4.0)
+  context.style.window.comboPadding = Vec2(x: 4.0, y: 4.0)
+  context.style.window.contextualPadding = Vec2(x: 4.0, y: 4.0)
+  context.style.window.menuPadding = Vec2(x: 4.0, y: 4.0)
+  context.style.window.tooltipPadding = Vec2(x: 4.0, y: 4.0)
 
 proc defaultStyle*() {.raises: [], tags: [], contractual.} =
   ## Reset the UI colors to the default Nuklear setting
-  proc nk_style_default(ctx) {.importc, nodecl, raises: [], tags: [], contractual.}
-    ## A binding to Nuklear's function. Internal use only
-  nk_style_default(ctx = ctx)
-
+  nkStyleFromTable()

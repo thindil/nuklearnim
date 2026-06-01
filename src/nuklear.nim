@@ -2077,26 +2077,6 @@ template imageLabelButton*(image: PImage; label, tooltip: string;
     showTooltip2(text = tooltip)
 
 # -------
-# Sliders
-# -------
-proc slide*(min, val, max, step: int): int {.raises: [], tags: [],
-    contractual.} =
-  ## Draw a slide widget with integer values
-  ##
-  ## * min  - the minimal value on the slider
-  ## * val  - the current value on the slider
-  ## * max  - the maximum value on the slider
-  ## * step - the amount of incrementing or decrementing the value on the
-  ##          slider with mouse click
-  ##
-  ## Returns the new value on the slider
-  proc nk_slide_int(ctx; min, val, max, step: cint): cint {.importc, nodecl,
-      raises: [], tags: [], contractual.}
-    ## A binding to Nuklear's function. Internal use only
-  return nk_slide_int(ctx = ctx, min = min.cint, val = val.cint, max = max.cint,
-      step = step.cint).int
-
-# -------
 # Layouts
 # -------
 proc layoutSpacePush(ctx; x1, y1, w1, h1: cfloat) {.raises: [], tags: [],
@@ -2223,15 +2203,35 @@ template menuItem*(label: string; align: TextAlignment; onPressCode: untyped) =
 # Sliders
 # -------
 
-proc slider*(min: int; val: var int; max, step: int): bool {.discardable,
-    raises: [], tags: [], contractual.} =
-  ## Create a Nuklear slider with integer values
+proc slide*(min, val, max, step: int): int {.raises: [], tags: [],
+    contractual.} =
+  ## Draw a slide widget with integer values
   ##
   ## * min  - the minimal value on the slider
   ## * val  - the current value on the slider
   ## * max  - the maximum value on the slider
-  ## * step - the amount which increase or decrease the slider's value when
-  ##          the user drag its button
+  ## * step - the amount of incrementing or decrementing the value on the
+  ##          slider with mouse click
+  ##
+  ## Returns the new value on the slider
+  proc nk_slide_int(ctx; min, val, max, step: cint): cint {.importc, nodecl,
+      raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  return nk_slide_int(ctx = ctx, min = min.cint, val = val.cint, max = max.cint,
+      step = step.cint).int
+
+proc slider*(min: int; val: var int; max, step: int;
+    tooltip: string = ""): bool {.discardable,
+
+raises: [], tags: [], contractual.} =
+  ## Create a Nuklear slider with integer values
+  ##
+  ## * min     - the minimal value on the slider
+  ## * val     - the current value on the slider
+  ## * max     - the maximum value on the slider
+  ## * step    - the amount which increase or decrease the slider's value when
+  ##             the user drag its button
+  ## * tooltip - the tooltip to show on the slider. Can be empty
   ##
   ## Returns true if the current value was modified, otherwise false. Also
   ## the modified parameter val
@@ -2239,9 +2239,12 @@ proc slider*(min: int; val: var int; max, step: int): bool {.discardable,
       step: cint): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
   var newVal: cint = val.cint
+  let showTips: bool = widgetIsHovered()
   result = nk_slider_int(ctx = ctx, min = min.cint, val = newVal,
       max = max.cint, step = step.cint) == nkTrue
   val = newVal
+  if showTips and tooltip.len > 0:
+    showTooltip2(text = tooltip)
 
 proc slider*(min: float; val: var float; max,
     step: float): bool {.discardable, raises: [], tags: [], contractual.} =
@@ -2990,6 +2993,22 @@ template group*(title: string; flags: set[PanelFlags]; content: untyped) =
     content
     nk_group_end(ctx = ctx)
 
+template group*(title, tooltip: string; flags: set[PanelFlags];
+    content: untyped) =
+  ## Set a group of widgets inside the parent
+  ##
+  ## * title   - the title of the group
+  ## * tooltip - the tooltip to show on the group.
+  ## * flags   - the set of PanelFlags for the group
+  ## * content - the content of the group
+  let showTips: bool = widgetIsHovered()
+  if nk_group_begin(ctx = ctx, ctitle = title.cstring, cflags = winSetToInt(
+      nimFlags = flags)):
+    content
+    nk_group_end(ctx = ctx)
+  if showTips:
+    showTooltip2(text = tooltip)
+
 # ---------
 # Edit text
 # ---------
@@ -3153,71 +3172,6 @@ proc ruleHorizontal*(color: Color; rounding: bool) {.raises: [], tags: [],
   let (r, g, b) = color.extractRGB
   nk_rule_horizontal(ctx = ctx, color = nk_color(r: r.uint8, g: g.uint8,
       b: b.uint8), rounding = (if rounding: nkTrue else: nkFalse))
-
-proc checkbox*(label: string; checked: var bool;
-    tooltip: string = ""): bool {.discardable, raises: [
-
-], tags: [], contractual.} =
-  ## Create a Nuklear checkbox widget
-  ##
-  ## * label   - the text to show with the checkbox
-  ## * checked - the state of the checkbox, if true, the checkbox is checked
-  ## * tooltip - the tooltip to show on the checkbox. Can be empty
-  ##
-  ## Returns true if the state of the checkbox was changed, otherwise false.
-  proc nk_checkbox_label(ctx; text: cstring;
-      active: var cint): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
-    ## Nuklear C binding
-  var active: cint = (if checked: 1 else: 0)
-  let showTips: bool = widgetIsHovered()
-  result = nk_checkbox_label(ctx = ctx, text = label.cstring,
-      active = active) == nkTrue
-  checked = active == 1
-  if showTips and tooltip.len > 0:
-    showTooltip2(text = tooltip)
-
-proc option*(label: string; selected: bool;
-    tooltip: string = ""): bool {.raises: [], tags: [], contractual.} =
-  ## Create a Nuklear option (radio) widget
-  ##
-  ## * label    - the text show with the option
-  ## * selected - the state of the option, if true the option is selected
-  ## * tooltip  - the tooltip to show when mouse is hovering about the widget
-  ##
-  ## Returns true if the option is selected, otherwise false
-  proc nk_option_label(ctx; name: cstring; active: cint): nk_bool {.importc,
-      nodecl, raises: [], tags: [], contractual.}
-    ## Nuklear C binding
-  var active: cint = (if selected: 1 else: 0)
-  let showTips: bool = widgetIsHovered()
-  result = nk_option_label(ctx = ctx, name = label.cstring, active = active) == nkTrue
-  if showTips and tooltip.len > 0:
-    showTooltip2(text = tooltip)
-
-proc progressBar*(value: var int; maxValue: int; modifyable: bool = true;
-    reversed: bool = false; tooltip: string = ""): bool {.discardable, raises: [
-        ], tags: [],
-    contractual.} =
-  ## Create a Nuklear progress bar widget
-  ##
-  ## * value      - the current value of the progress bar
-  ## * maxValue   - the maximum value of the progress bar
-  ## * modifyable - if true, the user can modify the value of the progress bar
-  ## * reversed   - if true, the progress bar should be draw in reverse, from
-  ##                the end
-  ## * tooltip    - the tooltip to show on the progress bar. Can be empty
-  ##
-  ## Returns true if the value parameter was changed, otherwise false
-  proc nk_progress(ctx; cur: var nk_size; max: nk_size; modifyable,
-      reversed: nk_bool): nk_bool {.importc, nodecl, raises: [], tags: [], contractual.}
-    ## Nuklear C binding
-  let showTips: bool = widgetIsHovered()
-  var curr: nk_size = value.nk_size
-  result = nk_progress(ctx = ctx, cur = curr, max = maxValue.nk_size,
-      modifyable = modifyable.nk_bool, reversed = reversed.nk_bool) == nkTrue
-  value = curr
-  if showTips and tooltip.len > 0:
-    showTooltip2(text = tooltip)
 
 # ------
 # Colors
