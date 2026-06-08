@@ -23,7 +23,7 @@
 # OR TORT *(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-import std/[colors, hashes, macros, unicode]
+import std/[colors, hashes, macros, math, unicode]
 import contracts, nimalyzer
 import nk_button, nk_colors, nk_context, nk_draw, nk_input, nk_layout, nk_math,
     nk_panel, nk_style, nk_tooltip, nk_types, nk_utf, nk_utils, nk_widget
@@ -3228,3 +3228,32 @@ template tooltip*(x, y, width: float; content: untyped) =
   if createTooltip(width2 = width, x2 = x, y2 = y):
     content
     ctx.nk_tooltip_end
+
+# ------
+# Vertex
+# ------
+when defined(nkIncludeVertexBufferOutput):
+  proc nkDrawListInit(list: var DrawList) {.raises: [], tags: [], contractual.} =
+    ## Initialize the drawing list
+    for i in 0..list.circleVtx.high:
+      let a: float = (i.float / list.circleVtx.len.float) * 2.0 * PI
+      list.circleVtx[i].x = a.cos
+      list.circleVtx[i].y = a.sin
+
+# -------
+# Context
+# -------
+proc nkInit*(ctx: var Context; font: UserFont = UserFont()) {.raises: [], tags: [],
+    contractual.} =
+  ## Init the Nuklear library
+  ##
+  ## * ctx  - the Nuklear context to set
+  ## * font - the font used in the UI. If empty, use the default Nuklear font
+  ##
+  ## Returns the modified parameter ctx
+  defaultStyle()
+  ctx.seq = 1
+  if font.height > 0.0:
+    ctx.style.font = font
+  when defined(nkIncludeVertexBufferOutput):
+    nkDrawListInit(list = ctx.drawList)
