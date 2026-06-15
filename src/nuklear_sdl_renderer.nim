@@ -60,8 +60,14 @@ type
   SurfacePtr = ptr SDL_Surface
   TexturePtr = ptr SDL_Texture
   RWPtr = ptr SDL_RWops
+  SDL_MouseWheelEvent{.importc, nodecl.} = object
+    x, y: int32
+  SDL_MouseMotionEvent {.importc, nodecl.} = object
+    xrel, yrel, x, y: int32
   SDL_Event {.importc, nodecl.} = object
     `type`: cuint
+    wheel: SDL_MouseWheelEvent
+    motion: SDL_MouseMotionEvent
   SDL_WindowEvt {.importc: "SDL_WindowEvent", nodecl.} = object
     `type`: cuint
     event: cuint
@@ -219,7 +225,8 @@ proc SDL_GetKeyboardState(numkeys: ptr int = nil): ptr array[512,
 proc SDL_SetWindowFullscreen(window: WindowPtr; flags: cint): cint {.importc,
     nodecl, raises: [], tags: [], contractual.}
   ## Internal SDL Image binding
-proc SDL_WarpMouseInWindow(window: WindowPtr; x, y: cint) {.importc, nodecl, raises: [], tags: [], contractual.}
+proc SDL_WarpMouseInWindow(window: WindowPtr; x, y: cint) {.importc, nodecl,
+    raises: [], tags: [], contractual.}
   ## Internal SDL Image binding
 proc IMG_Init(flags: cint): cint {.importc, nodecl, raises: [], tags: [], contractual.}
   ## Internal SDL Image binding
@@ -461,6 +468,19 @@ proc nuklearInput*(): UserEvents {.raises: [], tags: [], contractual.} =
         nk_input_button(ctx = ctx, id = right, x = x, y = y, down = down)
       else:
         discard
+    of SDL_MOUSEWHEEL.cuint:
+      result = mouseWheelEvent
+      nk_input_scroll(ctx = ctx, val = nk_vec2(x: evt.wheel.x.cfloat,
+          y: evt.wheel.y.cfloat))
+    of SDL_MOUSEMOTION.cuint:
+      result = mouseMotionEvent
+      if ctx.input.mouse.grabbed > 0:
+        let
+          x: cint = ctx.input.mouse.prev.x.cint
+          y: cint = ctx.input.mouse.prev.y.cint
+        nk_input_motion(ctx = ctx, x = x + evt.motion.xrel, y = y + evt.motion.yrel)
+      else:
+        nk_input_motion(ctx = ctx, x = evt.motion.x, y = evt.motion.y)
     else:
       discard nk_sdl_handle_event(evt = evt)
       result = anyEvent
@@ -578,8 +598,8 @@ proc nuklearGetWindowSize*(): tuple[w: float; h: float] {.raises: [], tags: [],
   SDL_GetWindowSize(window = sdl.win, w = winWidth, h = winHeight)
   return (winWidth.float, winHeight.float)
 
-proc nuklearSetWindowFullScreen*(fullScreen: bool = true) {.raises: [], tags: [],
-    contractual.} =
+proc nuklearSetWindowFullScreen*(fullScreen: bool = true) {.raises: [], tags: [
+    ], contractual.} =
   ## Set or unset the full screen mode for the main window of the application
   ##
   ## * fullScreen - if true, set the main window in full screen mode, otherwise

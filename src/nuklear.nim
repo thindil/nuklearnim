@@ -904,16 +904,8 @@ proc getMousePos*(): Vec2 {.raises: [], tags: [], contractual.} =
   ## Get the current mouse cursor position
   ##
   ## Returns the current mouse cursor position
-  proc nk_get_input_mouse_pos_x(ctx): cint {.importc, nodecl, raises: [],
-      tags: [], contractual.}
-    ## A binding to Nuklear's function.
-  proc nk_get_input_mouse_pos_y(ctx): cint {.importc, nodecl, raises: [],
-      tags: [], contractual.}
-    ## A binding to Nuklear's function.
-  let
-    x: cint = nk_get_input_mouse_pos_x(ctx = ctx)
-    y: cint = nk_get_input_mouse_pos_y(ctx = ctx)
-  return Vec2(x: x.float, y: y.float)
+  return Vec2(x: ctx.input.mouse.pos.x.float, y: ctx.input.mouse.pos.y.float)
+
 # ----
 # Text
 # ----
@@ -3057,11 +3049,7 @@ proc editIsActive*(): bool {.raises: [], tags: [], contractual.} =
   ## Check if an edit text is currently active widget
   ##
   ## Returns true when the edit text is active, otherwise false
-  proc nk_edit_is_active(ctx): cint {.importc, nodecl, raises: [], tags: [],
-      contractual.}
-    ## A binding to Nuklear's function. Internal use only
-
-  return nk_edit_is_active(ctx = ctx).bool
+  return ctx.current.edit.active.bool
 
 # -----------
 # Selectables

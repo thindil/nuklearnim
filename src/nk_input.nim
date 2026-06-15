@@ -49,6 +49,9 @@ proc nk_input_button*(ctx; id: Buttons; x, y: cint; down: nk_bool) {.importc,
 proc nk_input_scroll*(ctx; val: nk_vec2) {.importc, nodecl, raises: [],
     tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
+proc nk_input_motion*(ctx; x, y: cint) {.importc, nodecl, raises: [], tags: [],
+    contractual.}
+  ## A binding to Nuklear's function. Internal use only
 
 # ------------------
 # Low level bindings
@@ -117,7 +120,8 @@ proc getInputText*(): string {.raises: [], tags: [], contractual.} =
   ## Get the text inserted by the user
   ##
   ## Returns string with the text inserted by the user
-  proc nk_get_input_text(ctx): cstring {.importc, nodecl, raises: [], tags: [], contractual.}
+  proc nk_get_input_text(ctx): cchar {.importc, nodecl, raises: [], tags: [],
+      contractual.}
     ## A binding to Nuklear's function.
   return $nk_get_input_text(ctx = ctx)
 
@@ -125,7 +129,8 @@ proc getInputTextLen*(): Natural {.raises: [], tags: [], contractual.} =
   ## Get the length of the text inserted by the user
   ##
   ## Returns the length of the text inserted by the user
-  proc nk_get_input_text_len(ctx): cint {.importc, nodecl, raises: [], tags: [], contractual.}
+  proc nk_get_input_text_len(ctx): cint {.importc, nodecl, raises: [],
+      tags: [], contractual.}
     ## A binding to Nuklear's function.
   return nk_get_input_text_len(ctx = ctx).Natural
 
