@@ -46,8 +46,8 @@ include nuklear
 type
   SDL_EventType = enum
     SDL_FIRSTEVENT = 0, SDL_QUIT = 0x100, SDL_WINDOWEVENT = 0x200,
-        SDL_KEYDOWN = 0x300, SDL_KEYUP, SDL_MOUSEMOTION = 0x400,
-        SDL_MOUSEBUTTONDOWN, SDL_MOUSEBUTTONUP, SDL_MOUSEWHEEL
+      SDL_KEYDOWN = 0x300, SDL_KEYUP, SDL_TEXTEDITING, SDL_TEXTINPUT,
+      SDL_MOUSEMOTION = 0x400, SDL_MOUSEBUTTONDOWN, SDL_MOUSEBUTTONUP, SDL_MOUSEWHEEL
   SDL_WindowEventId = enum
     SDL_WINDOWEVENT_SIZE_CHANGED = 6
   SDL_Window {.importc, nodecl.} = object
@@ -64,10 +64,13 @@ type
     x, y: int32
   SDL_MouseMotionEvent {.importc, nodecl.} = object
     xrel, yrel, x, y: int32
+  SDL_TextInputEvent {.importc, nodecl.} = object
+    text: array[32, char]
   SDL_Event {.importc, nodecl.} = object
     `type`: cuint
     wheel: SDL_MouseWheelEvent
     motion: SDL_MouseMotionEvent
+    text: SDL_TextInputEvent
   SDL_WindowEvt {.importc: "SDL_WindowEvent", nodecl.} = object
     `type`: cuint
     event: cuint
@@ -85,6 +88,10 @@ type
     SDL_SCANCODE_RCTRL = 228
   SDL_Mouse_Buttons = enum
     SDL_BUTTON_LEFT = 1, SDL_BUTTON_MIDDLE, SDL_BUTTON_RIGHT
+  SDL_Pixel_Format = enum
+    SDL_PIXELFORMAT_ARGB8888 = 0x16362004u
+  SDL_Texture_Access = enum
+    SDL_TEXTUREACCESS_STATIC, SDL_TEXTUREACCESS_STREAMING, SDL_TEXTUREACCESS_TARGET
 
 const SDLK_SCANCODE_MASK: cint = 1 shl 30
 proc SDL_ScancodeToKeycode(code: SDL_Scancode): uint {.raises: [], tags: [],
@@ -205,6 +212,10 @@ proc SDL_SetWindowIcon(window: WindowPtr; icon: SurfacePtr) {.importc, nodecl,
 proc SDL_CreateTextureFromSurface(renderer: RendererPtr;
     surface: SurfacePtr): TexturePtr {.importc, nodecl, raises: [], tags: [], contractual.}
   ## Internal SDL binding
+proc SDL_CreateTexture(renderer: RendererPtr; format: SDL_Pixel_Format;
+    access: SDL_Texture_Access; w, h: cint): TexturePtr {.importc, nodecl,
+    raises: [], tags: [], contractual.}
+  ## Internal SDL binding
 proc SDL_FreeSurface(surface: SurfacePtr) {.importc, nodecl, raises: [], tags: [], contractual.}
   ## Internal SDL binding
 proc SDL_RWFromFile(file, mode: cstring): RWPtr {.importc, nodecl, raises: [],
@@ -221,13 +232,16 @@ proc SDL_SetWindowResizable(window: WindowPtr; resizable: cint) {.importc,
   ## Internal SDL binding
 proc SDL_GetKeyboardState(numkeys: ptr int = nil): ptr array[512,
     uint8] {.importc, nodecl, raises: [], tags: [], contractual.}
-  ## Internal SDL Image binding
+  ## Internal SDL binding
 proc SDL_SetWindowFullscreen(window: WindowPtr; flags: cint): cint {.importc,
     nodecl, raises: [], tags: [], contractual.}
-  ## Internal SDL Image binding
+  ## Internal SDL binding
 proc SDL_WarpMouseInWindow(window: WindowPtr; x, y: cint) {.importc, nodecl,
     raises: [], tags: [], contractual.}
-  ## Internal SDL Image binding
+  ## Internal SDL binding
+proc SDL_SetRelativeMouseMode(enabled: cint): cint {.importc, nodecl, raises: [
+    ], tags: [], contractual.}
+  ## Internal SDL binding
 proc IMG_Init(flags: cint): cint {.importc, nodecl, raises: [], tags: [], contractual.}
   ## Internal SDL Image binding
 proc IMG_Load(file: cstring): SurfacePtr {.importc, nodecl, raises: [], tags: [], contractual.}
@@ -248,9 +262,6 @@ proc nk_sdl_font_stash_begin(atlas: ptr ptr nk_font_atlas) {.importc, nodecl,
   ## Internal Nuklear binding
 proc nk_sdl_font_stash_end() {.importc, nodecl, raises: [], tags: [], contractual.}
   ## Internal Nuklear binding
-proc nk_sdl_handle_event(evt: var SDL_Event): cint {.importc, nodecl, raises: [
-    ], tags: [], contractual.}
-  ## Internal Nuklear binding
 proc nk_sdl_render(aa: AntiAliasing) {.importc, nodecl, raises: [], tags: [], contractual.}
   ## Internal Nuklear binding
 proc nk_sdl_shutdown() {.importc, nodecl, raises: [], tags: [], contractual.}
@@ -263,10 +274,17 @@ type
     ## Used to store data about an application's font
     path*: string
     size*: Positive = 14
+  NkSdlDevice = object
+    ## Used to store data about SDL device
+    fontTexture: TexturePtr
+    cmds: nk_buffer
+    texNull: nk_draw_null_texture
   NkSdl = object
     ## Used to store data about SDL backend
     win: WindowPtr
     renderer: RendererPtr
+    atlas: AtlasPtr
+    dev: NkSdlDevice
 
 var
   fontScale: cfloat = 0.0 ## The scale used to resize a font
@@ -323,6 +341,19 @@ proc nuklearInput*(): UserEvents {.raises: [], tags: [], contractual.} =
   nk_input_begin(ctx = ctx)
   result = noEvent
   while SDL_PollEvent(event = evt) != 0:
+
+    # optional grabbing behavior
+    if ctx.input.mouse.grab > 0:
+      discard SDL_SetRelativeMouseMode(enabled = 1)
+      ctx.input.mouse.grab = 0
+    elif ctx.input.mouse.ungrab > 0:
+      let
+        x: cint = ctx.input.mouse.prev.x.cint
+        y: cint = ctx.input.mouse.prev.y.cint
+      discard SDL_SetRelativeMouseMode(enabled = 0)
+      SDL_WarpMouseInWindow(window = sdl.win, x = x, y = y)
+      ctx.input.mouse.ungrab = 0
+
     case evt.`type`
     of SDL_QUIT.ord:
       return quitEvent
@@ -478,11 +509,17 @@ proc nuklearInput*(): UserEvents {.raises: [], tags: [], contractual.} =
         let
           x: cint = ctx.input.mouse.prev.x.cint
           y: cint = ctx.input.mouse.prev.y.cint
-        nk_input_motion(ctx = ctx, x = x + evt.motion.xrel, y = y + evt.motion.yrel)
+        nk_input_motion(ctx = ctx, x = x + evt.motion.xrel, y = y +
+            evt.motion.yrel)
       else:
         nk_input_motion(ctx = ctx, x = evt.motion.x, y = evt.motion.y)
+    of SDL_TEXTINPUT.cuint:
+      result = textInputEvent
+      var glyph: nk_glyph = ['\0', '\0', '\0', '\0']
+      for i in 0..3:
+        glyph[i] = evt.text.text[i]
+      nk_input_glyph(ctx = ctx, glyph = glyph)
     else:
-      discard nk_sdl_handle_event(evt = evt)
       result = anyEvent
   nk_input_end(ctx = ctx)
 
@@ -496,6 +533,9 @@ proc nuklearDraw*() {.raises: [], tags: [], contractual.} =
 
 proc nuklearClose*() {.raises: [], tags: [], contractual.} =
   ## Release all resources related to Xlib and Nuklear
+  if sdl.atlas != nil:
+    nk_font_atlas_clear(atlas = sdl.atlas)
+  nk_free(ctx = ctx)
   nk_sdl_shutdown()
   SDL_DestroyRenderer(renderer = sdl.renderer)
   SDL_DestroyWindow(window = sdl.win)
@@ -532,14 +572,14 @@ proc nuklearLoadFont*(font: FontData; glyphsRanges: openArray[nk_rune] = [
   ##                  be terminated with zero.
   ##
   ## Returns the pointer for the font
-  var
-    atlas: ptr nk_font_atlas = nil
-    config: nk_font_config = new_nk_font_config(pixelHeight = 0)
+  var config: nk_font_config = new_nk_font_config(pixelHeight = 0)
   if glyphsRanges.len > 0:
     config.`range` = glyphsRanges.addr
-  nk_sdl_font_stash_begin(atlas = atlas.unsafeAddr)
+  nk_sdl_font_stash_begin(atlas = sdl.atlas.unsafeAddr)
+  #nk_font_atlas_init_default(atlas = sdl.atlas)
+  #nk_font_atlas_begin(atlas = sdl.atlas)
   {.ruleOff: "namedParams".}
-  result = nk_font_atlas_add_from_file(atlas = atlas,
+  result = nk_font_atlas_add_from_file(atlas = sdl.atlas,
       filePath = font.path.cstring, height = font.size.cfloat * fontScale, config.addr)
   {.ruleOn: "namedParams".}
   nk_sdl_font_stash_end()
@@ -552,13 +592,13 @@ proc nuklearSetDefaultFont*(defaultFont: ptr nk_font = nil;
   ##                 font. If nil, the default Nuklear font will be used.
   ## * fontSize    - the size of the font used in the UI. Default values is 14.
   var
-    atlas: ptr nk_font_atlas = nil
+    atlas: AtlasPtr = nil
     config: nk_font_config = new_nk_font_config(pixelHeight = 0)
     font: ptr nk_font = nil
-  nk_sdl_font_stash_begin(atlas = atlas.unsafeAddr)
+  nk_sdl_font_stash_begin(atlas = atlas.addr)
   if defaultFont == nil:
     font = nk_font_atlas_add_default(atlas = atlas, height = fontSize.cfloat *
-        fontScale, config = config.unsafeAddr)
+        fontScale, config = config.addr)
   else:
     font = defaultFont
   nk_sdl_font_stash_end()

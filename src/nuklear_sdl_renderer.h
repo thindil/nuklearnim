@@ -265,42 +265,10 @@ nk_sdl_font_stash_end(void)
         nk_style_set_font(&sdl.ctx, &sdl.atlas.default_font->handle);
 }
 
-NK_API int
-nk_sdl_handle_event(SDL_Event *evt)
-{
-    struct nk_context *ctx = &sdl.ctx;
-
-    /* optional grabbing behavior */
-    if (ctx->input.mouse.grab) {
-        SDL_SetRelativeMouseMode(SDL_TRUE);
-        ctx->input.mouse.grab = 0;
-    } else if (ctx->input.mouse.ungrab) {
-        int x = (int)ctx->input.mouse.prev.x, y = (int)ctx->input.mouse.prev.y;
-        SDL_SetRelativeMouseMode(SDL_FALSE);
-        SDL_WarpMouseInWindow(sdl.win, x, y);
-        ctx->input.mouse.ungrab = 0;
-    }
-
-    switch(evt->type)
-    {
-
-        case SDL_TEXTINPUT:
-            {
-                nk_glyph glyph;
-                memcpy(glyph, evt->text.text, NK_UTF_SIZE);
-                nk_input_glyph(ctx, glyph);
-            }
-            return 1;
-    }
-    return 0;
-}
-
 NK_API
 void nk_sdl_shutdown(void)
 {
     struct nk_sdl_device *dev = &sdl.ogl;
-    nk_font_atlas_clear(&sdl.atlas);
-    nk_free(&sdl.ctx);
     SDL_DestroyTexture(dev->font_tex);
     /* glDeleteTextures(1, &dev->font_tex); */
     nk_buffer_free(&dev->cmds);

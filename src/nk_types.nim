@@ -314,7 +314,7 @@ type
   UserEvents* = enum
     ## The UI events caused by the user
     noEvent, quitEvent, sizeChangedEvent, keyEvent, mouseButtonEvent,
-      mouseWheelEvent, mouseMotionEvent, anyEvent
+      mouseWheelEvent, mouseMotionEvent, textInputEvent, anyEvent
   ShowStates* = enum
     ## When to change the state of a window
     hidden, shown
@@ -1085,6 +1085,8 @@ type
     background*, text*: nk_color
   CursorsArray* = array[cursorCount, nk_cursor]
     ## The array of mouse buttons
+  nk_glyph* = array[nkUtfSize, char]
+    ## Internal Nuklear type
 
 {.push ruleOff: "namedParams".}
 template `+`*[T](p: ptr T; off: nk_size): ptr T =
