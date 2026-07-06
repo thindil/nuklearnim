@@ -55,10 +55,12 @@ type
   SDL_Surface {.importc, nodecl.} = object
   SDL_Texture {.importc, nodecl.} = object
   SDL_RWops {.importc, nodecl.} = object
+  SDL_Rect {.importc, nodecl.} = object
   WindowPtr = ptr SDL_Window
   RendererPtr = ptr SDL_Renderer
   SurfacePtr = ptr SDL_Surface
   TexturePtr = ptr SDL_Texture
+  RectPtr = ptr SDL_Rect
   RWPtr = ptr SDL_RWops
   SDL_MouseWheelEvent{.importc, nodecl.} = object
     x, y: int32
@@ -92,6 +94,9 @@ type
     SDL_PIXELFORMAT_ARGB8888 = 0x16362004u
   SDL_Texture_Access = enum
     SDL_TEXTUREACCESS_STATIC, SDL_TEXTUREACCESS_STREAMING, SDL_TEXTUREACCESS_TARGET
+  SDL_BlendMode = enum
+    SDL_BLENDMODE_NONE = 0,
+    SDL_BLENDMODE_BLEND = 1
 
 const SDLK_SCANCODE_MASK: cint = 1 shl 30
 proc SDL_ScancodeToKeycode(code: SDL_Scancode): uint {.raises: [], tags: [],
@@ -181,9 +186,6 @@ proc SDL_CreateRenderer(window: WindowPtr; index,
 proc SDL_GetRendererOutputSize(renderer: RendererPtr; w, h: var cint) {.importc,
     nodecl, raises: [], tags: [], contractual.}
   ## Internal SDL binding
-proc SDL_GetWindowSize(window: WindowPtr; w, h: var cint) {.importc, nodecl,
-    raises: [], tags: [], contractual.}
-  ## Internal SDL binding
 proc SDL_RenderSetScale(renderer: RendererPtr; scaleX,
     scaleY: cfloat) {.importc, nodecl, raises: [], tags: [], contractual.}
   ## Internal SDL binding
@@ -214,7 +216,17 @@ proc SDL_CreateTextureFromSurface(renderer: RendererPtr;
   ## Internal SDL binding
 proc SDL_CreateTexture(renderer: RendererPtr; format: SDL_Pixel_Format;
     access: SDL_Texture_Access; w, h: cint): TexturePtr {.importc, nodecl,
-    raises: [], tags: [], contractual.}
+    raises: [], tags: [], contractual, used.}
+  ## Internal SDL binding
+proc SDL_UpdateTexture(texture: TexturePtr; rect: RectPtr; pixels: pointer;
+    pitch: cint): cint {.importc, nodecl, raises: [], tags: [], contractual, used.}
+  ## Internal SDL binding
+proc SDL_SetTextureBlendMode(texture: TexturePtr;
+    blendMode: SDL_BlendMode) {.importc, nodecl, raises: [], tags: [],
+    contractual, used.}
+  ## Internal SDL binding
+proc SDL_DestroyTexture(texture: TexturePtr) {.importc, nodecl, raises: [],
+    tags: [], contractual.}
   ## Internal SDL binding
 proc SDL_FreeSurface(surface: SurfacePtr) {.importc, nodecl, raises: [], tags: [], contractual.}
   ## Internal SDL binding
@@ -222,6 +234,9 @@ proc SDL_RWFromFile(file, mode: cstring): RWPtr {.importc, nodecl, raises: [],
     tags: [], contractual.}
   ## Internal SDL binding
 proc SDL_SetWindowSize(window: WindowPtr; w, h: cint) {.importc, nodecl,
+    raises: [], tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_GetWindowSize(window: WindowPtr; w, h: var cint) {.importc, nodecl,
     raises: [], tags: [], contractual.}
   ## Internal SDL binding
 proc SDL_SetWindowPosition(window: WindowPtr; x, y: cint) {.importc, nodecl,
@@ -241,6 +256,9 @@ proc SDL_WarpMouseInWindow(window: WindowPtr; x, y: cint) {.importc, nodecl,
   ## Internal SDL binding
 proc SDL_SetRelativeMouseMode(enabled: cint): cint {.importc, nodecl, raises: [
     ], tags: [], contractual.}
+  ## Internal SDL binding
+proc SDL_GetClipboardText(): pointer {.importc, nodecl, raises: [], tags: [],
+    contractual, used.}
   ## Internal SDL binding
 proc IMG_Init(flags: cint): cint {.importc, nodecl, raises: [], tags: [], contractual.}
   ## Internal SDL Image binding
@@ -263,8 +281,6 @@ proc nk_sdl_font_stash_begin(atlas: ptr ptr nk_font_atlas) {.importc, nodecl,
 proc nk_sdl_font_stash_end() {.importc, nodecl, raises: [], tags: [], contractual.}
   ## Internal Nuklear binding
 proc nk_sdl_render(aa: AntiAliasing) {.importc, nodecl, raises: [], tags: [], contractual.}
-  ## Internal Nuklear binding
-proc nk_sdl_shutdown() {.importc, nodecl, raises: [], tags: [], contractual.}
   ## Internal Nuklear binding
 
 # High level bindings
@@ -289,6 +305,17 @@ type
 var
   fontScale: cfloat = 0.0 ## The scale used to resize a font
   sdl: NkSdl = NkSdl()    ## The SDL backend settings
+
+proc nkSdlClipboardPaste(usr: nk_handle; edit: nk_text_edit) {.raises: [],
+    tags: [], contractual, used.} =
+  ## Handles pasting a text from a system clipboard to an edit field
+  ##
+  ## * usr  - an additional data. Unused
+  ## * edit - the edit field to which the clipboard text will be pasted
+  let text: pointer = SDL_GetClipboardText()
+  if text != nil:
+    let textLen: cint = cast[cstring](text).len.cint
+    discard nk_textedit_paste(state = edit, ctext = text, len = textLen)
 
 proc nuklearInit*(windowWidth, windowHeight: int; name: string = "";
     iconPath: string = ""): PContext {.discardable, raises: [], tags: [],
@@ -536,7 +563,7 @@ proc nuklearClose*() {.raises: [], tags: [], contractual.} =
   if sdl.atlas != nil:
     nk_font_atlas_clear(atlas = sdl.atlas)
   nk_free(ctx = ctx)
-  nk_sdl_shutdown()
+  SDL_DestroyTexture(texture = sdl.dev.fontTexture)
   SDL_DestroyRenderer(renderer = sdl.renderer)
   SDL_DestroyWindow(window = sdl.win)
   IMG_Quit()
@@ -576,13 +603,29 @@ proc nuklearLoadFont*(font: FontData; glyphsRanges: openArray[nk_rune] = [
   if glyphsRanges.len > 0:
     config.`range` = glyphsRanges.addr
   nk_sdl_font_stash_begin(atlas = sdl.atlas.unsafeAddr)
-  #nk_font_atlas_init_default(atlas = sdl.atlas)
-  #nk_font_atlas_begin(atlas = sdl.atlas)
+#  var atlas: nk_font_atlas = nk_font_atlas()
+#  sdl.atlas = atlas.addr
+#  nk_font_atlas_init_default(atlas = sdl.atlas)
+#  nk_font_atlas_begin(atlas = sdl.atlas)
   {.ruleOff: "namedParams".}
   result = nk_font_atlas_add_from_file(atlas = sdl.atlas,
       filePath = font.path.cstring, height = font.size.cfloat * fontScale, config.addr)
   {.ruleOn: "namedParams".}
   nk_sdl_font_stash_end()
+#  var w, h: cint = 0
+#  var image: pointer = nk_font_atlas_bake(atlas = sdl.atlas, width = w,
+#      height = h, fmt = atlasRGBA32)
+#  let sdlFontTexture: TexturePtr = SDL_CreateTexture(renderer = sdl.renderer,
+#      format = SDL_PIXELFORMAT_ARGB8888, access = SDL_TEXTUREACCESS_STATIC,
+#      w = w, h = h)
+#  if sdlFontTexture == nil:
+#    SDL_Log(fmt = "error creating texture")
+#    return
+#  discard SDL_UpdateTexture(texture = sdlFontTexture, rect = nil,
+#      pixels = image, pitch = 4 * w)
+#  SDL_SetTextureBlendMode(texture = sdlFontTexture,
+#      blendMode = SDL_BLENDMODE_BLEND)
+#  sdl.dev.fontTexture = sdlFontTexture
 
 proc nuklearSetDefaultFont*(defaultFont: ptr nk_font = nil;
     fontSize: int = 14) {.raises: [], tags: [], contractual.} =
