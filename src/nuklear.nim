@@ -53,6 +53,9 @@ proc nk_widget_disable_begin(ctx) {.importc, cdecl, raises: [], tags: [], contra
   ## A binding to Nuklear's function. Internal use only
 proc nk_widget_disable_end(ctx) {.importc, cdecl, raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
+proc nk_init_default(ctx; font: ptr nk_user_font): nk_bool {.importc, nodecl,
+    raises: [], tags: [], contractual, discardable, used.}
+  ## A binding to Nuklear's function. Internal use only
 
 # -------
 # Windows
@@ -67,7 +70,7 @@ proc nk_window_find(ctx; name: cstring): ptr nk_window {.importc, nodecl,
 proc nk_labelf(ctx; flags: nk_flags; fmt: cstring) {.importc,
     varargs, cdecl, raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
-proc nk_textedit_paste(state: nk_text_edit; ctext: pointer;
+proc nk_textedit_paste(state: ptr nk_text_edit; ctext: pointer;
     len: cint): nk_bool {.importc, nodecl, raises: [], tags: [], contractual, used.}
   ## A binding to Nuklear's function. Internal use only
 

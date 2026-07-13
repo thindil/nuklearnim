@@ -169,13 +169,6 @@ const
   SDL_WINDOW_FULLSCREEN: cint = 0x00000001
   windowCentered*: cint = SDL_WINDOWPOS_CENTERED ## The centered position of a window
 
-proc SDL_SetHint(name, value: cstring) {.importc, nodecl, raises: [], tags: [], contractual.}
-  ## Internal SDL binding
-proc SDL_Init(flags: cint): cint {.importc, nodecl, raises: [], tags: [], contractual.}
-  ## Internal SDL binding
-proc SDL_CreateWindow(title: cstring; x, y, w, h: cint;
-    flags: cuint): WindowPtr {.importc, nodecl, raises: [], tags: [], contractual.}
-  ## Internal SDL binding
 proc SDL_Log(fmt: cstring) {.importc, varargs, nodecl, raises: [], tags: [], contractual.}
   ## Internal SDL binding
 proc SDL_GetError(): cstring {.importc, nodecl, raises: [], tags: [], contractual.}
@@ -257,11 +250,6 @@ proc SDL_WarpMouseInWindow(window: WindowPtr; x, y: cint) {.importc, nodecl,
 proc SDL_SetRelativeMouseMode(enabled: cint): cint {.importc, nodecl, raises: [
     ], tags: [], contractual.}
   ## Internal SDL binding
-proc SDL_GetClipboardText(): pointer {.importc, nodecl, raises: [], tags: [],
-    contractual, used.}
-  ## Internal SDL binding
-proc IMG_Init(flags: cint): cint {.importc, nodecl, raises: [], tags: [], contractual.}
-  ## Internal SDL Image binding
 proc IMG_Load(file: cstring): SurfacePtr {.importc, nodecl, raises: [], tags: [], contractual.}
   ## Internal SDL Image binding
 proc IMG_LoadSizedSVG_RW(src: RWPtr; width, height: cint): SurfacePtr {.importc,
@@ -306,16 +294,38 @@ var
   fontScale: cfloat = 0.0 ## The scale used to resize a font
   sdl: NkSdl = NkSdl()    ## The SDL backend settings
 
-proc nkSdlClipboardPaste(usr: nk_handle; edit: nk_text_edit) {.raises: [],
-    tags: [], contractual, used.} =
+proc nkSdlClipboardPaste(usr: nk_handle; edit: ptr nk_text_edit) {.raises: [],
+    tags: [], contractual, cdecl.} =
   ## Handles pasting a text from a system clipboard to an edit field
   ##
   ## * usr  - an additional data. Unused
   ## * edit - the edit field to which the clipboard text will be pasted
+  proc SDL_GetClipboardText(): pointer {.importc, nodecl, raises: [], tags: [],
+      contractual.}
+    ## Internal SDL binding
   let text: pointer = SDL_GetClipboardText()
   if text != nil:
     let textLen: cint = cast[cstring](text).len.cint
     discard nk_textedit_paste(state = edit, ctext = text, len = textLen)
+    discard usr
+
+proc nkSdlClipboardCopy(usr: nk_handle; text: cstring; len: cint) {.raises: [],
+    tags: [], contractual, cdecl.} =
+  ## Handles copying a text to a system's clipboard
+  ##
+  ## * usr  - an aditional data. Unused
+  ## * text - the text which will be copied to clipboard
+  ## * len  - the length of the text which will be copied to clipboard
+  proc SDL_SetClipboardText(text: cstring): int {.importc, nodecl, raises: [],
+      tags: [], contractual.}
+    ## Internal SDL binding
+  if len == 0:
+    return
+  discard usr
+  var newText: string = ""
+  for i in 0..len:
+    newText &= text[i]
+  discard SDL_SetClipboardText(text = newText.cstring)
 
 proc nuklearInit*(windowWidth, windowHeight: int; name: string = "";
     iconPath: string = ""): PContext {.discardable, raises: [], tags: [],
@@ -327,6 +337,19 @@ proc nuklearInit*(windowWidth, windowHeight: int; name: string = "";
   ## * windowHeight - the default main window height
   ## * name         - the title of the main window
   ## * iconPath     - the full path to the window's icon. Default value is empty.
+  proc SDL_SetHint(name, value: cstring) {.importc, nodecl, raises: [],
+      tags: [], contractual.}
+    ## Internal SDL binding
+  proc SDL_Init(flags: cint): cint {.importc, nodecl, raises: [], tags: [],
+      contractual.}
+    ## Internal SDL binding
+  proc IMG_Init(flags: cint): cint {.importc, nodecl, raises: [], tags: [],
+      contractual.}
+    ## Internal SDL Image binding
+  proc SDL_CreateWindow(title: cstring; x, y, w, h: cint;
+      flags: cuint): WindowPtr {.importc, nodecl, raises: [], tags: [],
+      contractual.}
+    ## Internal SDL binding
   SDL_SetHint(name = "SDL_HINT_VIDEO_HIGHDPI_DISABLED", value = "0")
   discard SDL_Init(flags = SDL_INIT_VIDEO)
   discard IMG_Init(flags = IMG_INIT_PNG)
@@ -357,6 +380,10 @@ proc nuklearInit*(windowWidth, windowHeight: int; name: string = "";
   fontScale = scaleY
   setContext(newContext = nk_sdl_init(win = sdl.win, renderer = sdl.renderer))
   #nkInit(ctx = context)
+  ctx.clip.copy = nkSdlClipboardCopy
+  ctx.clip.paste = nkSdlClipboardPaste
+  ctx.clip.userdata = nk_handle()
+  nk_init_default(ctx = ctx, font = nil)
   return getContext()
 
 proc nuklearInput*(): UserEvents {.raises: [], tags: [], contractual.} =
