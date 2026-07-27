@@ -44,6 +44,13 @@ type
     ## Internal Nuklear type
   nk_uint* = cuint
     ## Internal Nuklear type
+when defined(nkUintDrawIndex):
+  type nk_draw_type* = nk_uint
+    ## Internal Nuklear type
+else:
+  type nk_draw_type* = nk_ushort
+    ## Internal Nuklear type
+
 
 # ------------
 # Enumerations
@@ -324,6 +331,13 @@ type
   PageDataType* = enum
     ## Types of page data
     tableType, panelType, windowType
+  ConvertResult* = enum
+    ## The result of conversion of backend data to Nuklear
+    convertSuccess = 0,
+    convertInvalidParam = 1,
+    convertCommandBufferFull = 1 shl 1,
+    convertVertexBufferFull = 1 shl 2,
+    convertElementBufferFull = 1 shl 3
 
 # ---------
 # Constants
@@ -996,7 +1010,7 @@ type
     line_AA*, shape_AA*: AntiAliasing
     circle_segment_count*, arc_segment_count*, curve_segment_count*: cuint
     tex_null*: nk_draw_null_texture
-    vertex_layout*: nk_draw_vertex_layout_element
+    vertex_layout*: pointer
     vertex_size*, vertex_alignment*: nk_size
   nk_draw_list* {.importc: "struct nk_draw_list", completeStruct.} = object
     ## Internal Nuklear type
@@ -1674,7 +1688,7 @@ type
     lineAA*, shapeAA*: AntiAliasing
     circleSegmentCount*, arcSegmentCount*, curveSegmentCount*: uint
     texNull*: DrawNullTexture
-    vertexLayout*: DrawVertexLayoutElement
+    vertexLayout*: seq[DrawVertexLayoutElement]
     vertexSize*, vertexAlignment*: int
   DrawList* = object
     ## Used to store data for drawing

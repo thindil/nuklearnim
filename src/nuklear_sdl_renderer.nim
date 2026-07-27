@@ -291,8 +291,9 @@ type
     dev: NkSdlDevice
 
 var
-  fontScale: cfloat = 0.0 ## The scale used to resize a font
-  sdl: NkSdl = NkSdl()    ## The SDL backend settings
+  fontScale: cfloat = 0.0   ## The scale used to resize a font
+  sdl: NkSdl = NkSdl()      ## The SDL backend settings
+  cmds: ptr nk_buffer = nil ## The Nuklear commands for drawing
 
 proc nkSdlClipboardPaste(usr: nk_handle; edit: ptr nk_text_edit) {.raises: [],
     tags: [], contractual, cdecl.} =
@@ -384,6 +385,9 @@ proc nuklearInit*(windowWidth, windowHeight: int; name: string = "";
   ctx.clip.paste = nkSdlClipboardPaste
   ctx.clip.userdata = nk_handle()
   nk_init_default(ctx = ctx, font = nil)
+  var tmpCmds: nk_buffer = nk_buffer()
+  cmds = tmpCmds.addr
+  nk_buffer_init_default(buffer = cmds)
   return getContext()
 
 proc nuklearInput*(): UserEvents {.raises: [], tags: [], contractual.} =
@@ -583,6 +587,35 @@ proc nuklearDraw*() {.raises: [], tags: [], contractual.} =
       255).uint8, g = (0.18 * 255).uint8, b = (0.24 * 255).uint8, a = 255)
   discard SDL_RenderClear(renderer = sdl.renderer)
   nk_sdl_render(aa = antiAliasingOn)
+
+#  const vertexLayout: array[4, nk_draw_vertex_layout_element] = [
+#    nk_draw_vertex_layout_element(attribute: vertexPosition),
+#    nk_draw_vertex_layout_element(attribute: vertexTextCoord),
+#    nk_draw_vertex_layout_element(attribute: vertexColor),
+#    nk_draw_vertex_layout_element(attribute: vertexAttributeCount)]
+#  type nk_sdl_vertex {.importc: "struct nk_sdl_vertex".} = object
+#  var config: nk_convert_config = nk_convert_config()
+#  config.vertex_layout = vertexLayout.addr
+#  config.vertex_size = nk_sdl_vertex.sizeof
+#  config.vertex_alignment = nk_sdl_vertex.alignof
+#  config.tex_null = sdl.dev.texNull
+#  config.circle_segment_count = 22
+#  config.curve_segment_count = 22
+#  config.arc_segment_count = 22
+#  config.global_alpha = 1.0
+#  config.shape_AA = antiAliasingOn
+#  config.line_AA = antiAliasingOn
+#
+#  # convert shapes into vertexes
+#  var vbuf, ebuf: nk_buffer = nk_buffer()
+#  nk_buffer_init_default(buffer = vbuf.addr)
+#  nk_buffer_init_default(buffer = ebuf.addr)
+#  discard nk_convert(ctx = ctx, cmds = cmds, vertices = vbuf.addr,
+#      elements = ebuf.addr, config = config.addr)
+#
+#  # iterate over and execute each draw command
+#  let offset: ptr nk_draw_index = cast[ptr nk_draw_index](nk_buffer_memory_const(buffer = ebuf))
+
   SDL_RenderPresent(renderer = sdl.renderer)
 
 proc nuklearClose*() {.raises: [], tags: [], contractual.} =

@@ -196,6 +196,12 @@ proc nk_group_begin(ctx; ctitle: cstring;
   ## A binding to Nuklear's function. Internal use only
 proc nk_group_end(ctx) {.importc, cdecl, raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
+proc nk_group_scrolled_offset_begin(ctx; x_offset, y_offset: nk_uint;
+    ctitle: cstring; cflags: nk_flags): nk_bool {.importc, cdecl, raises: [],
+    tags: [], contractual.}
+  ## A binding to Nuklear's function. Internal use only
+proc nk_group_scrolled_end(ctx) {.importc, cdecl, raises: [], tags: [], contractual.}
+  ## A binding to Nuklear's function. Internal use only
 
 # ------
 # Images
@@ -203,6 +209,21 @@ proc nk_group_end(ctx) {.importc, cdecl, raises: [], tags: [], contractual.}
 proc nk_image_ptr(iPtr: pointer): nk_image {.importc, nodecl, raises: [],
     tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
+
+# ------
+# Buffer
+# ------
+proc nk_buffer_init_default(buffer: ptr nk_buffer) {.importc, nodecl, raises: [
+    ], tags: [], contractual, used.}
+  ## A binding to Nuklear's function. Internal use only
+proc nk_convert(ctx; cmds, vertices, elements: ptr nk_buffer;
+    config: ptr nk_convert_config): nk_flags {.importc, nodecl, raises: [],
+    tags: [], contractual, used.}
+  ## A binding to Nuklear's function. Internal use only
+proc nk_buffer_memory_const(buffer: ptr nk_buffer): pointer {.importc, nodecl,
+    raises: [], tags: [], contractual, used.}
+  ## A binding to Nuklear's function. Internal use only
+
 
 # ------------------------------------------------------------------
 # High level bindings. The new version of the binding
@@ -2991,6 +3012,38 @@ template group*(title, tooltip: string; flags: set[PanelFlags];
     nk_group_end(ctx = ctx)
   if showTips:
     showTooltip2(text = tooltip)
+
+template groupScrolled*(x, y: Natural; title, tooltip: string;
+    flags: set[PanelFlags]; content: untyped) =
+  ## Set a group of widgets inside the parent
+  ##
+  ## * x       - the starting x offset of the scrollbar
+  ## * y       - the starting y offset of the
+  ## * title   - the title of the group
+  ## * tooltip - the tooltip to show on the group.
+  ## * flags   - the set of PanelFlags for the group
+  ## * content - the content of the group
+  let showTips: bool = widgetIsHovered()
+  if nk_group_scrolled_offset_begin(ctx = ctx, x_offset = x.nk_uint,
+      y_offset = y.nk_uint, ctitle = title.cstring, cflags = winSetToInt(
+      nimFlags = flags)):
+    content
+    nk_group_scrolled_end(ctx = ctx)
+  if showTips:
+    showTooltip2(text = tooltip)
+
+proc groupSetScrollbar*(title: string; xOffset, yOffset: Natural) {.raises: [],
+    tags: [], contractual.} =
+  ## Set the scrollbar position of the given group
+  ##
+  ## * title   - the title of the group
+  ## * xOffset - the x offset to scroll to
+  ## * yOffset - the y offset to scroll to
+  proc nk_group_set_scroll(ctx; id: cstring; x_offset,
+      y_offset: nk_uint) {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  nk_group_set_scroll(ctx = ctx, id = title.cstring, x_offset = xOffset.nk_uint,
+      y_offset = yOffset.nk_uint)
 
 # ---------
 # Edit text
