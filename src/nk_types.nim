@@ -45,10 +45,10 @@ type
   nk_uint* = cuint
     ## Internal Nuklear type
 when defined(nkUintDrawIndex):
-  type nk_draw_type* = nk_uint
+  type nk_draw_index* = nk_uint
     ## Internal Nuklear type
 else:
-  type nk_draw_type* = nk_ushort
+  type nk_draw_index* = nk_ushort
     ## Internal Nuklear type
 
 
@@ -338,6 +338,19 @@ type
     convertCommandBufferFull = 1 shl 1,
     convertVertexBufferFull = 1 shl 2,
     convertElementBufferFull = 1 shl 3
+  WidgetAlign* = enum
+    ## The basic alignment for widgets
+    widgetAlignLeft = 0x01,
+    widgetAlignCentered = 0x02,
+    widgetAlignRight = 0x04,
+    widgetAlignTop = 0x08,
+    widgetAlignMiddle = 0x10,
+    widgetAlignBottom = 0x20
+  WidgetAlignment* = enum
+    ## The advanced alignment for widgets
+    widgetLeft = widgetAlignMiddle.int or widgetAlignLeft.int,
+    widgetCentered = widgetAlignMiddle.int or widgetAlignCentered.int,
+    widgetRight = widgetAlignMiddle.int or widgetAlignRight.int
 
 # ---------
 # Constants

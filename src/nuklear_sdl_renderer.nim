@@ -588,6 +588,12 @@ proc nuklearDraw*() {.raises: [], tags: [], contractual.} =
   discard SDL_RenderClear(renderer = sdl.renderer)
   nk_sdl_render(aa = antiAliasingOn)
 
+#  proc SDL_RenderIsClipEnabled(renderer: RendererPtr): cint {.importc, nodecl,
+#      raises: [], tags: [], contractual.}
+#    ## Internal SDL binding
+#  proc SDL_RenderGetClipRect(renderer: RendererPtr; rect: RectPtr) {.importc,
+#      nodecl, raises: [], tags: [], contractual.}
+#    ## Internal SDL binding
 #  const vertexLayout: array[4, nk_draw_vertex_layout_element] = [
 #    nk_draw_vertex_layout_element(attribute: vertexPosition),
 #    nk_draw_vertex_layout_element(attribute: vertexTextCoord),
@@ -614,7 +620,19 @@ proc nuklearDraw*() {.raises: [], tags: [], contractual.} =
 #      elements = ebuf.addr, config = config.addr)
 #
 #  # iterate over and execute each draw command
-#  let offset: ptr nk_draw_index = cast[ptr nk_draw_index](nk_buffer_memory_const(buffer = ebuf))
+#  let
+#    offset: ptr nk_draw_index = cast[ptr nk_draw_index](
+#      nk_buffer_memory_const(buffer = ebuf.addr))
+#    clippingEnabled: bool = SDL_RenderIsClipEnabled(
+#        renderer = sdl.renderer).bool
+#  var savedClip: SDL_Rect = SDL_Rect()
+#  SDL_RenderGetClipRect(renderer = sdl.renderer, rect = savedClip.addr)
+#  when defined(nkSDLClampClipRect):
+#    proc SDL_RenderGetViewport(renderer: RendererPtr; rect: RectPtr) {.importc,
+#        nodecl, raises: [], tags: [], contractual.}
+#    ## Internal SDL binding
+#    var viewport: SDL_Rect = SDL_Rect()
+#    SDL_RenderGetViewport(renderer = sdl.renderer, rect = viewport.addr)
 
   SDL_RenderPresent(renderer = sdl.renderer)
 
