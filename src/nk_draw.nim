@@ -26,8 +26,39 @@
 ## Provides code related to drawing on the screen
 
 import contracts
-import nk_buffer, nk_math, nk_types
+import nk_buffer, nk_context, nk_math, nk_types
 
+# ---------------------
+# Procedures parameters
+# ---------------------
+using ctx: PContext
+
+# ------------------
+# Low level bindings
+# ------------------
+proc nk_draw_begin*(ctx; buffer: ptr nk_buffer): ptr nk_draw_command {.importc: "nk__draw_begin",
+    nodecl, raises: [], tags: [], contractual.}
+  ## A binding to Nuklear's function. Internal use only
+proc nk_draw_next*(cmd: ptr nk_draw_command; buffer: ptr nk_buffer;
+    ctx): ptr nk_draw_command {.importc: "nk__draw_next", nodecl, raises: [],
+    tags: [], contractual.}
+  ## A binding to Nuklear's function. Internal use only
+template nkDrawForeach*(cmd: ptr nk_draw_command; ctx; b: ptr nk_buffer; code: untyped) =
+  ## Draw the UI with commands from the buffer
+  ##
+  ## * cmd  - the Nuklear drawing command
+  ## * ctx  - the Nuklear context
+  ## * b    - the buffer with Nuklear commands
+  ## * code - the code to exexute
+  cmd = nk_draw_begin(ctx = ctx, buffer = b)
+  while cmd != nil:
+    code
+    cmd = nk_draw_next(cmd = cmd, buffer = b, ctx = ctx)
+
+
+# -------------------
+# High level bindings
+# -------------------
 proc nkCommandBufferPush*(b: var CommandBuffer; t: CommandType;
     size: nk_size): pointer {.raises: [], tags: [RootEffect], contractual.} =
   ## Add a command to the commands buffer. Internal use only

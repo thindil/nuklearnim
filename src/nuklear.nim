@@ -27,7 +27,7 @@ import std/[colors, hashes, macros, math, unicode]
 import contracts, nimalyzer
 import nk_button, nk_colors, nk_context, nk_draw, nk_font, nk_input, nk_layout,
     nk_math, nk_panel, nk_style, nk_tooltip, nk_types, nk_utf, nk_utils, nk_widget
-export nk_button, nk_colors, nk_context, nk_input, nk_layout, nk_style,
+export nk_button, nk_colors, nk_context, nk_draw, nk_input, nk_layout, nk_style,
     nk_tooltip, nk_types, nk_widget
 
 ## Provides code for Nuklear binding
@@ -223,7 +223,6 @@ proc nk_convert(ctx; cmds, vertices, elements: ptr nk_buffer;
 proc nk_buffer_memory_const(buffer: ptr nk_buffer): pointer {.importc, nodecl,
     raises: [], tags: [], contractual, used.}
   ## A binding to Nuklear's function. Internal use only
-
 
 # ------------------------------------------------------------------
 # High level bindings. The new version of the binding

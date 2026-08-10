@@ -56,6 +56,7 @@ type
   SDL_Texture {.importc, nodecl.} = object
   SDL_RWops {.importc, nodecl.} = object
   SDL_Rect {.importc, nodecl.} = object
+    x, y, w, h: cint
   WindowPtr = ptr SDL_Window
   RendererPtr = ptr SDL_Renderer
   SurfacePtr = ptr SDL_Surface
@@ -633,6 +634,26 @@ proc nuklearDraw*() {.raises: [], tags: [], contractual.} =
 #    ## Internal SDL binding
 #    var viewport: SDL_Rect = SDL_Rect()
 #    SDL_RenderGetViewport(renderer = sdl.renderer, rect = viewport.addr)
+#  var cmd: ptr nk_draw_command = nil
+#  nkDrawForeach(cmd = cmd, ctx = ctx, b = cmds):
+#    if cmd.elem_count == 0:
+#      continue
+#    var r: SDL_Rect = SDL_Rect()
+#    r.x = cmd.clip_rect.x.cint
+#    r.y = cmd.clip_rect.y.cint
+#    r.w = cmd.clip_rect.w.cint
+#    r.h = cmd.clip_rect.h.cint
+#    when defined(nkSDLClampClipRect):
+#      if r.x < 0:
+#        r.w += r.x
+#        r.x = 0
+#      if r.y < 0:
+#        r.h += r.y
+#        r.y = 0
+#      if r.h > viewport.h:
+#        r.h = viewport.h
+#      if r.w > viewport.w:
+#        r.w = viewport.w
 
   SDL_RenderPresent(renderer = sdl.renderer)
 
