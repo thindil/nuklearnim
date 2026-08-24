@@ -200,7 +200,8 @@ proc SDL_RenderPresent(renderer: RendererPtr) {.importc, nodecl, raises: [],
 proc SDL_DestroyRenderer(renderer: RendererPtr) {.importc, nodecl, raises: [],
     tags: [], contractual.}
   ## Internal SDL binding
-proc SDL_DestroyWindow(window: WindowPtr) {.importc, nodecl, raises: [], tags: [], contractual.}
+proc SDL_DestroyWindow(window: WindowPtr) {.importc, nodecl, raises: [],
+    tags: [], contractual.}
   ## Internal SDL binding
 proc SDL_Quit() {.importc, nodecl, raises: [], tags: [], contractual.}
   ## Internal SDL binding
@@ -208,7 +209,8 @@ proc SDL_SetWindowIcon(window: WindowPtr; icon: SurfacePtr) {.importc, nodecl,
     raises: [], tags: [], contractual.}
   ## Internal SDL binding
 proc SDL_CreateTextureFromSurface(renderer: RendererPtr;
-    surface: SurfacePtr): TexturePtr {.importc, nodecl, raises: [], tags: [], contractual.}
+    surface: SurfacePtr): TexturePtr {.importc, nodecl, raises: [], tags: [],
+    contractual.}
   ## Internal SDL binding
 proc SDL_CreateTexture(renderer: RendererPtr; format: SDL_Pixel_Format;
     access: SDL_Texture_Access; w, h: cint): TexturePtr {.importc, nodecl,
@@ -224,7 +226,8 @@ proc SDL_SetTextureBlendMode(texture: TexturePtr;
 proc SDL_DestroyTexture(texture: TexturePtr) {.importc, nodecl, raises: [],
     tags: [], contractual.}
   ## Internal SDL binding
-proc SDL_FreeSurface(surface: SurfacePtr) {.importc, nodecl, raises: [], tags: [], contractual.}
+proc SDL_FreeSurface(surface: SurfacePtr) {.importc, nodecl, raises: [],
+    tags: [], contractual.}
   ## Internal SDL binding
 proc SDL_RWFromFile(file, mode: cstring): RWPtr {.importc, nodecl, raises: [],
     tags: [], contractual.}
@@ -253,7 +256,8 @@ proc SDL_WarpMouseInWindow(window: WindowPtr; x, y: cint) {.importc, nodecl,
 proc SDL_SetRelativeMouseMode(enabled: cint): cint {.importc, nodecl, raises: [
     ], tags: [], contractual.}
   ## Internal SDL binding
-proc IMG_Load(file: cstring): SurfacePtr {.importc, nodecl, raises: [], tags: [], contractual.}
+proc IMG_Load(file: cstring): SurfacePtr {.importc, nodecl, raises: [],
+    tags: [], contractual.}
   ## Internal SDL Image binding
 proc IMG_LoadSizedSVG_RW(src: RWPtr; width, height: cint): SurfacePtr {.importc,
     nodecl, raises: [], tags: [], contractual.}
@@ -291,10 +295,12 @@ type
     atlas: AtlasPtr
     dev: NkSdlDevice
 
+const tmpAtlas: nk_font_atlas = nk_font_atlas()
+
 var
-  fontScale: cfloat = 0.0   ## The scale used to resize a font
-  sdl: NkSdl = NkSdl()      ## The SDL backend settings
-  cmds: ptr nk_buffer = nil ## The Nuklear commands for drawing
+  fontScale: cfloat = 0.0                  ## The scale used to resize a font
+  sdl: NkSdl = NkSdl(atlas: tmpAtlas.addr) ## The SDL backend settings
+  cmds: ptr nk_buffer = nil                ## The Nuklear commands for drawing
 
 proc nkSdlClipboardPaste(usr: nk_handle; edit: ptr nk_text_edit) {.raises: [],
     tags: [], contractual, cdecl.} =
@@ -696,8 +702,7 @@ proc nuklearDraw*() {.raises: [], tags: [], contractual.} =
         nk_buffer_free(&vbuf);
         nk_buffer_free(&ebuf);
     }
-  """
-  .}
+  """.}
 
   SDL_RenderPresent(renderer = sdl.renderer)
 
@@ -717,6 +722,7 @@ proc nuklearLoadSVGImage*(filePath: string; width,
   ## Load the selected SVG image from a file
   ##
   ## * filePath - the full path to the file from which the image will be loaded
+  ## * height   - the height of the image
   ##
   ## Returns the nk_image structure
   let img: RWPtr = SDL_RWFromFile(file = filePath.cstring, mode = "r")
@@ -745,9 +751,7 @@ proc nuklearLoadFont*(font: FontData; glyphsRanges: openArray[nk_rune] = [
   var config: nk_font_config = new_nk_font_config(pixelHeight = 0)
   if glyphsRanges.len > 0:
     config.`range` = glyphsRanges.addr
-  nk_sdl_font_stash_begin(atlas = sdl.atlas.unsafeAddr)
-#  var atlas: nk_font_atlas = nk_font_atlas()
-#  sdl.atlas = atlas.addr
+  nk_sdl_font_stash_begin(atlas = sdl.atlas.addr)
 #  nk_font_atlas_init_default(atlas = sdl.atlas)
 #  nk_font_atlas_begin(atlas = sdl.atlas)
   {.ruleOff: "namedParams".}
