@@ -708,7 +708,7 @@ proc nuklearDraw*() {.raises: [], tags: [], contractual.} =
 
 proc nuklearClose*() {.raises: [], tags: [], contractual.} =
   ## Release all resources related to Xlib and Nuklear
-  if sdl.atlas != nil:
+  if sdl.atlas != tmpAtlas.addr:
     nk_font_atlas_clear(atlas = sdl.atlas)
   nk_free(ctx = ctx)
   SDL_DestroyTexture(texture = sdl.dev.fontTexture)

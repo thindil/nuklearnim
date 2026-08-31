@@ -196,7 +196,7 @@ proc nk_group_begin(ctx; ctitle: cstring;
   ## A binding to Nuklear's function. Internal use only
 proc nk_group_end(ctx) {.importc, cdecl, raises: [], tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
-proc nk_group_scrolled_offset_begin(ctx; x_offset, y_offset: nk_uint;
+proc nk_group_scrolled_offset_begin(ctx; x_offset, y_offset: var nk_uint;
     ctitle: cstring; cflags: nk_flags): nk_bool {.importc, cdecl, raises: [],
     tags: [], contractual.}
   ## A binding to Nuklear's function. Internal use only
@@ -3012,7 +3012,26 @@ template group*(title, tooltip: string; flags: set[PanelFlags];
   if showTips:
     showTooltip2(text = tooltip)
 
-template groupScrolled*(x, y: Natural; title, tooltip: string;
+template groupScrolled*(x, y: var Natural; title: string; flags: set[
+    PanelFlags]; content: untyped) =
+  ## Set a group of widgets inside the parent
+  ##
+  ## * x       - the starting x offset of the scrollbar
+  ## * y       - the starting y offset of the
+  ## * title   - the title of the group
+  ## * flags   - the set of PanelFlags for the group
+  ## * content - the content of the group
+  var
+    cx: nk_uint = x.nk_uint
+    cy: nk_uint = y.nk_uint
+  if nk_group_scrolled_offset_begin(ctx = ctx, x_offset = cx, y_offset = cy,
+      ctitle = title.cstring, cflags = winSetToInt(nimFlags = flags)):
+    content
+    nk_group_scrolled_end(ctx = ctx)
+  x = cx
+  y = cy
+
+template groupScrolled*(x, y: var Natural; title, tooltip: string;
     flags: set[PanelFlags]; content: untyped) =
   ## Set a group of widgets inside the parent
   ##
@@ -3023,13 +3042,18 @@ template groupScrolled*(x, y: Natural; title, tooltip: string;
   ## * flags   - the set of PanelFlags for the group
   ## * content - the content of the group
   let showTips: bool = widgetIsHovered()
-  if nk_group_scrolled_offset_begin(ctx = ctx, x_offset = x.nk_uint,
-      y_offset = y.nk_uint, ctitle = title.cstring, cflags = winSetToInt(
+  var
+    cx: nk_uint = x.nk_uint
+    cy: nk_uint = y.nk_uint
+  if nk_group_scrolled_offset_begin(ctx = ctx, x_offset = cx,
+      y_offset = cy, ctitle = title.cstring, cflags = winSetToInt(
       nimFlags = flags)):
     content
     nk_group_scrolled_end(ctx = ctx)
   if showTips:
     showTooltip2(text = tooltip)
+  x = cx
+  y = cy
 
 proc groupSetScrollbar*(title: string; xOffset, yOffset: Natural) {.raises: [],
     tags: [], contractual.} =
@@ -3043,6 +3067,23 @@ proc groupSetScrollbar*(title: string; xOffset, yOffset: Natural) {.raises: [],
     ## A binding to Nuklear's function. Internal use only
   nk_group_set_scroll(ctx = ctx, id = title.cstring, x_offset = xOffset.nk_uint,
       y_offset = yOffset.nk_uint)
+
+proc groupGetScrollbar*(title: string; xOffset,
+    yOffset: var Natural) {.raises: [], tags: [], contractual.} =
+  ## Get the scrollbar position of the given group
+  ##
+  ## * title   - the title of the group
+  ## * xOffset - the x offset the group's scrollbar
+  ## * yOffset - the y offset the group's scrollbar
+  ##
+  ## Returns modified parameters xOffset and yOffset
+  proc nk_group_get_scroll(ctx; id: cstring; x_offset,
+      y_offset: var nk_uint) {.importc, nodecl, raises: [], tags: [], contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  var x, y: nk_uint = 0
+  nk_group_get_scroll(ctx = ctx, id = title.cstring, x_offset = x, y_offset = y)
+  xOffset = x
+  yOffset = y
 
 # ---------
 # Edit text
