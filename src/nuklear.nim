@@ -2032,7 +2032,8 @@ template imageButtonStyled*(image: PImage; style: ButtonStyle;
 
 proc createImageLabelButton(img: PImage; txt: string;
     align: TextAlignment): bool {.raises: [], tags: [], contractual.} =
-  ## Draw the button with the selected image and text, internal use only, temporary code
+  ## Draw the button with the selected image and text, internal use only,
+  ## temporary code
   ##
   ## * image - the image to show on the button
   ## * text  - the text to show on the button
@@ -2040,9 +2041,8 @@ proc createImageLabelButton(img: PImage; txt: string;
   ##
   ## Returns true if button was created, otherwise false
   proc nk_button_image_label(ctx; image: nk_image; text: cstring;
-      textAlignment: nk_flags): nk_bool {.importc, nodecl,
-
-raises: [], tags: [], contractual.}
+      textAlignment: nk_flags): nk_bool {.importc, nodecl, raises: [],
+      tags: [], contractual.}
     ## A binding to Nuklear's function. Internal use only
   return nk_button_image_label(ctx = ctx, image = nk_image_ptr(iPtr = img),
       text = txt.cstring, text_alignment = align.nk_flags)
@@ -2061,6 +2061,18 @@ template imageLabelButton*(image: PImage; label: string;
   if createImageLabelButton(img = image, txt = label, align = alignment):
     onPressCode
 
+template imageLabelButton*(image: PImage; label: string; onPressCode: untyped) =
+  ## Draw the button with the selected image and text. Execute the selected code
+  ## on pressing it.
+  ##
+  ## * image       - the image to shown on the button
+  ## * label       - the text to show on the button
+  ## * onPressCode - the Nim code to execute when the button was pressed
+  ##
+  ## Returns true if button was pressed
+  if createImageLabelButton(img = image, txt = label, align = right):
+    onPressCode
+
 template imageLabelButton*(image: PImage; label, tooltip: string;
     alignment: TextAlignment; onPressCode: untyped) =
   ## Draw the button with the selected image and text. Execute the selected code
@@ -2075,6 +2087,23 @@ template imageLabelButton*(image: PImage; label, tooltip: string;
   ## Returns true if button was pressed
   let showTips: bool = widgetIsHovered()
   if createImageLabelButton(img = image, txt = label, align = alignment):
+    onPressCode
+  if showTips:
+    showTooltip2(text = tooltip)
+
+template imageLabelButton*(image: PImage; label, tooltip: string;
+    onPressCode: untyped) =
+  ## Draw the button with the selected image and text. Execute the selected code
+  ## on pressing it.
+  ##
+  ## * image       - the image to shown on the button
+  ## * label        - the text to show on the button
+  ## * tooltip     - the tooltip to show when mouse is hovering over the widget
+  ## * onPressCode - the Nim code to execute when the button was pressed
+  ##
+  ## Returns true if button was pressed
+  let showTips: bool = widgetIsHovered()
+  if createImageLabelButton(img = image, txt = label, align = right):
     onPressCode
   if showTips:
     showTooltip2(text = tooltip)

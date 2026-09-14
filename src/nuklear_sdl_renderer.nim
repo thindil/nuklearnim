@@ -36,6 +36,14 @@
 #define NK_IMPLEMENTATION
 #define NK_SDL_RENDERER_IMPLEMENTATION
 #include "nuklear.h"
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_image.h>
+#include <strings.h>
+struct nk_sdl_device {
+    struct nk_buffer cmds;
+    struct nk_draw_null_texture tex_null;
+    SDL_Texture *font_tex;
+};
 #include "nuklear_sdl_renderer.h"
 """.}
 
@@ -272,8 +280,6 @@ proc nk_sdl_init(win: WindowPtr; renderer: RendererPtr): PContext {.importc,
   ## Internal Nuklear binding
 proc nk_sdl_font_stash_begin(atlas: ptr ptr nk_font_atlas) {.importc, nodecl,
     raises: [], tags: [], contractual.}
-  ## Internal Nuklear binding
-proc nk_sdl_font_stash_end() {.importc, nodecl, raises: [], tags: [], contractual.}
   ## Internal Nuklear binding
 
 # High level bindings
@@ -599,10 +605,13 @@ proc nuklearDraw*() {.raises: [], tags: [], contractual.} =
     struct nk_sdl_device *dev = &sdl.ogl;
 
     {
+        struct nk_sdl_vertex {
+            float position[2];
+            float uv[2];
+            nk_byte col[4];
+        };
+
         SDL_Rect saved_clip;
-#ifdef NK_SDL_CLAMP_CLIP_RECT
-        SDL_Rect viewport;
-#endif
         SDL_bool clipping_enabled;
         int vs = sizeof(struct nk_sdl_vertex);
         size_t vp = offsetof(struct nk_sdl_vertex, position);
@@ -644,9 +653,6 @@ proc nuklearDraw*() {.raises: [], tags: [], contractual.} =
 
         clipping_enabled = SDL_RenderIsClipEnabled(sdl.renderer);
         SDL_RenderGetClipRect(sdl.renderer, &saved_clip);
-#ifdef NK_SDL_CLAMP_CLIP_RECT
-        SDL_RenderGetViewport(sdl.renderer, &viewport);
-#endif
 
         nk_draw_foreach(cmd, &sdl.ctx, &dev->cmds)
         {
@@ -658,22 +664,6 @@ proc nuklearDraw*() {.raises: [], tags: [], contractual.} =
                 r.y = cmd->clip_rect.y;
                 r.w = cmd->clip_rect.w;
                 r.h = cmd->clip_rect.h;
-#ifdef NK_SDL_CLAMP_CLIP_RECT
-                if (r.x < 0) {
-                    r.w += r.x;
-                    r.x = 0;
-                }
-                if (r.y < 0) {
-                    r.h += r.y;
-                    r.y = 0;
-                }
-                if (r.h > viewport.h) {
-                    r.h = viewport.h;
-                }
-                if (r.w > viewport.w) {
-                    r.w = viewport.w;
-                }
-#endif
                 SDL_RenderSetClipRect(sdl.renderer, &r);
             }
 
@@ -751,28 +741,32 @@ proc nuklearLoadFont*(font: FontData; glyphsRanges: openArray[nk_rune] = [
   var config: nk_font_config = new_nk_font_config(pixelHeight = 0)
   if glyphsRanges.len > 0:
     config.`range` = glyphsRanges.addr
+  {.emit: """
+    nk_font_atlas_init_default(&sdl.atlas);
+    nk_font_atlas_begin(&sdl.atlas);
+  """.}
   nk_sdl_font_stash_begin(atlas = sdl.atlas.addr)
-#  nk_font_atlas_init_default(atlas = sdl.atlas)
-#  nk_font_atlas_begin(atlas = sdl.atlas)
   {.ruleOff: "namedParams".}
   result = nk_font_atlas_add_from_file(atlas = sdl.atlas,
       filePath = font.path.cstring, height = font.size.cfloat * fontScale, config.addr)
   {.ruleOn: "namedParams".}
-  nk_sdl_font_stash_end()
-#  var w, h: cint = 0
-#  var image: pointer = nk_font_atlas_bake(atlas = sdl.atlas, width = w,
-#      height = h, fmt = atlasRGBA32)
-#  let sdlFontTexture: TexturePtr = SDL_CreateTexture(renderer = sdl.renderer,
-#      format = SDL_PIXELFORMAT_ARGB8888, access = SDL_TEXTUREACCESS_STATIC,
-#      w = w, h = h)
-#  if sdlFontTexture == nil:
-#    SDL_Log(fmt = "error creating texture")
-#    return
-#  discard SDL_UpdateTexture(texture = sdlFontTexture, rect = nil,
-#      pixels = image, pitch = 4 * w)
-#  SDL_SetTextureBlendMode(texture = sdlFontTexture,
-#      blendMode = SDL_BLENDMODE_BLEND)
-#  sdl.dev.fontTexture = sdlFontTexture
+  {.emit: """
+    const void *image; int width, height;
+    image = nk_font_atlas_bake(&sdl.atlas, &width, &height, NK_FONT_ATLAS_RGBA32);
+    struct nk_sdl_device *dev = &sdl.ogl;
+
+    SDL_Texture *g_SDLFontTexture = SDL_CreateTexture(sdl.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, width, height);
+    if (g_SDLFontTexture == NULL) {
+        SDL_Log("error creating texture");
+        return;
+    }
+    SDL_UpdateTexture(g_SDLFontTexture, NULL, image, 4 * width);
+    SDL_SetTextureBlendMode(g_SDLFontTexture, SDL_BLENDMODE_BLEND);
+    dev->font_tex = g_SDLFontTexture;
+    nk_font_atlas_end(&sdl.atlas, nk_handle_ptr(sdl.ogl.font_tex), &sdl.ogl.tex_null);
+    if (sdl.atlas.default_font)
+        nk_style_set_font(&sdl.ctx, &sdl.atlas.default_font->handle);
+  """.}
 
 proc nuklearSetDefaultFont*(defaultFont: ptr nk_font = nil;
     fontSize: int = 14) {.raises: [], tags: [], contractual.} =
@@ -785,13 +779,33 @@ proc nuklearSetDefaultFont*(defaultFont: ptr nk_font = nil;
     atlas: AtlasPtr = nil
     config: nk_font_config = new_nk_font_config(pixelHeight = 0)
     font: ptr nk_font = nil
+  {.emit: """
+    nk_font_atlas_init_default(&sdl.atlas);
+    nk_font_atlas_begin(&sdl.atlas);
+  """.}
   nk_sdl_font_stash_begin(atlas = atlas.addr)
   if defaultFont == nil:
     font = nk_font_atlas_add_default(atlas = atlas, height = fontSize.cfloat *
         fontScale, config = config.addr)
   else:
     font = defaultFont
-  nk_sdl_font_stash_end()
+  {.emit: """
+    const void *image; int width, height;
+    image = nk_font_atlas_bake(&sdl.atlas, &width, &height, NK_FONT_ATLAS_RGBA32);
+    struct nk_sdl_device *dev = &sdl.ogl;
+
+    SDL_Texture *g_SDLFontTexture = SDL_CreateTexture(sdl.renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STATIC, width, height);
+    if (g_SDLFontTexture == NULL) {
+        SDL_Log("error creating texture");
+        return;
+    }
+    SDL_UpdateTexture(g_SDLFontTexture, NULL, image, 4 * width);
+    SDL_SetTextureBlendMode(g_SDLFontTexture, SDL_BLENDMODE_BLEND);
+    dev->font_tex = g_SDLFontTexture;
+    nk_font_atlas_end(&sdl.atlas, nk_handle_ptr(sdl.ogl.font_tex), &sdl.ogl.tex_null);
+    if (sdl.atlas.default_font)
+        nk_style_set_font(&sdl.ctx, &sdl.atlas.default_font->handle);
+  """.}
   nk_style_set_font(ctx = getContext(), font = font.handle.unsafeAddr)
 
 proc nuklearResizeWin*(width, height: int) {.raises: [], tags: [],
