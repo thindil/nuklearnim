@@ -26,10 +26,10 @@ To use it in your project, you will need files:
 * `nuklear.h` - Nuklear library itself
 * `nuklear.nim` - Nim main binding file to the Nuklear library.
 * `nk_*.nim` - Nim submodules, for various Nuklear UI elements.
-* nuklear_xxx.h - the selected backend for Nuklear library. For example,
-  `nuklear_sdl_renderer.h`
-* nuklear_xxx.nim - Nim binding for the selected backed. In the same example,
-  it will be `nuklear_sdl_renderer.nim`.
+* nuklear_xxx.nim - Nim binding for the selected backed. For example,
+  `nuklear_sdl_renderer.nim`.
+
+In case of Xlib backend, you will need also C header file `nuklear_xlib_renderer.h`
 
 You will need also to set the proper flags for C compiler, so it will be able to
 find the library.
