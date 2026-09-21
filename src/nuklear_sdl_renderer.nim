@@ -44,7 +44,26 @@ struct nk_sdl_device {
     struct nk_draw_null_texture tex_null;
     SDL_Texture *font_tex;
 };
-#include "nuklear_sdl_renderer.h"
+static struct nk_sdl {
+    SDL_Window *win;
+    SDL_Renderer *renderer;
+    struct nk_sdl_device ogl;
+    struct nk_context ctx;
+    struct nk_font_atlas atlas;
+} sdl;
+NK_API struct nk_context*
+nk_sdl_init(SDL_Window *win, SDL_Renderer *renderer)
+{
+    sdl.win = win;
+    sdl.renderer = renderer;
+    nk_buffer_init_default(&sdl.ogl.cmds);
+    return &sdl.ctx;
+}
+NK_API void
+nk_sdl_font_stash_begin(struct nk_font_atlas **atlas)
+{
+    *atlas = &sdl.atlas;
+}
 """.}
 
 include nuklear
@@ -278,8 +297,8 @@ proc IMG_Quit() {.importc, nodecl, raises: [], tags: [], contractual.}
 proc nk_sdl_init(win: WindowPtr; renderer: RendererPtr): PContext {.importc,
     nodecl, raises: [], tags: [], contractual.}
   ## Internal Nuklear binding
-proc nk_sdl_font_stash_begin(atlas: ptr ptr nk_font_atlas) {.importc, nodecl,
-    raises: [], tags: [], contractual.}
+proc nk_sdl_font_stash_begin(atlas: ptr AtlasPtr) {.importc, nodecl, raises: [],
+    tags: [], contractual.}
   ## Internal Nuklear binding
 
 # High level bindings
