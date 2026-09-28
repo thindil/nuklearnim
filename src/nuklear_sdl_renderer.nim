@@ -412,7 +412,6 @@ proc nuklearInit*(windowWidth, windowHeight: int; name: string = "";
   SDL_RenderSetScale(renderer = sdl.renderer, scaleX = scaleX, scaleY = scaleY)
   fontScale = scaleY
   setContext(newContext = nk_sdl_init(win = sdl.win, renderer = sdl.renderer))
-  #nkInit(ctx = context)
   ctx.clip.copy = nkSdlClipboardCopy
   ctx.clip.paste = nkSdlClipboardPaste
   ctx.clip.userdata = nk_handle()
