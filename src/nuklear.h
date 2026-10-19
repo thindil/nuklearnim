@@ -24898,10 +24898,6 @@ NK_API nk_bool nk_button_label_styled(struct nk_context *ctx,
 {
     return nk_button_text_styled(ctx, style, title, nk_strlen(title));
 }
-NK_API nk_bool nk_button_label(struct nk_context *ctx, const char *title)
-{
-    return nk_button_text(ctx, title, nk_strlen(title));
-}
 NK_API nk_bool
 nk_button_color(struct nk_context *ctx, struct nk_color color)
 {
@@ -30821,6 +30817,45 @@ nk_tooltip2(struct nk_context *ctx, const char *text, float startx, float starty
     if (nk_tooltip_begin2(ctx, (float)text_width, startx, starty)) {
         nk_layout_row_dynamic(ctx, (float)text_height, 1);
         nk_text(ctx, text, text_len, NK_TEXT_LEFT);
+        nk_tooltip_end(ctx);
+    }
+}
+NK_API void
+nk_tooltip3(struct nk_context *ctx, const char *text, float startx, float starty, int width)
+{
+    const struct nk_style *style;
+    struct nk_vec2 padding;
+
+    int text_len;
+    float text_width;
+    float text_height;
+
+    NK_ASSERT(ctx);
+    NK_ASSERT(ctx->current);
+    NK_ASSERT(ctx->current->layout);
+    NK_ASSERT(text);
+    if (!ctx || !ctx->current || !ctx->current->layout || !text)
+        return;
+
+    /* fetch configuration data */
+    style = &ctx->style;
+    padding = style->window.padding;
+
+    /* calculate size of the text and tooltip */
+    text_len = nk_strlen(text);
+    text_width = style->font->width(style->font->userdata,
+                    style->font->height, text, text_len);
+    text_width += (4 * padding.x);
+    int lines = text_width / width;
+    if ((int)text_width % width != 0)  {
+      lines++;
+    }
+    text_height = ((style->font->height * lines) + 2 * padding.y);
+
+    /* execute tooltip and fill with text */
+    if (nk_tooltip_begin2(ctx, (float)width, startx, starty)) {
+        nk_layout_row_dynamic(ctx, (float)text_height, 1);
+        nk_label_wrap(ctx, text);
         nk_tooltip_end(ctx);
     }
 }
