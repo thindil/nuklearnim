@@ -26,9 +26,9 @@
 import std/[colors, hashes, macros, math, unicode]
 import contracts, nimalyzer
 import nk_button, nk_colors, nk_context, nk_font, nk_input, nk_layout,
-    nk_style, nk_tooltip, nk_types, nk_widget
+    nk_tooltip, nk_types, nk_widget
 export nk_button, nk_colors, nk_context, nk_input, nk_layout, nk_tooltip,
-    nk_style, nk_types, nk_widget
+    nk_types, nk_widget
 
 ## Provides code for Nuklear binding
 
@@ -1669,6 +1669,13 @@ template changeStyle*(src, dest: ButtonStyleTypes; code: untyped) =
   setButtonStyle2(source = src, destination = dest)
   code
   restoreButtonStyle(destination = dest)
+
+proc nkStyleDefault*() {.raises: [], tags: [], contractual.} =
+  ## Set the default style for Nuklear
+  proc nk_style_default(ctx) {.importc, nodecl, raises: [], tags: [],
+      contractual.}
+    ## A binding to Nuklear's function. Internal use only
+  nk_style_default(ctx = ctx)
 
 # ------
 # Combos

@@ -30751,41 +30751,6 @@ nk_tooltip_end(struct nk_context *ctx)
     nk_popup_end(ctx);
 }
 NK_API void
-nk_tooltip(struct nk_context *ctx, const char *text)
-{
-    const struct nk_style *style;
-    struct nk_vec2 padding;
-
-    int text_len;
-    float text_width;
-    float text_height;
-
-    NK_ASSERT(ctx);
-    NK_ASSERT(ctx->current);
-    NK_ASSERT(ctx->current->layout);
-    NK_ASSERT(text);
-    if (!ctx || !ctx->current || !ctx->current->layout || !text)
-        return;
-
-    /* fetch configuration data */
-    style = &ctx->style;
-    padding = style->window.padding;
-
-    /* calculate size of the text and tooltip */
-    text_len = nk_strlen(text);
-    text_width = style->font->width(style->font->userdata,
-                    style->font->height, text, text_len);
-    text_width += (4 * padding.x);
-    text_height = (style->font->height + 2 * padding.y);
-
-    /* execute tooltip and fill with text */
-    if (nk_tooltip_begin(ctx, (float)text_width)) {
-        nk_layout_row_dynamic(ctx, (float)text_height, 1);
-        nk_text(ctx, text, text_len, NK_TEXT_LEFT);
-        nk_tooltip_end(ctx);
-    }
-}
-NK_API void
 nk_tooltip2(struct nk_context *ctx, const char *text, float startx, float starty)
 {
     const struct nk_style *style;
@@ -30821,7 +30786,7 @@ nk_tooltip2(struct nk_context *ctx, const char *text, float startx, float starty
     }
 }
 NK_API void
-nk_tooltip3(struct nk_context *ctx, const char *text, float startx, float starty, int width)
+nk_tooltip(struct nk_context *ctx, const char *text)
 {
     const struct nk_style *style;
     struct nk_vec2 padding;
@@ -30846,14 +30811,86 @@ nk_tooltip3(struct nk_context *ctx, const char *text, float startx, float starty
     text_width = style->font->width(style->font->userdata,
                     style->font->height, text, text_len);
     text_width += (4 * padding.x);
-    int lines = text_width / width;
-    if ((int)text_width % width != 0)  {
-      lines++;
+    int tooltip_width = nk_window_get_width(ctx) / 2.5;
+    if (text_width < tooltip_width) {
+      tooltip_width = text_width;
+    }
+    int lines = 0;
+    int done = 0;
+    int glyphs = 0;
+    NK_INTERN nk_rune seperator[] = {' '};
+    int fitting = nk_text_clamp(style->font, text, text_len, tooltip_width, &glyphs, &text_width, seperator, NK_LEN(seperator));
+    while (done < text_len) {
+        if (!fitting) break;
+        done += fitting;
+        lines ++;
+        fitting = nk_text_clamp(style->font, &text[done], text_len - done, tooltip_width, &glyphs, &text_width, seperator, NK_LEN(seperator));
     }
     text_height = ((style->font->height * lines) + 2 * padding.y);
 
     /* execute tooltip and fill with text */
-    if (nk_tooltip_begin2(ctx, (float)width, startx, starty)) {
+    if (nk_tooltip_begin(ctx, (float)tooltip_width)) {
+        nk_layout_row_dynamic(ctx, (float)text_height, 1);
+        nk_label_wrap(ctx, text);
+        nk_tooltip_end(ctx);
+    }
+}
+NK_API void
+nk_tooltip3(struct nk_context *ctx, const char *text, int window_width, int window_height)
+{
+    const struct nk_style *style;
+    struct nk_vec2 padding;
+
+    int text_len;
+    float text_width;
+    float text_height;
+    const struct nk_input *in;
+
+    NK_ASSERT(ctx);
+    NK_ASSERT(ctx->current);
+    NK_ASSERT(ctx->current->layout);
+    NK_ASSERT(text);
+    if (!ctx || !ctx->current || !ctx->current->layout || !text)
+        return;
+
+    /* fetch configuration data */
+    style = &ctx->style;
+    padding = style->window.padding;
+
+    /* calculate size of the text and tooltip */
+    text_len = nk_strlen(text);
+    text_width = style->font->width(style->font->userdata,
+                    style->font->height, text, text_len);
+    text_width += (4 * padding.x);
+    int tooltip_width = window_width / 2.5;
+    if (text_width < tooltip_width) {
+      tooltip_width = text_width;
+    }
+    int lines = 0;
+    int done = 0;
+    int glyphs = 0;
+    NK_INTERN nk_rune seperator[] = {' '};
+    int fitting = nk_text_clamp(style->font, text, text_len, tooltip_width, &glyphs, &text_width, seperator, NK_LEN(seperator));
+    while (done < text_len) {
+        if (!fitting) break;
+        done += fitting;
+        lines ++;
+        fitting = nk_text_clamp(style->font, &text[done], text_len - done, tooltip_width, &glyphs, &text_width, seperator, NK_LEN(seperator));
+    }
+    text_height = (style->font->height + padding.y) * lines;
+
+    in = &ctx->input;
+    int x = nk_ifloorf(in->mouse.pos.x + 10);
+    if (x + tooltip_width > window_width) {
+      x -= tooltip_width;
+    }
+    int y = nk_ifloorf(in->mouse.pos.y + 10);
+    if (y + text_height > window_height) {
+      y -= text_height;
+    }
+
+    /* execute tooltip and fill with text */
+    if (nk_tooltip_begin2(ctx, (float)tooltip_width, x, y)) {
         nk_layout_row_dynamic(ctx, (float)text_height, 1);
         nk_label_wrap(ctx, text);
         nk_tooltip_end(ctx);
