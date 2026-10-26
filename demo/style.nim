@@ -218,4 +218,4 @@ proc setStyle*(theme: Theme) {.raises: [], tags: [], contractual.} =
     table[progressbarColor] = NkColor(r: 48, g: 83, b: 111, a: 245)
     styleFromTable(table = table)
   of themeBlack:
-    defaultStyle()
+    nkStyledefault()
