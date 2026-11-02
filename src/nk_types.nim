@@ -1044,73 +1044,23 @@ type
     size*: cuint
     next*: ptr nk_page
     win*: pointer
-  nk_pool* {.importc: "struct nk_pool", completeStruct.} = object
-    ## Internal Nuklear type
-    alloc: nk_allocator
-    `type`: AllocationType
-    page_count*, capacity*: cuint
-    pages*: ptr nk_page
-    freelist*: pointer
-    size*, cap*: nk_size
-  nk_context* {.importc: "struct nk_context", completeStruct.} = object
+  nk_context* {.importc: "struct nk_context".} = object
     ## Internal Nuklear type
     style*: nk_style
     input*: nk_input
     begin*, `end`*, current*, active*: PNkWindow
-    seq*, count*: cuint
-    memory*: nk_buffer
-    use_pool*: bool
-    freelist*: pointer
     clip*: nk_clipboard
-    last_widget_state*: nk_flags
-    button_behavior*: ButtonBehavior
-    stacks*: nk_configuration_stacks
-    when defined(nkIncludeCommandUserData):
-      userdata*: nk_handle
-        ## Interna Nuklear data
-    when defined(nkIncludeVertexBufferOutput):
-      draw_list*: nk_draw_list
-        ## Internal Nuklear type
-    text_edit*: nk_text_edit
-    overlay*: nk_command_buffer
-    build*: cint
-    pool*: nk_pool
-  nk_font_glyph* {.importc: "struct nk_font_glyph", completeStruct.} = object
-    ## Internal Nuklear type
-    codepoint*: nk_rune
-    xadvance, x0, y0, x1, y1, w, h, u0, v0, u1, v1: cfloat
-  nk_font* {.importc: "struct nk_font", completeStruct.} = object
+  nk_font* {.importc: "struct nk_font".} = object
     ## Internal Nuklear type
     handle*: PNkUserFont
-    next*: ptr nk_font
-    scale*: cfloat
-    config*: ptr nk_font_config
-    glyphs*, fallback*: ptr nk_font_glyph
-    fallback_codepoint*: nk_rune
-    texture*: nk_handle
   nk_font_atlas* {.importc: "struct nk_font_atlas", completeStruct.} = object
     ## Internal Nuklear type
     pixel: pointer
     tex_width, tex_height: cint
     pernament, temporary: nk_allocator
-  nk_baked_font* {.importc: "struct nk_baked_font", completeStruct.} = object
-    ## Internal Nuklear type
-    height*: cfloat
-    glyph_offset*, glyph_count*: nk_rune
-    ranges*: pointer
   nk_font_config* {.importc: "struct nk_font_config".} = object
     ## Internal Nuklear type
-    `range`*, ttf_blob: pointer
-    next*, n*, p*: ptr nk_font_config
-    ttf_size*: nk_size
-    ttf_data_owned_by_atlas*, merge_mode*, pixel_snap*, oversample_v*,
-      oversample_h*: uint8
-    padding*: array[3, uint8]
-    size*: cfloat
-    coord_type*: FontCoordType
-    spacing*: nk_vec2
-    font*: ptr nk_baked_font
-    fallback_glyph*: nk_rune
+    `range`*: pointer
   CursorsArray* = array[cursorCount, nk_cursor]
     ## The array of mouse buttons
   nk_glyph* = array[nkUtfSize, char]

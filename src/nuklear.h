@@ -7804,7 +7804,27 @@ nk_text_calculate_text_bounds(const struct nk_user_font *font,
         *remaining = begin+text_len;
     return text_size;
 }
+NK_API int
+nk_text_count_lines(struct nk_context *ctx, const char *text, int text_len, float text_width, int max_len) {
+    const struct nk_style *style;
+    struct nk_vec2 padding;
+    /* fetch configuration data */
+    style = &ctx->style;
+    padding = style->window.padding;
 
+    int lines = 0;
+    int done = 0;
+    int glyphs = 0;
+    NK_INTERN nk_rune seperator[] = {' '};
+    int fitting = nk_text_clamp(style->font, text, text_len, max_len, &glyphs, &text_width, seperator, NK_LEN(seperator));
+    while (done < text_len) {
+        if (!fitting) break;
+        done += fitting;
+        lines ++;
+        fitting = nk_text_clamp(style->font, &text[done], text_len - done, max_len, &glyphs, &text_width, seperator, NK_LEN(seperator));
+    }
+    return lines;
+}
 
 
 
@@ -30815,17 +30835,7 @@ nk_tooltip(struct nk_context *ctx, const char *text)
     if (text_width < tooltip_width) {
       tooltip_width = text_width;
     }
-    int lines = 0;
-    int done = 0;
-    int glyphs = 0;
-    NK_INTERN nk_rune seperator[] = {' '};
-    int fitting = nk_text_clamp(style->font, text, text_len, tooltip_width, &glyphs, &text_width, seperator, NK_LEN(seperator));
-    while (done < text_len) {
-        if (!fitting) break;
-        done += fitting;
-        lines ++;
-        fitting = nk_text_clamp(style->font, &text[done], text_len - done, tooltip_width, &glyphs, &text_width, seperator, NK_LEN(seperator));
-    }
+    int lines = nk_text_count_lines(ctx, text, text_len, text_width, tooltip_width);
     text_height = ((style->font->height * lines) + 2 * padding.y);
 
     /* execute tooltip and fill with text */
@@ -30861,22 +30871,12 @@ nk_tooltip3(struct nk_context *ctx, const char *text, int window_width, int wind
     text_len = nk_strlen(text);
     text_width = style->font->width(style->font->userdata,
                     style->font->height, text, text_len);
-    text_width += (4 * padding.x);
+    text_width += (8 * padding.x);
     int tooltip_width = window_width / 2.5;
     if (text_width < tooltip_width) {
       tooltip_width = text_width;
     }
-    int lines = 0;
-    int done = 0;
-    int glyphs = 0;
-    NK_INTERN nk_rune seperator[] = {' '};
-    int fitting = nk_text_clamp(style->font, text, text_len, tooltip_width, &glyphs, &text_width, seperator, NK_LEN(seperator));
-    while (done < text_len) {
-        if (!fitting) break;
-        done += fitting;
-        lines ++;
-        fitting = nk_text_clamp(style->font, &text[done], text_len - done, tooltip_width, &glyphs, &text_width, seperator, NK_LEN(seperator));
-    }
+    int lines = nk_text_count_lines(ctx, text, text_len, text_width, tooltip_width);
     text_height = (style->font->height + padding.y) * lines;
 
     in = &ctx->input;
