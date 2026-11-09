@@ -997,53 +997,10 @@ type
     ## Internal Nuklear type
     head*: cint
     elements*: pointer
-  nk_configuration_stacks* {.importc: "struct nk_configuration_stacks",
-      completeStruct.} = object
+  nk_draw_null_texture* {.importc: "struct nk_draw_null_texture".} = object
     ## Internal Nuklear type
-    style_items*: nk_config_stack_style_item
-    floats*: nk_config_stack_float
-    vectors*: nk_config_stack_vec2
-    flags*: nk_config_stack_flags
-    colors*: nk_config_stack_color
-    fonts*: nk_config_stack_user_font
-    button_behaviors*: nk_config_stack_button_behavior
-  nk_draw_null_texture* {.importc: "struct nk_draw_null_texture",
-      completeStruct.} = object
+  nk_convert_config* {.importc: "struct nk_convert_config".} = object
     ## Internal Nuklear type
-    texture*: nk_handle
-    uv*: nk_vec2
-  nk_draw_vertex_layout_element* {.importc: "struct nk_draw_vertex_layout_element",
-      completeStruct.} = object
-    ## Internal Nuklear type
-    attribute*: DrawVertexLayoutAttribute
-    format*: DrawVertexLayoutFormat
-    offset*: nk_size
-  nk_convert_config* {.importc: "struct nk_convert_config",
-      completeStruct.} = object
-    ## Internal Nuklear type
-    global_alpha*: cfloat
-    line_AA*, shape_AA*: AntiAliasing
-    circle_segment_count*, arc_segment_count*, curve_segment_count*: cuint
-    tex_null*: nk_draw_null_texture
-    vertex_layout*: pointer
-    vertex_size*, vertex_alignment*: nk_size
-  nk_draw_list* {.importc: "struct nk_draw_list", completeStruct.} = object
-    ## Internal Nuklear type
-    clip_rect*: nk_rect
-    circle_vtx: array[12, nk_vec2]
-    config*: nk_convert_config
-    buffer*, vertices*, elements*: PNkBuffer
-    element_count*, vertex_count*, cmd_count*, path_count*, path_offset*: cuint
-    cmd_offset*: nk_size
-    line_AA, shape_AA: AntiAliasing
-    when defined(nkIncludeCommandUserData):
-      userdata*: nk_handle
-        ## Internal Nuklear type
-  nk_page* {.importc: "struct nk_pool", completeStruct.} = object
-    ## Internal Nuklear type
-    size*: cuint
-    next*: ptr nk_page
-    win*: pointer
   nk_context* {.importc: "struct nk_context".} = object
     ## Internal Nuklear type
     style*: nk_style
